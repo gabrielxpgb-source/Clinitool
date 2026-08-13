@@ -301,7 +301,7 @@
   <header class="flex justify-between items-center px-6 py-4 w-full bg-surface-container-low border-b border-outline-variant sticky top-0 z-50">
     <div class="flex items-center gap-4 cursor-pointer" onclick="navegar('tela-inicio')">
       <span class="text-xl font-bold text-primary font-headline-md">CliniFat</span>
-      <span class="text-xs px-2 py-1 bg-surface-container-highest rounded text-on-surface-variant font-label-sm hidden sm:inline-block">CliniTool • v11.0</span>
+      <span class="text-xs px-2 py-1 bg-surface-container-highest rounded text-on-surface-variant font-label-sm hidden sm:inline-block">CliniTool • v11.1</span>
     </div>
 
     <!-- Controles de Colunas (Tela Contador) -->
@@ -379,12 +379,13 @@
 
     <!-- TELA CONFIGURAÇÕES CLINIFAT -->
     <div id="tela-configuracoes" class="screen">
-      <div class="max-w-7xl mx-auto flex flex-col gap-6">
+      <div class="max-w-7xl mx-auto flex flex-col gap-5">
+
         <div class="bg-surface-container-high p-6 rounded-2xl border border-outline-variant flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div class="text-xs uppercase font-bold text-secondary font-label-sm mb-1">CliniFat</div>
             <h2 class="text-2xl font-bold text-primary font-headline-md">Configurações</h2>
-            <p class="text-sm text-on-surface-variant mt-1">Cadastros operacionais e base de referência do GuideCheck.</p>
+            <p class="text-sm text-on-surface-variant mt-1">Cadastros do Gerenciador de Guias e base de referência do GuideCheck.</p>
           </div>
           <button onclick="navegar('tela-inicio')" class="px-5 py-2.5 bg-surface-container-highest hover:bg-outline-variant rounded-xl text-on-surface font-label-sm flex items-center gap-2">
             <span class="material-symbols-outlined text-sm">arrow_back</span>Voltar
@@ -395,92 +396,164 @@
           Somente usuários Master podem alterar estes cadastros.
         </div>
 
-        <!-- PROFISSIONAIS -->
-        <section class="bg-surface-container p-6 rounded-2xl border border-outline-variant">
-          <div class="mb-5">
-            <h3 class="text-lg font-bold text-secondary">Profissionais</h3>
-            <p class="text-xs text-on-surface-variant mt-1">Os dados de CRM/UF/CBO serão usados pelo GuideCheck para validar o profissional identificado na guia.</p>
-          </div>
-
-          <div id="form-profissional" class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-5">
-            <input id="cfg-prof-nome" class="sa-input md:col-span-4" placeholder="Nome completo" autocomplete="off">
-            <select id="cfg-prof-tipo" class="sa-input md:col-span-2">
-              <option value="consulta">Médico (Consulta)</option>
-              <option value="sadt">Psicólogo (SADT)</option>
-            </select>
-            <input id="cfg-prof-crm" class="sa-input md:col-span-2" placeholder="CRM" inputmode="numeric">
-            <input id="cfg-prof-uf" class="sa-input md:col-span-1" placeholder="UF" maxlength="2">
-            <input id="cfg-prof-cbo" class="sa-input md:col-span-2" placeholder="CBO" inputmode="numeric">
-            <button onclick="salvarProfissional()" class="h-11 rounded-xl bg-secondary text-on-secondary font-bold md:col-span-1 flex items-center justify-center" title="Adicionar / salvar">
-              <span class="material-symbols-outlined">save</span>
-            </button>
-            <input id="cfg-prof-especialidade" class="sa-input md:col-span-4" placeholder="Especialidade">
-            <input id="cfg-prof-aliases" class="sa-input md:col-span-6" placeholder="Variações conhecidas, separadas por ;">
-            <button id="cfg-prof-cancel-btn" onclick="cancelarEdicaoProfissional()" class="hidden h-11 rounded-xl bg-surface-container-highest border border-outline-variant text-on-surface font-bold md:col-span-2 items-center justify-center gap-2">
-              <span class="material-symbols-outlined text-sm">close</span>Cancelar edição
-            </button>
-          </div>
-
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <!-- PROFISSIONAIS DO CONTADOR -->
+        <details class="bg-surface-container rounded-2xl border border-outline-variant overflow-hidden">
+          <summary class="cursor-pointer select-none p-5 bg-surface-container-high hover:bg-surface-container-highest flex items-center justify-between gap-3">
             <div>
-              <div class="flex items-center justify-between mb-2">
-                <h4 class="text-sm font-bold text-primary flex items-center gap-2"><span class="material-symbols-outlined text-base">stethoscope</span>Médicos</h4>
-                <span id="cfg-prof-medicos-count" class="text-[10px] font-label-sm text-outline">0</span>
-              </div>
-              <div id="cfg-prof-medicos" class="cf-list"></div>
+              <h3 class="text-lg font-bold text-secondary">Profissionais do Contador</h3>
+              <p class="text-xs text-on-surface-variant mt-1">Lista simples usada apenas para gerar os cartões de contagem.</p>
             </div>
-            <div>
-              <div class="flex items-center justify-between mb-2">
-                <h4 class="text-sm font-bold text-tertiary flex items-center gap-2"><span class="material-symbols-outlined text-base">psychology</span>Psicólogos</h4>
-                <span id="cfg-prof-psicologos-count" class="text-[10px] font-label-sm text-outline">0</span>
-              </div>
-              <div id="cfg-prof-psicologos" class="cf-list"></div>
+            <span class="material-symbols-outlined text-outline">expand_more</span>
+          </summary>
+
+          <div class="p-6">
+            <div id="form-profissional" class="grid grid-cols-1 md:grid-cols-8 gap-3 mb-5">
+              <input id="cfg-prof-nome" class="sa-input md:col-span-4" placeholder="Nome do profissional" autocomplete="off">
+              <input id="cfg-prof-especialidade-contador" class="sa-input md:col-span-2" placeholder="Especialidade">
+              <select id="cfg-prof-tipo" class="sa-input md:col-span-1">
+                <option value="consulta">Consulta</option>
+                <option value="sadt">SADT</option>
+              </select>
+              <button onclick="salvarProfissional()" class="h-11 rounded-xl bg-secondary text-on-secondary font-bold md:col-span-1 flex items-center justify-center" title="Salvar">
+                <span class="material-symbols-outlined">save</span>
+              </button>
+
+              <button id="cfg-prof-cancel-btn" onclick="cancelarEdicaoProfissional()" class="hidden h-11 rounded-xl bg-surface-container-highest border border-outline-variant text-on-surface font-bold md:col-span-2 items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-sm">close</span>Cancelar edição
+              </button>
             </div>
+
+            <details class="border border-outline-variant rounded-xl overflow-hidden">
+              <summary class="cursor-pointer p-4 bg-surface-container-high flex items-center justify-between">
+                <span class="font-bold text-sm text-primary">Mostrar lista de profissionais</span>
+                <span id="cfg-prof-total-count" class="text-[10px] font-label-sm text-outline">0 item(ns)</span>
+              </summary>
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 p-4">
+                <div>
+                  <div class="flex items-center justify-between mb-2">
+                    <h4 class="text-sm font-bold text-primary">Consulta</h4>
+                    <span id="cfg-prof-medicos-count" class="text-[10px] font-label-sm text-outline">0</span>
+                  </div>
+                  <div id="cfg-prof-medicos" class="cf-list"></div>
+                </div>
+                <div>
+                  <div class="flex items-center justify-between mb-2">
+                    <h4 class="text-sm font-bold text-tertiary">SADT</h4>
+                    <span id="cfg-prof-psicologos-count" class="text-[10px] font-label-sm text-outline">0</span>
+                  </div>
+                  <div id="cfg-prof-psicologos" class="cf-list"></div>
+                </div>
+              </div>
+            </details>
           </div>
-        </section>
+        </details>
+
+        <!-- PROFISSIONAIS DO GUIDECHECK -->
+        <details class="bg-surface-container rounded-2xl border border-outline-variant overflow-hidden">
+          <summary class="cursor-pointer select-none p-5 bg-surface-container-high hover:bg-surface-container-highest flex items-center justify-between gap-3">
+            <div>
+              <h3 class="text-lg font-bold text-primary">Profissionais do GuideCheck</h3>
+              <p class="text-xs text-on-surface-variant mt-1">Base usada para confirmar identidade, CRM e dados profissionais das guias.</p>
+            </div>
+            <span class="material-symbols-outlined text-outline">expand_more</span>
+          </summary>
+
+          <div class="p-6">
+            <div id="form-guidecheck-profissional" class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-5">
+              <input id="cfg-gcp-nome" class="sa-input md:col-span-4" placeholder="Nome completo" autocomplete="off">
+              <input id="cfg-gcp-especialidade" class="sa-input md:col-span-2" placeholder="Especialidade">
+              <input id="cfg-gcp-crm" class="sa-input md:col-span-2" inputmode="numeric" placeholder="CRM (ex.: 12345)">
+              <input id="cfg-gcp-crm52" class="sa-input md:col-span-2" inputmode="numeric" placeholder="CRM/52 (ex.: 5212345)">
+              <input id="cfg-gcp-uf" class="sa-input md:col-span-1" maxlength="2" placeholder="UF">
+              <input id="cfg-gcp-cbo" class="sa-input md:col-span-1" inputmode="numeric" placeholder="CBO">
+              <input id="cfg-gcp-aliases" class="sa-input md:col-span-9" placeholder="Variações conhecidas do nome, separadas por ;">
+              <button onclick="salvarGuideCheckProfissional()" class="h-11 rounded-xl bg-primary-container text-on-primary-container font-bold md:col-span-2 flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-sm">save</span>Salvar
+              </button>
+              <button id="cfg-gcp-cancel-btn" onclick="cancelarEdicaoGuideCheckProfissional()" class="hidden h-11 rounded-xl bg-surface-container-highest border border-outline-variant text-on-surface font-bold md:col-span-1 items-center justify-center">
+                <span class="material-symbols-outlined text-sm">close</span>
+              </button>
+            </div>
+
+            <details class="border border-outline-variant rounded-xl overflow-hidden">
+              <summary class="cursor-pointer p-4 bg-surface-container-high flex items-center justify-between">
+                <span class="font-bold text-sm text-primary">Mostrar profissionais do GuideCheck</span>
+                <span id="cfg-gcp-count" class="text-[10px] font-label-sm text-outline">0 item(ns)</span>
+              </summary>
+              <div id="cfg-gcp-lista" class="cf-list m-4"></div>
+            </details>
+          </div>
+        </details>
 
         <!-- CONVÊNIOS -->
-        <section class="bg-surface-container p-6 rounded-2xl border border-outline-variant">
-          <div class="mb-5">
-            <h3 class="text-lg font-bold text-primary">Convênios</h3>
-            <p class="text-xs text-on-surface-variant">Valores e modalidades usados pelo Gerenciador de Guias e Lotes.</p>
-          </div>
-          <div id="form-convenio" class="grid grid-cols-1 md:grid-cols-6 gap-3 mb-5">
-            <input id="cfg-conv-nome" class="sa-input md:col-span-2" placeholder="Nome do convênio" autocomplete="off">
-            <input id="cfg-conv-valor" class="sa-input" inputmode="decimal" placeholder="Valor (ex.: 85,50)">
-            <select id="cfg-conv-tipo" class="sa-input"><option value="consulta">Consulta</option><option value="sadt">SADT</option></select>
-            <button onclick="salvarConvenio()" class="h-11 rounded-xl bg-primary-container text-on-primary-container font-bold flex items-center justify-center gap-2">
-              <span class="material-symbols-outlined text-sm">save</span>Salvar
-            </button>
-            <button id="cfg-conv-cancel-btn" onclick="cancelarEdicaoConvenio()" class="hidden h-11 rounded-xl bg-surface-container-highest border border-outline-variant text-on-surface font-bold items-center justify-center gap-2">
-              <span class="material-symbols-outlined text-sm">close</span>Cancelar
-            </button>
-          </div>
-
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <details class="bg-surface-container rounded-2xl border border-outline-variant overflow-hidden">
+          <summary class="cursor-pointer select-none p-5 bg-surface-container-high hover:bg-surface-container-highest flex items-center justify-between gap-3">
             <div>
-              <div class="flex items-center justify-between mb-2"><h4 class="text-sm font-bold text-primary">Consulta</h4><span id="cfg-conv-consulta-count" class="text-[10px] font-label-sm text-outline">0</span></div>
-              <div id="cfg-conv-consulta" class="cf-list"></div>
+              <h3 class="text-lg font-bold text-primary">Convênios</h3>
+              <p class="text-xs text-on-surface-variant mt-1">Cadastros e valores utilizados pelo CliniFat.</p>
             </div>
-            <div>
-              <div class="flex items-center justify-between mb-2"><h4 class="text-sm font-bold text-tertiary">SADT</h4><span id="cfg-conv-sadt-count" class="text-[10px] font-label-sm text-outline">0</span></div>
-              <div id="cfg-conv-sadt" class="cf-list"></div>
-            </div>
-          </div>
-        </section>
+            <span class="material-symbols-outlined text-outline">expand_more</span>
+          </summary>
 
-        <!-- GUIDECHECK -->
-        <section class="bg-surface-container p-6 rounded-2xl border border-outline-variant">
-          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-5">
-            <div>
-              <h3 class="text-lg font-bold text-secondary">GuideCheck — Base de Referência</h3>
-              <p class="text-xs text-on-surface-variant mt-1">Valores abaixo são usados para validar as guias e podem ser alterados pelo Master sem publicar novo HTML.</p>
+          <div class="p-6">
+            <div id="form-convenio" class="grid grid-cols-1 md:grid-cols-6 gap-3 mb-5">
+              <input id="cfg-conv-nome" class="sa-input md:col-span-2" placeholder="Nome do convênio" autocomplete="off">
+              <input id="cfg-conv-valor" class="sa-input" inputmode="decimal" placeholder="Valor (ex.: 85,50)">
+              <select id="cfg-conv-tipo" class="sa-input">
+                <option value="consulta">Consulta</option>
+                <option value="sadt">SADT</option>
+              </select>
+              <button onclick="salvarConvenio()" class="h-11 rounded-xl bg-primary-container text-on-primary-container font-bold flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-sm">save</span>Salvar
+              </button>
+              <button id="cfg-conv-cancel-btn" onclick="cancelarEdicaoConvenio()" class="hidden h-11 rounded-xl bg-surface-container-highest border border-outline-variant text-on-surface font-bold items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-sm">close</span>Cancelar
+              </button>
             </div>
-            <span class="px-3 py-1.5 rounded-lg border border-outline-variant bg-surface-container-high text-xs font-label-sm text-primary">SulAmérica • Consulta</span>
-          </div>
 
-          <div id="cfg-guidecheck-fields" class="cf-list"></div>
-        </section>
+            <details class="border border-outline-variant rounded-xl overflow-hidden">
+              <summary class="cursor-pointer p-4 bg-surface-container-high flex items-center justify-between">
+                <span class="font-bold text-sm text-primary">Mostrar lista de convênios</span>
+                <span id="cfg-conv-total-count" class="text-[10px] font-label-sm text-outline">0 item(ns)</span>
+              </summary>
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 p-4">
+                <div>
+                  <div class="flex items-center justify-between mb-2">
+                    <h4 class="text-sm font-bold text-primary">Consulta</h4>
+                    <span id="cfg-conv-consulta-count" class="text-[10px] font-label-sm text-outline">0</span>
+                  </div>
+                  <div id="cfg-conv-consulta" class="cf-list"></div>
+                </div>
+                <div>
+                  <div class="flex items-center justify-between mb-2">
+                    <h4 class="text-sm font-bold text-tertiary">SADT</h4>
+                    <span id="cfg-conv-sadt-count" class="text-[10px] font-label-sm text-outline">0</span>
+                  </div>
+                  <div id="cfg-conv-sadt" class="cf-list"></div>
+                </div>
+              </div>
+            </details>
+          </div>
+        </details>
+
+        <!-- REGRAS DO GUIDECHECK -->
+        <details class="bg-surface-container rounded-2xl border border-outline-variant overflow-hidden">
+          <summary class="cursor-pointer select-none p-5 bg-surface-container-high hover:bg-surface-container-highest flex items-center justify-between gap-3">
+            <div>
+              <h3 class="text-lg font-bold text-secondary">GuideCheck — Regras</h3>
+              <p class="text-xs text-on-surface-variant mt-1">Campos fixos e referências utilizadas na conferência.</p>
+            </div>
+            <span class="material-symbols-outlined text-outline">expand_more</span>
+          </summary>
+
+          <div class="p-6">
+            <div class="mb-4">
+              <span class="px-3 py-1.5 rounded-lg border border-outline-variant bg-surface-container-high text-xs font-label-sm text-primary">SulAmérica • Consulta</span>
+            </div>
+            <div id="cfg-guidecheck-fields" class="cf-list"></div>
+          </div>
+        </details>
+
       </div>
     </div>
 
@@ -1130,6 +1203,7 @@
 
     let editandoProfissionalId = null;
     let editandoConvenioId = null;
+    let editandoGuideCheckProfissionalId = null;
     let guideCheckProfileSulamericaConsultaId = null;
 
     async function abrirConfiguracoes() {
@@ -1140,9 +1214,7 @@
         console.error('Erro nas configurações:', err);
         alert('Não foi possível carregar as Configurações: ' + (err.message || err));
         navegar('tela-inicio');
-        return;
       }
-      setTimeout(() => document.getElementById('cfg-prof-nome')?.focus(), 50);
     }
 
     function escapeHtmlCF(v) {
@@ -1151,37 +1223,50 @@
     function escapeJsCF(v) {
       return String(v ?? '').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
     }
-
     function aliasesParaTexto(aliases) {
       return Array.isArray(aliases) ? aliases.filter(Boolean).join('; ') : '';
     }
-
     function textoParaAliases(texto) {
-      return String(texto || '')
-        .split(';')
-        .map(v => v.trim())
-        .filter(Boolean);
+      return String(texto || '').split(';').map(v => v.trim()).filter(Boolean);
     }
 
     function linhaProfissional(p) {
+      const esp = p.especialidade ? escapeHtmlCF(p.especialidade) : (p.tipo === 'consulta' ? 'Consulta' : 'SADT');
+      return `
+        <div class="cf-list-row ${p.ativo ? '' : 'is-inactive'}">
+          <span class="material-symbols-outlined text-base ${p.tipo === 'consulta' ? 'text-primary' : 'text-tertiary'}">person</span>
+          <div class="min-w-0 flex-1">
+            <div class="font-bold text-sm truncate">${escapeHtmlCF(p.nome)}</div>
+            <div class="text-[10px] text-on-surface-variant font-label-sm">${esp} • ${p.ativo ? 'ATIVO' : 'INATIVO'}</div>
+          </div>
+          ${isClinifatMaster ? `
+            <button onclick="iniciarEdicaoProfissional(${p.id},'${escapeJsCF(p.nome)}','${p.tipo}','${escapeJsCF(p.especialidade||'')}')" class="p-2 rounded-lg text-primary hover:bg-primary/10" title="Editar"><span class="material-symbols-outlined text-sm">edit</span></button>
+            <button onclick="alternarProfissional(${p.id},${!p.ativo})" class="p-2 rounded-lg hover:bg-outline-variant" title="${p.ativo?'Desativar':'Ativar'}"><span class="material-symbols-outlined text-sm">${p.ativo?'visibility_off':'visibility'}</span></button>
+            <button onclick="excluirProfissional(${p.id},'${escapeJsCF(p.nome)}')" class="p-2 rounded-lg text-error hover:bg-error-container/30" title="Excluir"><span class="material-symbols-outlined text-sm">delete</span></button>
+          ` : ''}
+        </div>`;
+    }
+
+    function linhaGuideCheckProfissional(p) {
       const detalhes = [
+        p.especialidade ? escapeHtmlCF(p.especialidade) : null,
         p.crm ? `CRM ${escapeHtmlCF(p.crm)}` : null,
+        p.crm_52 ? `CRM/52 ${escapeHtmlCF(p.crm_52)}` : null,
         p.uf ? escapeHtmlCF(p.uf) : null,
-        p.cbo ? `CBO ${escapeHtmlCF(p.cbo)}` : null,
-        p.especialidade ? escapeHtmlCF(p.especialidade) : null
+        p.cbo ? `CBO ${escapeHtmlCF(p.cbo)}` : null
       ].filter(Boolean).join(' • ');
 
       return `
         <div class="cf-list-row ${p.ativo ? '' : 'is-inactive'}">
-          <span class="material-symbols-outlined text-base ${p.tipo === 'consulta' ? 'text-primary' : 'text-tertiary'}">${p.tipo === 'consulta' ? 'stethoscope' : 'psychology'}</span>
+          <span class="material-symbols-outlined text-base text-primary">badge</span>
           <div class="min-w-0 flex-1">
             <div class="font-bold text-sm truncate">${escapeHtmlCF(p.nome)}</div>
-            <div class="text-[10px] text-on-surface-variant font-label-sm">${detalhes || 'Sem dados profissionais adicionais'} • ${p.ativo ? 'ATIVO' : 'INATIVO'}</div>
+            <div class="text-[10px] text-on-surface-variant font-label-sm">${detalhes || 'Sem dados complementares'} • ${p.ativo ? 'ATIVO' : 'INATIVO'}</div>
           </div>
           ${isClinifatMaster ? `
-            <button onclick="iniciarEdicaoProfissional(${p.id},'${escapeJsCF(p.nome)}','${p.tipo}','${escapeJsCF(p.crm||'')}','${escapeJsCF(p.uf||'')}','${escapeJsCF(p.cbo||'')}','${escapeJsCF(p.especialidade||'')}','${escapeJsCF(aliasesParaTexto(p.aliases))}')" class="p-2 rounded-lg text-primary hover:bg-primary/10" title="Editar"><span class="material-symbols-outlined text-sm">edit</span></button>
-            <button onclick="alternarProfissional(${p.id},${!p.ativo})" class="p-2 rounded-lg hover:bg-outline-variant" title="${p.ativo?'Desativar':'Ativar'}"><span class="material-symbols-outlined text-sm">${p.ativo?'visibility_off':'visibility'}</span></button>
-            <button onclick="excluirProfissional(${p.id},'${escapeJsCF(p.nome)}')" class="p-2 rounded-lg text-error hover:bg-error-container/30" title="Excluir"><span class="material-symbols-outlined text-sm">delete</span></button>
+            <button onclick="iniciarEdicaoGuideCheckProfissional(${p.id},'${escapeJsCF(p.nome)}','${escapeJsCF(p.especialidade||'')}','${escapeJsCF(p.crm||'')}','${escapeJsCF(p.crm_52||'')}','${escapeJsCF(p.uf||'')}','${escapeJsCF(p.cbo||'')}','${escapeJsCF(aliasesParaTexto(p.aliases))}')" class="p-2 rounded-lg text-primary hover:bg-primary/10" title="Editar"><span class="material-symbols-outlined text-sm">edit</span></button>
+            <button onclick="alternarGuideCheckProfissional(${p.id},${!p.ativo})" class="p-2 rounded-lg hover:bg-outline-variant" title="${p.ativo?'Desativar':'Ativar'}"><span class="material-symbols-outlined text-sm">${p.ativo?'visibility_off':'visibility'}</span></button>
+            <button onclick="excluirGuideCheckProfissional(${p.id},'${escapeJsCF(p.nome)}')" class="p-2 rounded-lg text-error hover:bg-error-container/30" title="Excluir"><span class="material-symbols-outlined text-sm">delete</span></button>
           ` : ''}
         </div>`;
     }
@@ -1203,31 +1288,39 @@
     }
 
     async function renderizarConfiguracoes() {
-      const [profRes, convRes, profileRes] = await Promise.all([
+      const [profRes, gcpRes, convRes, profileRes] = await Promise.all([
         _supabase.from('clinifat_profissionais').select('*').order('tipo').order('ordem').order('nome'),
+        _supabase.from('guidecheck_profissionais').select('*').order('ordem').order('nome'),
         _supabase.from('clinifat_convenios').select('*').order('tipo').order('ordem').order('nome'),
         _supabase.from('guidecheck_profiles').select('id,profile_key,nome').eq('profile_key','sulamerica_consulta').maybeSingle()
       ]);
 
       if (profRes.error) throw profRes.error;
+      if (gcpRes.error) throw gcpRes.error;
       if (convRes.error) throw convRes.error;
       if (profileRes.error) throw profileRes.error;
 
       guideCheckProfileSulamericaConsultaId = profileRes.data?.id || null;
 
-      const medicos = (profRes.data || []).filter(p => p.tipo === 'consulta');
-      const psicologos = (profRes.data || []).filter(p => p.tipo === 'sadt');
-      document.getElementById('cfg-prof-medicos').innerHTML = medicos.map(linhaProfissional).join('') || '<div class="cf-list-empty">Nenhum médico cadastrado.</div>';
-      document.getElementById('cfg-prof-psicologos').innerHTML = psicologos.map(linhaProfissional).join('') || '<div class="cf-list-empty">Nenhum psicólogo cadastrado.</div>';
-      document.getElementById('cfg-prof-medicos-count').textContent = `${medicos.length} item(ns)`;
-      document.getElementById('cfg-prof-psicologos-count').textContent = `${psicologos.length} item(ns)`;
+      const consulta = (profRes.data || []).filter(p => p.tipo === 'consulta');
+      const sadt = (profRes.data || []).filter(p => p.tipo === 'sadt');
+      document.getElementById('cfg-prof-medicos').innerHTML = consulta.map(linhaProfissional).join('') || '<div class="cf-list-empty">Nenhum profissional de Consulta.</div>';
+      document.getElementById('cfg-prof-psicologos').innerHTML = sadt.map(linhaProfissional).join('') || '<div class="cf-list-empty">Nenhum profissional SADT.</div>';
+      document.getElementById('cfg-prof-medicos-count').textContent = `${consulta.length} item(ns)`;
+      document.getElementById('cfg-prof-psicologos-count').textContent = `${sadt.length} item(ns)`;
+      document.getElementById('cfg-prof-total-count').textContent = `${(profRes.data || []).length} item(ns)`;
 
-      const consulta = (convRes.data || []).filter(c => c.tipo === 'consulta');
-      const sadt = (convRes.data || []).filter(c => c.tipo === 'sadt');
-      document.getElementById('cfg-conv-consulta').innerHTML = consulta.map(linhaConvenio).join('') || '<div class="cf-list-empty">Nenhum convênio de Consulta cadastrado.</div>';
-      document.getElementById('cfg-conv-sadt').innerHTML = sadt.map(linhaConvenio).join('') || '<div class="cf-list-empty">Nenhum convênio SADT cadastrado.</div>';
-      document.getElementById('cfg-conv-consulta-count').textContent = `${consulta.length} item(ns)`;
-      document.getElementById('cfg-conv-sadt-count').textContent = `${sadt.length} item(ns)`;
+      const gcps = gcpRes.data || [];
+      document.getElementById('cfg-gcp-lista').innerHTML = gcps.map(linhaGuideCheckProfissional).join('') || '<div class="cf-list-empty">Nenhum profissional cadastrado no GuideCheck.</div>';
+      document.getElementById('cfg-gcp-count').textContent = `${gcps.length} item(ns)`;
+
+      const convConsulta = (convRes.data || []).filter(c => c.tipo === 'consulta');
+      const convSadt = (convRes.data || []).filter(c => c.tipo === 'sadt');
+      document.getElementById('cfg-conv-consulta').innerHTML = convConsulta.map(linhaConvenio).join('') || '<div class="cf-list-empty">Nenhum convênio de Consulta.</div>';
+      document.getElementById('cfg-conv-sadt').innerHTML = convSadt.map(linhaConvenio).join('') || '<div class="cf-list-empty">Nenhum convênio SADT.</div>';
+      document.getElementById('cfg-conv-consulta-count').textContent = `${convConsulta.length} item(ns)`;
+      document.getElementById('cfg-conv-sadt-count').textContent = `${convSadt.length} item(ns)`;
+      document.getElementById('cfg-conv-total-count').textContent = `${(convRes.data || []).length} item(ns)`;
 
       await renderizarCamposGuideCheck();
     }
@@ -1237,7 +1330,7 @@
       if (!box) return;
 
       if (!guideCheckProfileSulamericaConsultaId) {
-        box.innerHTML = '<div class="cf-list-empty text-tertiary">Perfil SulAmérica • Consulta não encontrado. Execute a migração SQL desta versão.</div>';
+        box.innerHTML = '<div class="cf-list-empty text-tertiary">Perfil SulAmérica • Consulta não encontrado.</div>';
         return;
       }
 
@@ -1261,12 +1354,11 @@
             <div class="min-w-0 flex-1">
               <div class="font-bold text-sm">${escapeHtmlCF(f.nome_campo)}</div>
               <div class="text-[10px] uppercase font-label-sm ${f.tipo_regra === 'fixo' ? 'text-secondary' : 'text-tertiary'}">${escapeHtmlCF(f.tipo_regra)}</div>
-              ${f.observacao ? `<div class="text-[10px] text-on-surface-variant mt-1">${escapeHtmlCF(f.observacao)}</div>` : ''}
             </div>
             ${editavel ? `
               <input id="gc-field-${f.id}" value="${escapeHtmlCF(f.valor_esperado || '')}" class="sa-input max-w-xs" ${isClinifatMaster ? '' : 'disabled'}>
               ${isClinifatMaster ? `<button onclick="salvarCampoGuideCheck(${f.id})" class="p-2 rounded-lg text-secondary hover:bg-secondary/10" title="Salvar regra"><span class="material-symbols-outlined text-sm">save</span></button>` : ''}
-            ` : `<div class="text-xs text-on-surface-variant max-w-xs">Validação vinculada ao cadastro de profissionais</div>`}
+            ` : `<div class="text-xs text-on-surface-variant max-w-xs">Validado pela base de profissionais do GuideCheck</div>`}
           </div>`;
       }).join('') || '<div class="cf-list-empty">Nenhuma regra cadastrada.</div>';
     }
@@ -1274,39 +1366,25 @@
     async function salvarCampoGuideCheck(id) {
       if (!isClinifatMaster) return;
       const input = document.getElementById(`gc-field-${id}`);
-      if (!input) return;
-
-      const { error } = await _supabase
-        .from('guidecheck_fields')
-        .update({ valor_esperado: input.value.trim() })
-        .eq('id', id);
-
+      const { error } = await _supabase.from('guidecheck_fields').update({ valor_esperado: input.value.trim() }).eq('id', id);
       if (error) return alert('Erro ao salvar regra: ' + error.message);
-
-      input.classList.add('border-secondary');
-      setTimeout(() => input.classList.remove('border-secondary'), 700);
     }
 
-    function iniciarEdicaoProfissional(id, nome, tipo, crm, uf, cbo, especialidade, aliases) {
+    // CONTADOR
+    function iniciarEdicaoProfissional(id, nome, tipo, especialidade) {
       editandoProfissionalId = Number(id);
       document.getElementById('cfg-prof-nome').value = nome;
       document.getElementById('cfg-prof-tipo').value = tipo;
-      document.getElementById('cfg-prof-crm').value = crm;
-      document.getElementById('cfg-prof-uf').value = uf;
-      document.getElementById('cfg-prof-cbo').value = cbo;
-      document.getElementById('cfg-prof-especialidade').value = especialidade;
-      document.getElementById('cfg-prof-aliases').value = aliases;
+      document.getElementById('cfg-prof-especialidade-contador').value = especialidade || '';
       const cancel = document.getElementById('cfg-prof-cancel-btn');
       cancel.classList.remove('hidden'); cancel.classList.add('flex');
       document.getElementById('cfg-prof-nome').focus();
-      document.getElementById('cfg-prof-nome').select();
     }
 
     function cancelarEdicaoProfissional() {
       editandoProfissionalId = null;
-      ['cfg-prof-nome','cfg-prof-crm','cfg-prof-uf','cfg-prof-cbo','cfg-prof-especialidade','cfg-prof-aliases'].forEach(id => {
-        const el = document.getElementById(id); if (el) el.value = '';
-      });
+      document.getElementById('cfg-prof-nome').value = '';
+      document.getElementById('cfg-prof-especialidade-contador').value = '';
       const cancel = document.getElementById('cfg-prof-cancel-btn');
       cancel.classList.add('hidden'); cancel.classList.remove('flex');
       document.getElementById('cfg-prof-nome')?.focus();
@@ -1314,39 +1392,103 @@
 
     async function salvarProfissional() {
       if (!isClinifatMaster) return alert('Acesso restrito ao Master.');
+      const nome = document.getElementById('cfg-prof-nome').value.trim();
+      const tipo = document.getElementById('cfg-prof-tipo').value;
+      const especialidade = document.getElementById('cfg-prof-especialidade-contador').value.trim() || null;
 
-      const input = document.getElementById('cfg-prof-nome');
-      const payload = {
-        nome: input.value.trim(),
-        tipo: document.getElementById('cfg-prof-tipo').value,
-        crm: document.getElementById('cfg-prof-crm').value.trim() || null,
-        uf: document.getElementById('cfg-prof-uf').value.trim().toUpperCase() || null,
-        cbo: document.getElementById('cfg-prof-cbo').value.trim() || null,
-        especialidade: document.getElementById('cfg-prof-especialidade').value.trim() || null,
-        aliases: textoParaAliases(document.getElementById('cfg-prof-aliases').value)
-      };
+      if (!nome) return alert('Informe o nome do profissional.');
 
-      if (!payload.nome) {
-        input.focus();
-        return alert('Informe o nome do profissional.');
-      }
-
+      const payload = { nome, tipo, especialidade };
       const query = editandoProfissionalId
         ? _supabase.from('clinifat_profissionais').update(payload).eq('id', editandoProfissionalId)
         : _supabase.from('clinifat_profissionais').insert(payload);
 
       const { error } = await query;
-      if (error) {
-        input.focus();
-        return alert('Erro ao salvar profissional: ' + error.message);
-      }
+      if (error) return alert('Erro ao salvar profissional: ' + error.message);
 
       cancelarEdicaoProfissional();
       await carregarDadosSupabase();
       await renderizarConfiguracoes();
-      input.focus();
     }
 
+    async function alternarProfissional(id, ativo) {
+      const { error } = await _supabase.from('clinifat_profissionais').update({ ativo }).eq('id', id);
+      if (error) return alert(error.message);
+      await carregarDadosSupabase(); await renderizarConfiguracoes();
+    }
+
+    async function excluirProfissional(id, nome) {
+      if (!confirm(`Excluir "${nome}" da lista do Contador?`)) return;
+      const { error } = await _supabase.from('clinifat_profissionais').delete().eq('id', id);
+      if (error) return alert(error.message);
+      await carregarDadosSupabase(); await renderizarConfiguracoes();
+    }
+
+    // GUIDECHECK PROFESSIONALS
+    function iniciarEdicaoGuideCheckProfissional(id,nome,especialidade,crm,crm52,uf,cbo,aliases) {
+      editandoGuideCheckProfissionalId = Number(id);
+      document.getElementById('cfg-gcp-nome').value = nome;
+      document.getElementById('cfg-gcp-especialidade').value = especialidade;
+      document.getElementById('cfg-gcp-crm').value = crm;
+      document.getElementById('cfg-gcp-crm52').value = crm52;
+      document.getElementById('cfg-gcp-uf').value = uf;
+      document.getElementById('cfg-gcp-cbo').value = cbo;
+      document.getElementById('cfg-gcp-aliases').value = aliases;
+      const cancel = document.getElementById('cfg-gcp-cancel-btn');
+      cancel.classList.remove('hidden'); cancel.classList.add('flex');
+      document.getElementById('cfg-gcp-nome').focus();
+    }
+
+    function cancelarEdicaoGuideCheckProfissional() {
+      editandoGuideCheckProfissionalId = null;
+      ['cfg-gcp-nome','cfg-gcp-especialidade','cfg-gcp-crm','cfg-gcp-crm52','cfg-gcp-uf','cfg-gcp-cbo','cfg-gcp-aliases'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.value = '';
+      });
+      const cancel = document.getElementById('cfg-gcp-cancel-btn');
+      cancel.classList.add('hidden'); cancel.classList.remove('flex');
+      document.getElementById('cfg-gcp-nome')?.focus();
+    }
+
+    async function salvarGuideCheckProfissional() {
+      if (!isClinifatMaster) return alert('Acesso restrito ao Master.');
+
+      const payload = {
+        nome: document.getElementById('cfg-gcp-nome').value.trim(),
+        especialidade: document.getElementById('cfg-gcp-especialidade').value.trim() || null,
+        crm: document.getElementById('cfg-gcp-crm').value.replace(/\D/g,'') || null,
+        crm_52: document.getElementById('cfg-gcp-crm52').value.replace(/\D/g,'') || null,
+        uf: document.getElementById('cfg-gcp-uf').value.trim().toUpperCase() || null,
+        cbo: document.getElementById('cfg-gcp-cbo').value.replace(/\D/g,'') || null,
+        aliases: textoParaAliases(document.getElementById('cfg-gcp-aliases').value)
+      };
+
+      if (!payload.nome) return alert('Informe o nome do profissional.');
+
+      const query = editandoGuideCheckProfissionalId
+        ? _supabase.from('guidecheck_profissionais').update(payload).eq('id', editandoGuideCheckProfissionalId)
+        : _supabase.from('guidecheck_profissionais').insert(payload);
+
+      const { error } = await query;
+      if (error) return alert('Erro ao salvar profissional do GuideCheck: ' + error.message);
+
+      cancelarEdicaoGuideCheckProfissional();
+      await renderizarConfiguracoes();
+    }
+
+    async function alternarGuideCheckProfissional(id, ativo) {
+      const { error } = await _supabase.from('guidecheck_profissionais').update({ ativo }).eq('id', id);
+      if (error) return alert(error.message);
+      await renderizarConfiguracoes();
+    }
+
+    async function excluirGuideCheckProfissional(id, nome) {
+      if (!confirm(`Excluir "${nome}" da base do GuideCheck?`)) return;
+      const { error } = await _supabase.from('guidecheck_profissionais').delete().eq('id', id);
+      if (error) return alert(error.message);
+      await renderizarConfiguracoes();
+    }
+
+    // CONVÊNIOS
     function iniciarEdicaoConvenio(id, nome, valor, tipo) {
       editandoConvenioId = Number(id);
       document.getElementById('cfg-conv-nome').value = nome;
@@ -1354,8 +1496,6 @@
       document.getElementById('cfg-conv-tipo').value = tipo;
       const cancel = document.getElementById('cfg-conv-cancel-btn');
       cancel.classList.remove('hidden'); cancel.classList.add('flex');
-      document.getElementById('cfg-conv-nome').focus();
-      document.getElementById('cfg-conv-nome').select();
     }
 
     function cancelarEdicaoConvenio() {
@@ -1364,20 +1504,16 @@
       document.getElementById('cfg-conv-valor').value = '';
       const cancel = document.getElementById('cfg-conv-cancel-btn');
       cancel.classList.add('hidden'); cancel.classList.remove('flex');
-      document.getElementById('cfg-conv-nome')?.focus();
     }
 
     async function salvarConvenio() {
       if (!isClinifatMaster) return alert('Acesso restrito ao Master.');
-      const inputNome = document.getElementById('cfg-conv-nome');
-      const inputValor = document.getElementById('cfg-conv-valor');
-      const nome = inputNome.value.trim();
+      const nome = document.getElementById('cfg-conv-nome').value.trim();
       const tipo = document.getElementById('cfg-conv-tipo').value;
-      const raw = inputValor.value.trim().replace(/\./g,'').replace(',','.');
-      const valor = Number(raw);
+      const valor = Number(document.getElementById('cfg-conv-valor').value.trim().replace(/\./g,'').replace(',','.'));
 
-      if (!nome) { inputNome.focus(); return alert('Informe o nome do convênio.'); }
-      if (!Number.isFinite(valor) || valor < 0) { inputValor.focus(); return alert('Informe um valor válido.'); }
+      if (!nome) return alert('Informe o nome do convênio.');
+      if (!Number.isFinite(valor) || valor < 0) return alert('Informe um valor válido.');
 
       const query = editandoConvenioId
         ? _supabase.from('clinifat_convenios').update({ nome, tipo, valor }).eq('id', editandoConvenioId)
@@ -1389,13 +1525,6 @@
       cancelarEdicaoConvenio();
       await carregarDadosSupabase();
       await renderizarConfiguracoes();
-      inputNome.focus();
-    }
-
-    async function alternarProfissional(id, ativo) {
-      const { error } = await _supabase.from('clinifat_profissionais').update({ ativo }).eq('id', id);
-      if (error) return alert(error.message);
-      await carregarDadosSupabase(); await renderizarConfiguracoes();
     }
 
     async function alternarConvenio(id, ativo) {
@@ -1404,19 +1533,10 @@
       await carregarDadosSupabase(); await renderizarConfiguracoes();
     }
 
-    async function excluirProfissional(id, nome) {
-      if (!confirm(`Excluir definitivamente o profissional "${nome}"?`)) return;
-      const { error } = await _supabase.from('clinifat_profissionais').delete().eq('id', id);
-      if (error) return alert(error.message);
-      if (editandoProfissionalId === Number(id)) cancelarEdicaoProfissional();
-      await carregarDadosSupabase(); await renderizarConfiguracoes();
-    }
-
     async function excluirConvenio(id, nome) {
       if (!confirm(`Excluir definitivamente o convênio "${nome}"?`)) return;
       const { error } = await _supabase.from('clinifat_convenios').delete().eq('id', id);
       if (error) return alert(error.message);
-      if (editandoConvenioId === Number(id)) cancelarEdicaoConvenio();
       await carregarDadosSupabase(); await renderizarConfiguracoes();
     }
 
@@ -2387,13 +2507,17 @@
       });
     });
 
-    // Cadastro rápido dos profissionais: ENTER salva de qualquer campo do formulário.
-    ['cfg-prof-nome','cfg-prof-crm','cfg-prof-uf','cfg-prof-cbo','cfg-prof-especialidade','cfg-prof-aliases'].forEach(id => {
-      document.getElementById(id)?.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter') {
-          event.preventDefault();
-          salvarProfissional();
-        }
+
+    // Cadastro rápido nas Configurações
+    ['cfg-prof-nome','cfg-prof-especialidade-contador'].forEach(id => {
+      document.getElementById(id)?.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); salvarProfissional(); }
+      });
+    });
+
+    ['cfg-gcp-nome','cfg-gcp-especialidade','cfg-gcp-crm','cfg-gcp-crm52','cfg-gcp-uf','cfg-gcp-cbo','cfg-gcp-aliases'].forEach(id => {
+      document.getElementById(id)?.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); salvarGuideCheckProfissional(); }
       });
     });
 
