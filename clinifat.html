@@ -233,7 +233,7 @@
       }
     }
 
-    /* Conferência de Guias — componentes reutilizáveis */
+    /* Componentes de formulário do CliniFat / GuideCheck */
     .sa-input { width:100%; height:44px; padding:0 12px; background:#1e2022; border:1px solid #414753; border-radius:0.75rem; color:#e2e2e5; font-size:.875rem; outline:none; }
     .sa-input:focus { border-color:#a9c7ff; box-shadow:0 0 0 1px #a9c7ff; }
     .sa-label { display:block; font-size:.75rem; font-weight:700; color:#c1c6d5; margin-bottom:6px; }
@@ -301,7 +301,7 @@
   <header class="flex justify-between items-center px-6 py-4 w-full bg-surface-container-low border-b border-outline-variant sticky top-0 z-50">
     <div class="flex items-center gap-4 cursor-pointer" onclick="navegar('tela-inicio')">
       <span class="text-xl font-bold text-primary font-headline-md">CliniFat</span>
-      <span class="text-xs px-2 py-1 bg-surface-container-highest rounded text-on-surface-variant font-label-sm hidden sm:inline-block">CliniTool • v10.8</span>
+      <span class="text-xs px-2 py-1 bg-surface-container-highest rounded text-on-surface-variant font-label-sm hidden sm:inline-block">CliniTool • v10.9</span>
     </div>
 
     <!-- Controles de Colunas (Tela Contador) -->
@@ -377,201 +377,170 @@
       </div>
     </div>
 
-    <!-- TELA SELEÇÃO DE CONVÊNIO PARA CONFERÊNCIA DE GUIA -->
-    <div id="tela-conferencia-guia" class="screen">
-      <div class="max-w-5xl mx-auto flex flex-col gap-6">
-        <div class="bg-surface-container-high p-6 rounded-2xl border border-outline-variant shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <!-- GUIDECHECK — FASE 1 -->
+    <div id="tela-guidecheck" class="screen">
+      <div class="max-w-7xl mx-auto flex flex-col gap-6">
+
+        <div class="bg-surface-container-high p-6 rounded-2xl border border-outline-variant flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
-            <h2 class="text-2xl font-bold text-primary font-headline-md flex items-center gap-2"><span class="material-symbols-outlined">rule</span>Conferir Guia de Consulta</h2>
-            <p class="text-sm text-on-surface-variant mt-1">Qual é o convênio?</p>
+            <div class="text-xs uppercase font-bold text-secondary font-label-sm mb-1">CliniFat • GuideCheck</div>
+            <h2 class="text-2xl font-bold text-primary font-headline-md">Conferência de Guias</h2>
+            <p class="text-sm text-on-surface-variant mt-1">Escolha convênio e modalidade antes de carregar o PDF. O perfil selecionado definirá as regras e o layout de leitura nas próximas etapas.</p>
           </div>
-          <button onclick="navegar('tela-inicio')" class="px-5 py-2.5 bg-surface-container-highest hover:bg-outline-variant rounded-xl text-on-surface font-label-sm transition-all flex items-center gap-2"><span class="material-symbols-outlined text-sm">arrow_back</span>Voltar</button>
-        </div>
-        <div id="grid-convenios-conferencia" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"></div>
-      </div>
-    </div>
-
-    <!-- TELA SULAMÉRICA SADT -->
-    <div id="tela-sulamerica-sadt" class="screen">
-      <div class="max-w-6xl mx-auto flex flex-col gap-6">
-        <div class="bg-surface-container-high p-6 rounded-2xl border border-outline-variant shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div class="flex items-center gap-2 text-xs font-label-sm text-secondary uppercase font-bold mb-1"><span class="material-symbols-outlined text-sm">verified</span>SulAmérica • SADT</div>
-            <h2 class="text-2xl font-bold text-primary font-headline-md">Conferência de Guia</h2>
-            <p class="text-sm text-on-surface-variant mt-1">Preencha os dados da guia e da VPP. O sistema compara o que for automatizável e destaca o que exige conferência visual.</p>
-          </div>
-          <div class="flex gap-2">
-            <button onclick="limparConferenciaSulamerica()" class="px-4 py-2.5 border border-error text-error hover:bg-error-container rounded-xl font-label-sm flex items-center gap-2"><span class="material-symbols-outlined text-sm">restart_alt</span>Limpar</button>
-            <button onclick="navegar('tela-conferencia-guia')" class="px-4 py-2.5 bg-surface-container-highest hover:bg-outline-variant rounded-xl text-on-surface font-label-sm flex items-center gap-2"><span class="material-symbols-outlined text-sm">arrow_back</span>Convênios</button>
-          </div>
-        </div>
-
-        <div id="sa-status-geral" class="p-4 rounded-xl border border-outline-variant bg-surface-container text-sm font-bold text-on-surface-variant">Preencha os campos para iniciar a conferência.</div>
-
-        <!-- VPP -->
-        <section class="bg-surface-container p-6 rounded-2xl border border-outline-variant flex flex-col gap-5">
-          <div><h3 class="text-lg font-bold text-secondary font-headline-md">1. Conferência da VPP</h3><p class="text-xs text-on-surface-variant mt-1">Os dados da guia devem estar idênticos aos dados correspondentes da Validação Prévia de Procedimentos.</p></div>
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div class="grid grid-cols-2 gap-2"><label class="col-span-2 text-xs font-bold text-on-surface-variant">10 Nome do Paciente ↔ VPP Nome</label><input id="sa-guia-nome" oninput="validarSulamerica()" placeholder="Guia" class="sa-input"><input id="sa-vpp-nome" oninput="validarSulamerica()" placeholder="VPP" class="sa-input"><div id="sa-r-nome" class="col-span-2 sa-result"></div></div>
-            <div class="grid grid-cols-2 gap-2"><label class="col-span-2 text-xs font-bold text-on-surface-variant">3 Nº Guia Principal ↔ VPP Nº Guia no Prestador</label><input id="sa-guia-numero" oninput="somenteNumeros(this);validarSulamerica()" inputmode="numeric" placeholder="Guia" class="sa-input"><input id="sa-vpp-numero" oninput="somenteNumeros(this);validarSulamerica()" inputmode="numeric" placeholder="VPP" class="sa-input"><div id="sa-r-numero" class="col-span-2 sa-result"></div></div>
-            <div class="grid grid-cols-2 gap-2"><label class="col-span-2 text-xs font-bold text-on-surface-variant">4 Data da Autorização ↔ VPP Data da Solicitação</label><input id="sa-guia-autorizacao" oninput="formatarDataCampo(this);validarSulamerica()" inputmode="numeric" maxlength="10" placeholder="DD/MM/AAAA" class="sa-input"><input id="sa-vpp-solicitacao" oninput="formatarDataCampo(this);validarSulamerica()" inputmode="numeric" maxlength="10" placeholder="DD/MM/AAAA" class="sa-input"><div id="sa-r-autorizacao" class="col-span-2 sa-result"></div></div>
-            <div class="grid grid-cols-2 gap-2"><label class="col-span-2 text-xs font-bold text-on-surface-variant">5 Senha ↔ VPP Senha</label><input id="sa-guia-senha" oninput="validarSulamerica()" placeholder="Guia" class="sa-input"><input id="sa-vpp-senha" oninput="validarSulamerica()" placeholder="VPP" class="sa-input"><div id="sa-r-senha" class="col-span-2 sa-result"></div></div>
-            <div class="grid grid-cols-2 gap-2"><label class="col-span-2 text-xs font-bold text-on-surface-variant">6 Validade da Senha ↔ VPP Data de validade</label><input id="sa-guia-validade" oninput="formatarDataCampo(this);validarSulamerica()" inputmode="numeric" maxlength="10" placeholder="DD/MM/AAAA" class="sa-input"><input id="sa-vpp-validade" oninput="formatarDataCampo(this);validarSulamerica()" inputmode="numeric" maxlength="10" placeholder="DD/MM/AAAA" class="sa-input"><div id="sa-r-validade" class="col-span-2 sa-result"></div></div>
-            <div class="grid grid-cols-2 gap-2"><label class="col-span-2 text-xs font-bold text-on-surface-variant">VPP Quantidades</label><input id="sa-vpp-qtd-solicitada" oninput="somenteNumeros(this);validarSulamerica()" inputmode="numeric" placeholder="Qtd. solicitada (01)" class="sa-input"><input id="sa-vpp-qtd-autorizada" oninput="somenteNumeros(this);validarSulamerica()" inputmode="numeric" placeholder="Qtd. autorizada (01)" class="sa-input"><div id="sa-r-quantidades" class="col-span-2 sa-result"></div></div>
-          </div>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-surface-container-high p-4 rounded-xl border border-outline-variant">
-            <div><label class="text-xs font-bold text-on-surface-variant">56 Data do Atendimento</label><input id="sa-data-atendimento" oninput="formatarDataCampo(this);validarSulamerica()" inputmode="numeric" maxlength="10" placeholder="DD/MM/AAAA" class="sa-input mt-1"></div>
-            <div class="md:col-span-2"><label class="text-xs font-bold text-on-surface-variant">Validação da senha</label><div id="sa-r-periodo-senha" class="mt-1 min-h-[44px] flex items-center px-4 rounded-xl border border-outline-variant bg-surface-container text-sm font-bold text-on-surface-variant">Aguardando datas...</div></div>
-          </div>
-        </section>
-
-        <!-- GUIA -->
-        <section class="bg-surface-container p-6 rounded-2xl border border-outline-variant flex flex-col gap-5">
-          <div><h3 class="text-lg font-bold text-primary font-headline-md">2. Campos da Guia</h3><p class="text-xs text-on-surface-variant mt-1">Campos de regra fixa são validados automaticamente. Dados do médico e referências podem ser preenchidos para comparação.</p></div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div><label class="sa-label">12 Atendimento RN — sempre Não</label><select id="sa-c12" onchange="validarSulamerica()" class="sa-input"><option value="">Selecione</option><option>Não</option><option>Sim</option></select><div id="sa-r-c12" class="sa-result"></div></div>
-            <div><label class="sa-label">13 Código na Operadora — CNPJ</label><input id="sa-ref-cnpj" oninput="somenteNumeros(this);validarSulamerica()" placeholder="CNPJ esperado (referência)" class="sa-input mb-2"><input id="sa-c13" oninput="somenteNumeros(this);validarSulamerica()" placeholder="Campo 13 da guia" class="sa-input"><div id="sa-r-c13" class="sa-result"></div></div>
-            <div><label class="sa-label">14 Nome do Contratado</label><input id="sa-ref-contratado" oninput="validarSulamerica()" placeholder="Nome fantasia esperado" class="sa-input mb-2"><input id="sa-c14" oninput="validarSulamerica()" placeholder="Campo 14 da guia" class="sa-input"><div id="sa-r-c14" class="sa-result"></div></div>
-            <div><label class="sa-label">15 Profissional Solicitante</label><input id="sa-c15" oninput="validarSulamerica()" placeholder="Nome do médico" class="sa-input"><div id="sa-r-c15" class="sa-result"></div></div>
-            <div><label class="sa-label">16 Conselho — sempre CRM</label><input id="sa-c16" oninput="validarSulamerica()" placeholder="CRM" class="sa-input"><div id="sa-r-c16" class="sa-result"></div></div>
-            <div><label class="sa-label">17 Número do Conselho — sem 52</label><input id="sa-c17" oninput="somenteNumeros(this);validarSulamerica()" inputmode="numeric" placeholder="CRM do médico" class="sa-input"><div id="sa-r-c17" class="sa-result"></div></div>
-            <div><label class="sa-label">18 UF do médico</label><input id="sa-ref-uf" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z]/g,'').slice(0,2);validarSulamerica()" maxlength="2" placeholder="UF esperada" class="sa-input mb-2"><input id="sa-c18" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z]/g,'').slice(0,2);validarSulamerica()" maxlength="2" placeholder="Campo 18" class="sa-input"><div id="sa-r-c18" class="sa-result"></div></div>
-            <div><label class="sa-label">19 CBO da especialidade</label><select id="sa-ref-especialidade" onchange="preencherCBOReferencia();validarSulamerica()" class="sa-input mb-2"><option value="">Especialidade</option><option value="225133">Psiquiatria — 225133</option><option value="225112">Neurologia — 225112</option><option value="outro">Outra / conferir manualmente</option></select><input id="sa-c19" oninput="somenteNumeros(this);validarSulamerica()" placeholder="CBO da guia" class="sa-input"><div id="sa-r-c19" class="sa-result"></div></div>
-            <div><label class="sa-label">21 Caráter — sempre Eletivo</label><input id="sa-c21" oninput="validarSulamerica()" placeholder="Eletivo" class="sa-input"><div id="sa-r-c21" class="sa-result"></div></div>
-            <div><label class="sa-label">22 Data da Solicitação — igual ao campo 4</label><input id="sa-c22" oninput="formatarDataCampo(this);validarSulamerica()" maxlength="10" inputmode="numeric" placeholder="DD/MM/AAAA" class="sa-input"><div id="sa-r-c22" class="sa-result"></div></div>
-            <div><label class="sa-label">23 Indicação Clínica — CID</label><input id="sa-ref-cid" oninput="validarSulamerica()" placeholder="CID do encaminhamento" class="sa-input mb-2"><input id="sa-c23" oninput="validarSulamerica()" placeholder="CID na guia" class="sa-input"><div id="sa-r-c23" class="sa-result"></div></div>
-            <div><label class="sa-label">32 Tipo de atendimento</label><input id="sa-c32" oninput="validarSulamerica()" placeholder="Outras terapias" class="sa-input"><div id="sa-r-c32" class="sa-result"></div></div>
-            <div><label class="sa-label">33 Indicação de acidente</label><input id="sa-c33" oninput="validarSulamerica()" placeholder="Não acidente" class="sa-input"><div id="sa-r-c33" class="sa-result"></div></div>
-            <div><label class="sa-label">34 Tipo de consulta</label><select id="sa-c34" onchange="validarSulamerica()" class="sa-input"><option value="">Selecione</option><option>Primeira vez</option><option>Retorno</option></select><p class="text-[10px] text-outline mt-1">Encaminhamento original = Primeira vez; caso contrário = Retorno.</p><div id="sa-r-c34" class="sa-result"></div></div>
-            <div><label class="sa-label">91 Regime — sempre Ambulatorial</label><input id="sa-c91" oninput="validarSulamerica()" placeholder="Ambulatorial" class="sa-input"><div id="sa-r-c91" class="sa-result"></div></div>
-            <div><label class="sa-label">42 Quantidade — sempre 1</label><input id="sa-c42" oninput="somenteNumeros(this);validarSulamerica()" inputmode="numeric" placeholder="1" class="sa-input"><div id="sa-r-c42" class="sa-result"></div></div>
-            <div><label class="sa-label">44 Técnica — Convencional</label><input id="sa-c44" oninput="validarSulamerica()" placeholder="Convencional" class="sa-input"><div id="sa-r-c44" class="sa-result"></div></div>
-            <div class="lg:col-span-2"><label class="sa-label">46 Valor Unitário / 47 Valor Total</label><div class="grid grid-cols-2 gap-2"><input id="sa-c46" placeholder="Valor unitário" class="sa-input"><input id="sa-c47" placeholder="Valor total" class="sa-input"></div><div class="sa-result text-tertiary">Conferir com a tabela vigente. Automação prevista para uma etapa futura.</div></div>
-          </div>
-        </section>
-
-        <!-- VISUAL -->
-        <section class="bg-surface-container p-6 rounded-2xl border border-outline-variant flex flex-col gap-5">
-          <div><h3 class="text-lg font-bold text-tertiary font-headline-md">3. Conferência Visual e Documental</h3><p class="text-xs text-on-surface-variant mt-1">Marque cada item somente após verificar o documento físico.</p></div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="sa-checklist-visual">
-            <label class="sa-check"><input type="checkbox" data-sa-required onchange="validarSulamerica()">56 — Data do atendimento preenchida à caneta</label>
-            <label class="sa-check"><input type="checkbox" data-sa-required onchange="validarSulamerica()">56 — Rubrica do paciente</label>
-            <label class="sa-check"><input type="checkbox" data-sa-required onchange="validarSulamerica()">58 — Carimbo do psicólogo</label>
-            <label class="sa-check"><input type="checkbox" data-sa-required onchange="validarSulamerica()">58 — Rubrica do psicólogo</label>
-            <label class="sa-check"><input type="checkbox" data-sa-required onchange="validarSulamerica()">66 — Assinatura do psicólogo</label>
-            <label class="sa-check"><input type="checkbox" data-sa-required onchange="validarSulamerica()">67 — Assinatura ou rubrica do paciente</label>
-          </div>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-surface-container-high p-4 rounded-xl border border-outline-variant">
-            <div><label class="sa-label">Data de emissão do encaminhamento</label><input id="sa-data-encaminhamento" oninput="formatarDataCampo(this);validarSulamerica()" maxlength="10" inputmode="numeric" placeholder="DD/MM/AAAA" class="sa-input"></div>
-            <div><label class="sa-label">Data usada na comparação</label><div class="h-11 flex items-center px-3 rounded-xl bg-surface-container border border-outline-variant text-xs text-on-surface-variant">Será usada a Data do Atendimento (campo 56).</div></div>
-            <div><label class="sa-label">Validade do encaminhamento</label><div id="sa-r-encaminhamento" class="h-11 flex items-center px-3 rounded-xl bg-surface-container border border-outline-variant text-sm font-bold text-on-surface-variant">Aguardando datas...</div></div>
-          </div>
-        </section>
-      </div>
-    </div>
-
-    <!-- MODAL TIPO DA CONFERÊNCIA -->
-    <div id="modal-tipo-conferencia-guia" class="fixed inset-0 z-[70] bg-background/80 backdrop-blur-sm hidden items-center justify-center p-4">
-      <div class="bg-surface-container-high border border-outline-variant rounded-2xl p-6 max-w-md w-full shadow-2xl flex flex-col gap-5">
-        <div class="flex justify-between items-center border-b border-outline-variant pb-3"><div><h3 id="cg-modal-convenio" class="text-lg font-bold text-on-surface">Convênio</h3><p class="text-xs text-on-surface-variant">A guia é de Consulta ou SADT?</p></div><button onclick="fecharModalTipoConferencia()" class="text-outline hover:text-on-surface"><span class="material-symbols-outlined">close</span></button></div>
-        <button onclick="selecionarTipoConferencia('consulta')" class="w-full py-4 bg-primary-container text-on-primary-container hover:opacity-90 font-bold rounded-xl flex items-center justify-center gap-2"><span class="material-symbols-outlined">medical_services</span>CONSULTA</button>
-        <button onclick="selecionarTipoConferencia('sadt')" class="w-full py-4 bg-tertiary-container text-on-tertiary-container hover:opacity-90 font-bold rounded-xl flex items-center justify-center gap-2"><span class="material-symbols-outlined">biotech</span>SADT</button>
-      </div>
-    </div>
-
-
-    <!-- TELA CONFIGURAÇÕES CLINIFAT -->
-    <div id="tela-configuracoes" class="screen">
-      <div class="max-w-6xl mx-auto flex flex-col gap-6">
-        <div class="bg-surface-container-high p-6 rounded-2xl border border-outline-variant flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div class="text-xs uppercase font-bold text-secondary font-label-sm mb-1">CliniFat</div>
-            <h2 class="text-2xl font-bold text-primary font-headline-md">Configurações</h2>
-            <p class="text-sm text-on-surface-variant mt-1">Gerencie profissionais e convênios usados pelo Gerenciador de Guias e Lotes.</p>
-          </div>
-          <button onclick="navegar('tela-inicio')" class="px-5 py-2.5 bg-surface-container-highest hover:bg-outline-variant rounded-xl text-on-surface font-label-sm flex items-center gap-2">
+          <button onclick="sairGuideCheck()" class="px-5 py-2.5 bg-surface-container-highest hover:bg-outline-variant rounded-xl text-on-surface font-label-sm flex items-center gap-2">
             <span class="material-symbols-outlined text-sm">arrow_back</span>Voltar
           </button>
         </div>
 
-        <div id="config-no-master" class="hidden p-4 rounded-xl border border-tertiary bg-tertiary-container/10 text-tertiary text-sm font-bold">
-          Apenas usuários Master podem alterar os cadastros nesta etapa.
+        <!-- Etapas -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div id="gc-step-1" class="p-4 rounded-xl border border-primary bg-primary/10">
+            <div class="text-[10px] uppercase font-label-sm text-primary font-bold">Etapa 1</div>
+            <div class="font-bold mt-1">Convênio e modalidade</div>
+          </div>
+          <div id="gc-step-2" class="p-4 rounded-xl border border-outline-variant bg-surface-container">
+            <div class="text-[10px] uppercase font-label-sm text-outline font-bold">Etapa 2</div>
+            <div class="font-bold mt-1 text-on-surface-variant">Documento PDF</div>
+          </div>
+          <div id="gc-step-3" class="p-4 rounded-xl border border-outline-variant bg-surface-container">
+            <div class="text-[10px] uppercase font-label-sm text-outline font-bold">Etapa 3</div>
+            <div class="font-bold mt-1 text-on-surface-variant">Fila de conferência</div>
+          </div>
         </div>
 
-        <section class="bg-surface-container p-6 rounded-2xl border border-outline-variant">
-          <div class="mb-5">
-            <h3 class="text-lg font-bold text-secondary">Profissionais</h3>
-            <p class="text-xs text-on-surface-variant">Consulta é apresentada como Médicos; SADT como Psicólogos.</p>
+        <!-- Passo 1 -->
+        <section id="gc-configuracao" class="bg-surface-container p-6 rounded-2xl border border-outline-variant flex flex-col gap-5">
+          <div>
+            <h3 class="text-lg font-bold text-secondary font-headline-md">1. Selecione o tipo de guia</h3>
+            <p class="text-xs text-on-surface-variant mt-1">Cada combinação poderá ter regras e zonas de OCR próprias.</p>
           </div>
 
-          <div id="form-profissional" class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-5">
-            <input id="cfg-prof-nome" class="sa-input md:col-span-2" placeholder="Nome do profissional" autocomplete="off">
-            <select id="cfg-prof-tipo" class="sa-input">
-              <option value="consulta">Médico (Consulta)</option>
-              <option value="sadt">Psicólogo (SADT)</option>
-            </select>
-            <button id="cfg-prof-save-btn" onclick="salvarProfissional()" class="h-11 rounded-xl bg-secondary text-on-secondary font-bold flex items-center justify-center gap-2">
-              <span class="material-symbols-outlined text-sm">person_add</span><span id="cfg-prof-save-text">Adicionar</span>
-            </button>
-            <button id="cfg-prof-cancel-btn" onclick="cancelarEdicaoProfissional()" class="hidden h-11 rounded-xl bg-surface-container-highest border border-outline-variant text-on-surface font-bold items-center justify-center gap-2">
-              <span class="material-symbols-outlined text-sm">close</span>Cancelar
-            </button>
+          <div>
+            <label class="sa-label">Convênio</label>
+            <div id="gc-grid-convenios" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"></div>
           </div>
 
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            <div>
-              <div class="flex items-center justify-between mb-2">
-                <h4 class="text-sm font-bold text-primary flex items-center gap-2"><span class="material-symbols-outlined text-base">stethoscope</span>Médicos</h4>
-                <span id="cfg-prof-medicos-count" class="text-[10px] font-label-sm text-outline">0</span>
-              </div>
-              <div id="cfg-prof-medicos" class="cf-list"></div>
+          <div id="gc-modalidade-box" class="hidden">
+            <label class="sa-label">Modalidade</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl">
+              <button onclick="selecionarGuideCheckModalidade('consulta')" id="gc-btn-consulta" class="cf-module-card min-h-[145px]" style="--cf-accent:#a9c7ff;--cf-glow:rgba(77,150,255,.14)">
+                <span class="cf-module-icon"><span class="material-symbols-outlined">medical_services</span></span>
+                <span class="cf-module-title">Consulta</span>
+                <span class="cf-module-desc">Guias de atendimento médico.</span>
+              </button>
+              <button onclick="selecionarGuideCheckModalidade('sadt')" id="gc-btn-sadt" class="cf-module-card min-h-[145px]" style="--cf-accent:#ffb873;--cf-glow:rgba(255,184,115,.14)">
+                <span class="cf-module-icon"><span class="material-symbols-outlined">psychology</span></span>
+                <span class="cf-module-title">SADT</span>
+                <span class="cf-module-desc">Guias de procedimentos e terapias.</span>
+              </button>
             </div>
-            <div>
-              <div class="flex items-center justify-between mb-2">
-                <h4 class="text-sm font-bold text-tertiary flex items-center gap-2"><span class="material-symbols-outlined text-base">psychology</span>Psicólogos</h4>
-                <span id="cfg-prof-psicologos-count" class="text-[10px] font-label-sm text-outline">0</span>
-              </div>
-              <div id="cfg-prof-psicologos" class="cf-list"></div>
-            </div>
+          </div>
+
+          <div id="gc-selecao-resumo" class="hidden p-4 rounded-xl border border-secondary bg-secondary/10 text-sm">
+            <span class="text-secondary font-bold">Perfil selecionado:</span>
+            <span id="gc-selecao-texto" class="font-bold text-on-surface"></span>
           </div>
         </section>
 
-        <section class="bg-surface-container p-6 rounded-2xl border border-outline-variant">
-          <div class="mb-5">
-            <h3 class="text-lg font-bold text-primary">Convênios</h3>
-            <p class="text-xs text-on-surface-variant">Cadastros separados conforme a modalidade em que são utilizados.</p>
-          </div>
-
-          <div id="form-convenio" class="grid grid-cols-1 md:grid-cols-6 gap-3 mb-5">
-            <input id="cfg-conv-nome" class="sa-input md:col-span-2" placeholder="Nome do convênio" autocomplete="off">
-            <input id="cfg-conv-valor" class="sa-input" inputmode="decimal" placeholder="Valor (ex.: 85,50)" autocomplete="off">
-            <select id="cfg-conv-tipo" class="sa-input">
-              <option value="consulta">Consulta</option>
-              <option value="sadt">SADT</option>
-            </select>
-            <button id="cfg-conv-save-btn" onclick="salvarConvenio()" class="h-11 rounded-xl bg-primary-container text-on-primary-container font-bold flex items-center justify-center gap-2">
-              <span class="material-symbols-outlined text-sm">add_business</span><span id="cfg-conv-save-text">Adicionar</span>
-            </button>
-            <button id="cfg-conv-cancel-btn" onclick="cancelarEdicaoConvenio()" class="hidden h-11 rounded-xl bg-surface-container-highest border border-outline-variant text-on-surface font-bold items-center justify-center gap-2">
-              <span class="material-symbols-outlined text-sm">close</span>Cancelar
-            </button>
-          </div>
-
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            <div>
-              <div class="flex items-center justify-between mb-2">
-                <h4 class="text-sm font-bold text-primary">Convênios — Consulta</h4>
-                <span id="cfg-conv-consulta-count" class="text-[10px] font-label-sm text-outline">0</span>
+        <!-- Passo 2 -->
+        <section id="gc-upload-section" class="hidden bg-surface-container p-6 rounded-2xl border border-outline-variant">
+          <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 rounded-xl bg-primary-container text-on-primary-container flex items-center justify-center">
+                <span class="material-symbols-outlined">picture_as_pdf</span>
               </div>
-              <div id="cfg-conv-consulta" class="cf-list"></div>
-            </div>
-            <div>
-              <div class="flex items-center justify-between mb-2">
-                <h4 class="text-sm font-bold text-tertiary">Convênios — SADT</h4>
-                <span id="cfg-conv-sadt-count" class="text-[10px] font-label-sm text-outline">0</span>
+              <div>
+                <h3 class="font-bold text-on-surface">2. Carregar documento</h3>
+                <p id="gc-pdf-status" class="text-xs text-on-surface-variant mt-1">Selecione um PDF com no máximo 20 páginas.</p>
               </div>
-              <div id="cfg-conv-sadt" class="cf-list"></div>
             </div>
+
+            <label class="px-6 py-3 bg-primary-container text-on-primary-container font-bold rounded-xl cursor-pointer hover:opacity-90 flex items-center gap-2">
+              <span class="material-symbols-outlined">upload_file</span>
+              Selecionar PDF
+              <input type="file" id="gc-pdf-input" accept="application/pdf" class="hidden" onchange="carregarPDFGuideCheck(event)">
+            </label>
+          </div>
+        </section>
+
+        <!-- Passo 3 / Workspace -->
+        <section id="gc-workspace" class="hidden">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+
+            <!-- Fila -->
+            <aside class="lg:col-span-3 bg-surface-container border border-outline-variant rounded-2xl overflow-hidden">
+              <div class="p-4 border-b border-outline-variant">
+                <div class="flex items-center justify-between gap-2">
+                  <div>
+                    <div class="font-bold">Fila de guias</div>
+                    <div id="gc-fila-resumo" class="text-[10px] text-on-surface-variant font-label-sm mt-1">0 páginas</div>
+                  </div>
+                  <span class="material-symbols-outlined text-primary">view_list</span>
+                </div>
+              </div>
+              <div id="gc-fila-paginas" class="max-h-[620px] overflow-y-auto p-2 flex flex-col gap-2"></div>
+            </aside>
+
+            <!-- Documento -->
+            <div class="lg:col-span-6 bg-surface-container border border-outline-variant rounded-2xl overflow-hidden">
+              <div class="p-4 border-b border-outline-variant flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <div id="gc-doc-titulo" class="font-bold">Documento</div>
+                  <div id="gc-doc-subtitulo" class="text-[10px] text-on-surface-variant font-label-sm">Página 0 / 0</div>
+                </div>
+                <div class="flex gap-2">
+                  <button onclick="navegarPaginaGuideCheck(-1)" class="h-9 px-3 rounded-lg bg-surface-container-high border border-outline-variant hover:bg-outline-variant flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">chevron_left</span>Anterior
+                  </button>
+                  <button onclick="navegarPaginaGuideCheck(1)" class="h-9 px-3 rounded-lg bg-surface-container-high border border-outline-variant hover:bg-outline-variant flex items-center gap-1">
+                    Próxima<span class="material-symbols-outlined text-sm">chevron_right</span>
+                  </button>
+                </div>
+              </div>
+              <div class="p-4 bg-surface-container-lowest min-h-[650px] flex justify-center items-start overflow-auto">
+                <canvas id="gc-pdf-canvas" class="max-w-full bg-white shadow-xl"></canvas>
+              </div>
+            </div>
+
+            <!-- Estado da página -->
+            <aside class="lg:col-span-3 bg-surface-container border border-outline-variant rounded-2xl overflow-hidden">
+              <div class="p-4 border-b border-outline-variant">
+                <div class="font-bold">Conferência</div>
+                <div class="text-[10px] text-on-surface-variant font-label-sm mt-1">Fase 1 — organização da fila</div>
+              </div>
+              <div class="p-4 flex flex-col gap-4">
+                <div>
+                  <label class="sa-label">Status da página</label>
+                  <select id="gc-status-pagina" class="sa-input" onchange="alterarStatusPaginaGuideCheck(this.value)">
+                    <option value="nao_iniciada">Não iniciada</option>
+                    <option value="em_analise">Em análise</option>
+                    <option value="pendencia">Com pendência</option>
+                    <option value="ok">OK</option>
+                  </select>
+                </div>
+
+                <div class="p-3 rounded-xl border border-outline-variant bg-surface-container-high">
+                  <div class="text-[10px] uppercase text-outline font-label-sm">Perfil</div>
+                  <div id="gc-perfil-lateral" class="text-sm font-bold mt-1">—</div>
+                </div>
+
+                <div class="p-3 rounded-xl border border-outline-variant bg-surface-container-high">
+                  <div class="text-[10px] uppercase text-outline font-label-sm">Próxima etapa</div>
+                  <div class="text-xs text-on-surface-variant mt-1">Aqui entrarão OCR, regras automáticas e checklist específico do convênio/modalidade selecionados.</div>
+                </div>
+
+                <button onclick="irProximaPendenteGuideCheck()" class="h-11 rounded-xl bg-tertiary-container text-on-tertiary-container font-bold">
+                  Próxima pendente
+                </button>
+                <button onclick="irProximaNaoIniciadaGuideCheck()" class="h-11 rounded-xl bg-primary-container text-on-primary-container font-bold">
+                  Próxima não iniciada
+                </button>
+                <button onclick="reiniciarGuideCheck()" class="h-11 rounded-xl border border-error text-error hover:bg-error-container/30 font-bold">
+                  Encerrar este PDF
+                </button>
+              </div>
+            </aside>
+
           </div>
         </section>
       </div>
@@ -1903,119 +1872,300 @@
 
 
     /* ==========================================================================
-       CONFERÊNCIA DE GUIAS — MOTOR REUTILIZÁVEL / SULAMÉRICA SADT
+       GUIDECHECK — FASE 1
+       Convênio → Modalidade → PDF → Fila de páginas
        ========================================================================== */
-    const CONVENIOS_CONFERENCIA = ['Amil','Assim','Blue','Bradesco','Gama','Life','Mediservice','Petrobras','Porto','Postal Saúde','SulAmérica','Vale/Pasa'];
-    let convenioConferenciaAtual = '';
+    const GUIDECHECK_MAX_PAGES = 20;
+    const GUIDECHECK_CONVENIOS = ['Amil','Assim','Blue','Bradesco','Gama','Life','Mediservice','Petrobras','Porto','Postal Saúde','SulAmérica','Vale/Pasa'];
+
+    let guideCheckConvenio = '';
+    let guideCheckModalidade = '';
+    let guideCheckPdfDoc = null;
+    let guideCheckPaginas = [];
+    let guideCheckPaginaAtual = 0;
+    let guideCheckRenderToken = 0;
 
     function abrirConferenciaGuia() {
-      renderizarConveniosConferencia();
-      navegar('tela-conferencia-guia');
+      reiniciarGuideCheck(false);
+      navegar('tela-guidecheck');
+      renderizarConveniosGuideCheck();
     }
 
-    function renderizarConveniosConferencia() {
-      const grid = document.getElementById('grid-convenios-conferencia');
+    function renderizarConveniosGuideCheck() {
+      const grid = document.getElementById('gc-grid-convenios');
+      if (!grid) return;
       grid.innerHTML = '';
-      CONVENIOS_CONFERENCIA.forEach(nome => {
+
+      GUIDECHECK_CONVENIOS.forEach(nome => {
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = 'min-h-20 px-4 py-4 bg-surface-container-high border border-outline-variant hover:border-primary hover:text-primary rounded-xl text-on-surface font-bold font-label-md transition-all shadow-md flex items-center justify-center text-center';
+        btn.className = 'min-h-16 px-4 py-3 bg-surface-container-high border border-outline-variant hover:border-primary hover:text-primary rounded-xl text-on-surface font-bold text-sm transition-all';
         btn.textContent = nome;
-        btn.onclick = () => selecionarConvenioConferencia(nome);
+        btn.dataset.convenio = nome;
+        btn.addEventListener('click', () => selecionarGuideCheckConvenio(nome));
         grid.appendChild(btn);
       });
     }
 
-    function selecionarConvenioConferencia(nome) {
-      convenioConferenciaAtual = nome;
-      document.getElementById('cg-modal-convenio').innerText = nome;
-      const modal = document.getElementById('modal-tipo-conferencia-guia');
-      modal.classList.remove('hidden'); modal.classList.add('flex');
-    }
-    function fecharModalTipoConferencia() { const m=document.getElementById('modal-tipo-conferencia-guia'); m.classList.add('hidden'); m.classList.remove('flex'); }
-    function selecionarTipoConferencia(tipo) {
-      fecharModalTipoConferencia();
-      if (convenioConferenciaAtual === 'SulAmérica' && tipo === 'sadt') { navegar('tela-sulamerica-sadt'); validarSulamerica(); return; }
-      alert(`${convenioConferenciaAtual} — ${tipo.toUpperCase()}: processo de conferência ainda não configurado.`);
-    }
+    function selecionarGuideCheckConvenio(nome) {
+      guideCheckConvenio = nome;
+      guideCheckModalidade = '';
 
-    function somenteNumeros(el) { el.value = el.value.replace(/\D/g,''); }
-    function formatarDataCampo(el) {
-      let d=el.value.replace(/\D/g,'').slice(0,8);
-      if(d.length>4) d=d.slice(0,2)+'/'+d.slice(2,4)+'/'+d.slice(4);
-      else if(d.length>2) d=d.slice(0,2)+'/'+d.slice(2);
-      el.value=d;
-    }
-    function normalizarTexto(v){ return (v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().replace(/\s+/g,' ').toUpperCase(); }
-    function parseDataBR(v){ const m=(v||'').match(/^(\d{2})\/(\d{2})\/(\d{4})$/); if(!m)return null; const d=new Date(+m[3],+m[2]-1,+m[1],12); if(d.getFullYear()!=+m[3]||d.getMonth()!=+m[2]-1||d.getDate()!=+m[1])return null; return d; }
-    function diffDias(a,b){ return Math.floor((b-a)/86400000); }
-    function valor(id){ const el=document.getElementById(id); return el?el.value.trim():''; }
-    function setResultado(id, estado, msg){ const el=document.getElementById(id); if(!el)return; const cls=estado==='ok'?'text-secondary':estado==='erro'?'text-error':'text-outline'; el.className=`sa-result ${cls} font-bold`; el.textContent=msg||''; }
-    function compararCampos(idA,idB,idR,rotulo='Campos'){ const a=valor(idA),b=valor(idB); if(!a&&!b){setResultado(idR,'pendente','');return null;} if(!a||!b){setResultado(idR,'erro','⚠ Preencha os dois campos');return false;} const ok=normalizarTexto(a)===normalizarTexto(b); setResultado(idR,ok?'ok':'erro',ok?'✓ OK':`✕ ${rotulo} divergentes`); return ok; }
-    function validarFixo(id,esperado,idR,aceitos=[]){ const v=valor(id); if(!v){setResultado(idR,'pendente','');return null;} const n=normalizarTexto(v); const lista=[esperado,...aceitos].map(normalizarTexto); const ok=lista.includes(n); setResultado(idR,ok?'ok':'erro',ok?'✓ OK':`✕ Esperado: ${esperado}`); return ok; }
-    function validarReferencia(idValor,idRef,idR,rotulo='Referência'){ const v=valor(idValor),r=valor(idRef); if(!v&&!r){setResultado(idR,'pendente','');return null;} if(!r){setResultado(idR,'pendente',`Informe ${rotulo.toLowerCase()} para comparar`);return null;} if(!v){setResultado(idR,'erro','⚠ Campo da guia não preenchido');return false;} const ok=normalizarTexto(v)===normalizarTexto(r); setResultado(idR,ok?'ok':'erro',ok?'✓ OK':`✕ Diverge da ${rotulo.toLowerCase()}`); return ok; }
-    function preencherCBOReferencia(){ }
+      document.querySelectorAll('#gc-grid-convenios button').forEach(btn => {
+        const ativo = btn.dataset.convenio === nome;
+        btn.classList.toggle('border-primary', ativo);
+        btn.classList.toggle('text-primary', ativo);
+        btn.classList.toggle('bg-primary/10', ativo);
+      });
 
-    function validarSulamerica() {
-      const resultados=[];
-      resultados.push(compararCampos('sa-guia-nome','sa-vpp-nome','sa-r-nome','Nomes'));
-      resultados.push(compararCampos('sa-guia-numero','sa-vpp-numero','sa-r-numero','Números da guia'));
-      resultados.push(compararCampos('sa-guia-autorizacao','sa-vpp-solicitacao','sa-r-autorizacao','Datas'));
-      resultados.push(compararCampos('sa-guia-senha','sa-vpp-senha','sa-r-senha','Senhas'));
-      resultados.push(compararCampos('sa-guia-validade','sa-vpp-validade','sa-r-validade','Validades'));
+      document.getElementById('gc-modalidade-box')?.classList.remove('hidden');
+      document.getElementById('gc-upload-section')?.classList.add('hidden');
+      document.getElementById('gc-selecao-resumo')?.classList.add('hidden');
+      document.getElementById('gc-workspace')?.classList.add('hidden');
 
-      const qs=valor('sa-vpp-qtd-solicitada'), qa=valor('sa-vpp-qtd-autorizada');
-      if(!qs&&!qa){setResultado('sa-r-quantidades','pendente',''); resultados.push(null);} else { const ok=(parseInt(qs,10)===1 && parseInt(qa,10)===1); setResultado('sa-r-quantidades',ok?'ok':'erro',ok?'✓ Solicitada 01 e Autorizada 01':'✕ Ambas as quantidades devem ser 01'); resultados.push(ok); }
-
-      const aut=parseDataBR(valor('sa-guia-autorizacao')), val=parseDataBR(valor('sa-guia-validade')), atend=parseDataBR(valor('sa-data-atendimento'));
-      const rp=document.getElementById('sa-r-periodo-senha');
-      if(aut&&val&&atend){
-        let ok=true,msg='✓ OK — atendimento dentro do período válido';
-        if(atend<aut){ok=false;msg='✕ Atendimento anterior à autorização';}
-        else if(atend>val){ok=false;msg='✕ Senha Vencida';}
-        else if(diffDias(aut,atend)>30 || diffDias(aut,val)>30){ok=false;msg='✕ Senha Vencida';}
-        rp.textContent=msg; rp.className=`mt-1 min-h-[44px] flex items-center px-4 rounded-xl border bg-surface-container text-sm font-bold ${ok?'border-secondary text-secondary':'border-error text-error'}`; resultados.push(ok);
-      } else { rp.textContent='Aguardando datas...'; rp.className='mt-1 min-h-[44px] flex items-center px-4 rounded-xl border border-outline-variant bg-surface-container text-sm font-bold text-on-surface-variant'; resultados.push(null); }
-
-      resultados.push(validarFixo('sa-c12','Não','sa-r-c12'));
-      resultados.push(validarReferencia('sa-c13','sa-ref-cnpj','sa-r-c13','CNPJ esperado'));
-      resultados.push(validarReferencia('sa-c14','sa-ref-contratado','sa-r-c14','nome fantasia esperado'));
-      const nmed=valor('sa-c15'); if(nmed){setResultado('sa-r-c15','ok','✓ Nome preenchido — confirme visualmente se está correto'); resultados.push(true);} else {setResultado('sa-r-c15','pendente',''); resultados.push(null);}
-      resultados.push(validarFixo('sa-c16','CRM','sa-r-c16'));
-      const crm=valor('sa-c17'); if(crm){const ok=!crm.startsWith('52');setResultado('sa-r-c17',ok?'ok':'erro',ok?'✓ OK':'✕ Remover o 52 do início');resultados.push(ok)}else{setResultado('sa-r-c17','pendente','');resultados.push(null)}
-      resultados.push(validarReferencia('sa-c18','sa-ref-uf','sa-r-c18','UF esperada'));
-      const esp=valor('sa-ref-especialidade'),cbo=valor('sa-c19'); if(!esp&&!cbo){setResultado('sa-r-c19','pendente','');resultados.push(null)} else if(esp==='outro'){setResultado('sa-r-c19','pendente','Conferir CBO manualmente para esta especialidade');resultados.push(null)} else if(!esp){setResultado('sa-r-c19','pendente','Selecione a especialidade');resultados.push(null)} else {const ok=cbo===esp;setResultado('sa-r-c19',ok?'ok':'erro',ok?'✓ OK':`✕ Esperado: ${esp}`);resultados.push(ok)}
-      resultados.push(validarFixo('sa-c21','Eletivo','sa-r-c21'));
-      const c22=valor('sa-c22'),c4=valor('sa-guia-autorizacao'); if(!c22&&!c4){setResultado('sa-r-c22','pendente','');resultados.push(null)} else {const ok=!!c22&&!!c4&&c22===c4;setResultado('sa-r-c22',ok?'ok':'erro',ok?'✓ OK':'✕ Deve ser igual ao campo 4');resultados.push(ok)}
-      resultados.push(validarReferencia('sa-c23','sa-ref-cid','sa-r-c23','CID do encaminhamento'));
-      resultados.push(validarFixo('sa-c32','Outras terapias','sa-r-c32'));
-      resultados.push(validarFixo('sa-c33','Não acidente','sa-r-c33',['Nao acidente']));
-      const c34=valor('sa-c34'); if(c34){setResultado('sa-r-c34','ok','✓ Opção válida — confirme conforme o encaminhamento');resultados.push(true)}else{setResultado('sa-r-c34','pendente','');resultados.push(null)}
-      resultados.push(validarFixo('sa-c91','Ambulatorial','sa-r-c91'));
-      resultados.push(validarFixo('sa-c42','1','sa-r-c42',['01']));
-      resultados.push(validarFixo('sa-c44','Convencional','sa-r-c44'));
-
-      const emiss=parseDataBR(valor('sa-data-encaminhamento'));
-      const re=document.getElementById('sa-r-encaminhamento');
-      if(emiss&&atend){ const dias=diffDias(emiss,atend); const ok=dias<=90 && dias>=0; re.textContent=ok?`✓ OK — ${dias} dias`:'✕ Encaminhamento Vencido'; re.className=`h-11 flex items-center px-3 rounded-xl bg-surface-container border text-sm font-bold ${ok?'border-secondary text-secondary':'border-error text-error'}`; resultados.push(ok); }
-      else {re.textContent='Aguardando datas...';re.className='h-11 flex items-center px-3 rounded-xl bg-surface-container border border-outline-variant text-sm font-bold text-on-surface-variant';resultados.push(null)}
-
-      const checks=[...document.querySelectorAll('[data-sa-required]')];
-      const marcados=checks.filter(c=>c.checked).length;
-      if(marcados>0 || resultados.some(v=>v!==null)) resultados.push(marcados===checks.length);
-
-      const status=document.getElementById('sa-status-geral');
-      if(resultados.includes(false)){status.textContent='❌ CONFERÊNCIA COM PENDÊNCIAS — verifique os itens destacados em vermelho.';status.className='p-4 rounded-xl border border-error bg-error-container/30 text-sm font-bold text-error';}
-      else if(resultados.length && resultados.every(v=>v===true)){status.textContent='✅ SULAMÉRICA SADT — CONFERÊNCIA OK';status.className='p-4 rounded-xl border border-secondary bg-secondary-container/20 text-sm font-bold text-secondary';}
-      else {status.textContent='🟡 CONFERÊNCIA EM ANDAMENTO — complete os campos e as verificações visuais.';status.className='p-4 rounded-xl border border-tertiary bg-tertiary-container/10 text-sm font-bold text-tertiary';}
+      atualizarEtapasGuideCheck(1);
     }
 
-    function limparConferenciaSulamerica(){
-      if(!confirm('Deseja limpar todos os dados desta conferência?')) return;
-      document.querySelectorAll('#tela-sulamerica-sadt input').forEach(el=>{ if(el.type==='checkbox')el.checked=false; else el.value=''; });
-      document.querySelectorAll('#tela-sulamerica-sadt select').forEach(el=>el.value='');
-      document.querySelectorAll('#tela-sulamerica-sadt .sa-result').forEach(el=>el.textContent='');
-      validarSulamerica();
+    function selecionarGuideCheckModalidade(tipo) {
+      if (!guideCheckConvenio) return alert('Selecione primeiro o convênio.');
+
+      guideCheckModalidade = tipo;
+      const rotulo = tipo === 'consulta' ? 'Consulta' : 'SADT';
+
+      document.getElementById('gc-btn-consulta')?.classList.toggle('border-primary', tipo === 'consulta');
+      document.getElementById('gc-btn-sadt')?.classList.toggle('border-tertiary', tipo === 'sadt');
+
+      const resumo = document.getElementById('gc-selecao-resumo');
+      const texto = document.getElementById('gc-selecao-texto');
+      if (texto) texto.textContent = `${guideCheckConvenio} • ${rotulo}`;
+      resumo?.classList.remove('hidden');
+
+      document.getElementById('gc-upload-section')?.classList.remove('hidden');
+      document.getElementById('gc-perfil-lateral').textContent = `${guideCheckConvenio} • ${rotulo}`;
+      document.getElementById('gc-pdf-status').textContent = 'Selecione um PDF com no máximo 20 páginas.';
+      atualizarEtapasGuideCheck(2);
+
+      setTimeout(() => document.getElementById('gc-upload-section')?.scrollIntoView({behavior:'smooth', block:'center'}), 80);
+    }
+
+    function atualizarEtapasGuideCheck(etapa) {
+      [1,2,3].forEach(n => {
+        const el = document.getElementById(`gc-step-${n}`);
+        if (!el) return;
+        const ativo = n === etapa;
+        const concluido = n < etapa;
+
+        el.className = `p-4 rounded-xl border ${
+          ativo ? 'border-primary bg-primary/10' :
+          concluido ? 'border-secondary bg-secondary/10' :
+          'border-outline-variant bg-surface-container'
+        }`;
+
+        const kicker = el.querySelector('div:first-child');
+        const titulo = el.querySelector('div:nth-child(2)');
+        if (kicker) kicker.className = `text-[10px] uppercase font-label-sm font-bold ${ativo?'text-primary':concluido?'text-secondary':'text-outline'}`;
+        if (titulo) titulo.className = `font-bold mt-1 ${ativo||concluido?'text-on-surface':'text-on-surface-variant'}`;
+      });
+    }
+
+    async function carregarPDFGuideCheck(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      if (!guideCheckConvenio || !guideCheckModalidade) {
+        event.target.value = '';
+        return alert('Selecione convênio e modalidade antes do PDF.');
+      }
+
+      const status = document.getElementById('gc-pdf-status');
+      status.textContent = 'Lendo documento...';
+
+      try {
+        const buffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+
+        if (pdf.numPages > GUIDECHECK_MAX_PAGES) {
+          event.target.value = '';
+          status.textContent = `PDF recusado: ${pdf.numPages} páginas. Limite atual: ${GUIDECHECK_MAX_PAGES}.`;
+          return alert(`O GuideCheck aceita no máximo ${GUIDECHECK_MAX_PAGES} páginas nesta fase.`);
+        }
+
+        if (pdf.numPages < 1) throw new Error('O PDF não possui páginas.');
+
+        guideCheckPdfDoc = pdf;
+        guideCheckPaginaAtual = 0;
+        guideCheckPaginas = Array.from({length: pdf.numPages}, (_, i) => ({
+          pagina: i + 1,
+          status: 'nao_iniciada',
+          pendencias: [],
+          campos: {},
+          checklist: {}
+        }));
+
+        status.textContent = `${file.name} • ${pdf.numPages} página(s) • ${guideCheckConvenio} • ${guideCheckModalidade.toUpperCase()}`;
+        document.getElementById('gc-workspace').classList.remove('hidden');
+        atualizarEtapasGuideCheck(3);
+        renderizarFilaGuideCheck();
+        await selecionarPaginaGuideCheck(0);
+
+        setTimeout(() => document.getElementById('gc-workspace')?.scrollIntoView({behavior:'smooth', block:'start'}), 80);
+      } catch (err) {
+        console.error(err);
+        status.textContent = 'Não foi possível abrir este PDF.';
+        alert('Erro ao abrir PDF: ' + (err.message || err));
+      }
+    }
+
+    function statusGuideCheckMeta(status) {
+      return {
+        nao_iniciada: { label:'Não iniciada', icon:'schedule', cls:'text-outline border-outline-variant' },
+        em_analise: { label:'Em análise', icon:'pending', cls:'text-primary border-primary' },
+        pendencia: { label:'Pendência', icon:'warning', cls:'text-tertiary border-tertiary' },
+        ok: { label:'OK', icon:'check_circle', cls:'text-secondary border-secondary' }
+      }[status] || { label:status, icon:'help', cls:'text-outline border-outline-variant' };
+    }
+
+    function renderizarFilaGuideCheck() {
+      const fila = document.getElementById('gc-fila-paginas');
+      if (!fila) return;
+      fila.innerHTML = '';
+
+      guideCheckPaginas.forEach((item, index) => {
+        const meta = statusGuideCheckMeta(item.status);
+        const ativo = index === guideCheckPaginaAtual;
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `w-full p-3 rounded-xl border text-left flex items-center gap-3 transition-all ${
+          ativo ? 'bg-surface-container-highest border-primary' : 'bg-surface-container-high border-outline-variant hover:border-primary'
+        }`;
+        btn.innerHTML = `
+          <div class="w-8 h-8 rounded-lg border ${meta.cls} flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-base">${meta.icon}</span>
+          </div>
+          <div class="min-w-0 flex-1">
+            <div class="font-bold text-sm">Guia ${String(item.pagina).padStart(2,'0')}</div>
+            <div class="text-[10px] font-label-sm ${meta.cls.split(' ')[0]}">${meta.label}</div>
+          </div>
+          <span class="material-symbols-outlined text-outline text-sm">chevron_right</span>
+        `;
+        btn.addEventListener('click', () => selecionarPaginaGuideCheck(index));
+        fila.appendChild(btn);
+      });
+
+      const ok = guideCheckPaginas.filter(p => p.status === 'ok').length;
+      const pend = guideCheckPaginas.filter(p => p.status === 'pendencia').length;
+      document.getElementById('gc-fila-resumo').textContent =
+        `${guideCheckPaginas.length} páginas • ${ok} OK • ${pend} pendência(s)`;
+    }
+
+    async function selecionarPaginaGuideCheck(index) {
+      if (!guideCheckPdfDoc || index < 0 || index >= guideCheckPaginas.length) return;
+      guideCheckPaginaAtual = index;
+      renderizarFilaGuideCheck();
+
+      const item = guideCheckPaginas[index];
+      document.getElementById('gc-doc-subtitulo').textContent = `Página ${item.pagina} / ${guideCheckPaginas.length}`;
+      document.getElementById('gc-status-pagina').value = item.status;
+
+      await renderizarPaginaPDFGuideCheck(item.pagina);
+    }
+
+    async function renderizarPaginaPDFGuideCheck(numeroPagina) {
+      const token = ++guideCheckRenderToken;
+      const page = await guideCheckPdfDoc.getPage(numeroPagina);
+      if (token !== guideCheckRenderToken) return;
+
+      const canvas = document.getElementById('gc-pdf-canvas');
+      const ctx = canvas.getContext('2d');
+
+      const base = page.getViewport({ scale: 1 });
+      const targetWidth = Math.min(820, Math.max(480, document.querySelector('#gc-pdf-canvas')?.parentElement?.clientWidth - 40 || 760));
+      const scale = targetWidth / base.width;
+      const viewport = page.getViewport({ scale });
+
+      canvas.width = Math.floor(viewport.width);
+      canvas.height = Math.floor(viewport.height);
+
+      await page.render({ canvasContext: ctx, viewport }).promise;
+    }
+
+    function navegarPaginaGuideCheck(delta) {
+      selecionarPaginaGuideCheck(guideCheckPaginaAtual + delta);
+    }
+
+    function alterarStatusPaginaGuideCheck(status) {
+      if (!guideCheckPaginas[guideCheckPaginaAtual]) return;
+      guideCheckPaginas[guideCheckPaginaAtual].status = status;
+      renderizarFilaGuideCheck();
+    }
+
+    function irProximaPendenteGuideCheck() {
+      if (!guideCheckPaginas.length) return;
+      const n = guideCheckPaginas.length;
+      for (let passo = 1; passo <= n; passo++) {
+        const idx = (guideCheckPaginaAtual + passo) % n;
+        if (guideCheckPaginas[idx].status === 'pendencia') {
+          selecionarPaginaGuideCheck(idx);
+          return;
+        }
+      }
+      alert('Nenhuma página marcada com pendência.');
+    }
+
+    function irProximaNaoIniciadaGuideCheck() {
+      if (!guideCheckPaginas.length) return;
+      const n = guideCheckPaginas.length;
+      for (let passo = 1; passo <= n; passo++) {
+        const idx = (guideCheckPaginaAtual + passo) % n;
+        if (guideCheckPaginas[idx].status === 'nao_iniciada') {
+          selecionarPaginaGuideCheck(idx);
+          return;
+        }
+      }
+      alert('Todas as páginas já foram iniciadas.');
+    }
+
+    function reiniciarGuideCheck(confirmar = true) {
+      if (confirmar && guideCheckPaginas.length && !confirm('Encerrar este PDF e limpar a fila do GuideCheck?')) return false;
+
+      guideCheckConvenio = '';
+      guideCheckModalidade = '';
+      guideCheckPdfDoc = null;
+      guideCheckPaginas = [];
+      guideCheckPaginaAtual = 0;
+      guideCheckRenderToken++;
+
+      document.getElementById('gc-modalidade-box')?.classList.add('hidden');
+      document.getElementById('gc-selecao-resumo')?.classList.add('hidden');
+      document.getElementById('gc-upload-section')?.classList.add('hidden');
+      document.getElementById('gc-workspace')?.classList.add('hidden');
+
+      const pdfInput = document.getElementById('gc-pdf-input');
+      if (pdfInput) pdfInput.value = '';
+
+      const canvas = document.getElementById('gc-pdf-canvas');
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        canvas.width = 0; canvas.height = 0;
+      }
+
+      document.querySelectorAll('#gc-grid-convenios button').forEach(btn => {
+        btn.classList.remove('border-primary','text-primary','bg-primary/10');
+      });
+
+      atualizarEtapasGuideCheck(1);
+      return true;
+    }
+
+    function sairGuideCheck() {
+      if (guideCheckPaginas.length) {
+        const ok = reiniciarGuideCheck(true);
+        if (!ok) return;
+      } else {
+        reiniciarGuideCheck(false);
+      }
+      navegar('tela-inicio');
     }
 
     // Cadastro rápido: ENTER salva e devolve o foco ao campo principal.
