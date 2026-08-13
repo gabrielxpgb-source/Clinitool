@@ -1,0 +1,1825 @@
+<!DOCTYPE html>
+<html class="dark" lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>CliniFat — CliniTool</title>
+
+  <!-- Biblioteca QR Code -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- PDF.js da Mozilla -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <!-- Supabase / CliniTool -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Tailwind CSS & Google Fonts -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-tertiary-fixed": "#2d1600",
+            "on-background": "#e2e2e5",
+            "on-secondary": "#003919",
+            "tertiary": "#ffb873",
+            "outline-variant": "#414753",
+            "error-container": "#93000a",
+            "surface-bright": "#37393b",
+            "surface-container-low": "#1a1c1e",
+            "on-error-container": "#ffdad6",
+            "on-tertiary": "#4b2800",
+            "inverse-primary": "#005db8",
+            "primary": "#a9c7ff",
+            "tertiary-fixed-dim": "#ffb873",
+            "on-secondary-container": "#003e1c",
+            "secondary-fixed-dim": "#4de082",
+            "surface-container": "#1e2022",
+            "on-error": "#690005",
+            "inverse-on-surface": "#2f3133",
+            "tertiary-container": "#dc8000",
+            "on-surface": "#e2e2e5",
+            "on-secondary-fixed": "#00210c",
+            "on-surface-variant": "#c1c6d5",
+            "surface-container-lowest": "#0c0e10",
+            "error": "#ffb4ab",
+            "surface-container-high": "#282a2c",
+            "secondary-fixed": "#6dfe9c",
+            "surface-container-hover": "#333537",
+            "primary-fixed": "#d6e3ff",
+            "primary-container": "#4d96ff",
+            "tertiary-fixed": "#ffdcbf",
+            "on-tertiary-fixed-variant": "#6a3b00",
+            "on-primary-fixed-variant": "#00468c",
+            "outline": "#8b919e",
+            "surface-tint": "#a9c7ff",
+            "background": "#121416",
+            "on-primary": "#003064",
+            "secondary": "#4de082",
+            "surface-variant": "#333537",
+            "secondary-container": "#00b55d",
+            "on-primary-container": "#002e61",
+            "primary-fixed-dim": "#a9c7ff",
+            "on-secondary-fixed-variant": "#005227",
+            "on-tertiary-container": "#492700",
+            "on-primary-fixed": "#001b3e",
+            "surface": "#121416",
+            "inverse-surface": "#e2e2e5",
+            "surface-dim": "#121416"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "fontFamily": {
+            "headline-md": ["Hanken Grotesk"],
+            "headline-xl": ["Hanken Grotesk"],
+            "label-md": ["JetBrains Mono"],
+            "label-sm": ["JetBrains Mono"],
+            "body-md": ["Inter"],
+            "body-sm": ["Inter"],
+            "headline-lg": ["Hanken Grotesk"],
+            "body-lg": ["Inter"]
+          }
+        },
+      },
+    }
+  </script>
+
+  <style>
+    :root {
+      --qtd-colunas: 10;
+    }
+
+    body { font-family: 'Inter', sans-serif; }
+
+    /* Remove a seta nativa do select para exibir apenas o ícone customizado */
+    #select-convenio {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      background-image: none !important;
+    }
+    #select-convenio::-ms-expand { display: none; }
+
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* Estilos ativos dos cards */
+    .card-active {
+      background-color: rgba(0, 181, 93, 0.1) !important;
+      border-color: #4de082 !important;
+      box-shadow: 0px 4px 20px rgba(0, 181, 93, 0.15);
+    }
+    .text-active {
+      color: #4de082 !important;
+    }
+
+    .glass-summary {
+      background: rgba(30, 32, 34, 0.85);
+      backdrop-filter: blur(12px);
+    }
+
+    /* Grid Dinâmico de Contadores */
+    .dynamic-grid {
+      display: grid;
+      grid-template-columns: repeat(var(--qtd-colunas), minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    @media (max-width: 1024px) {
+      .dynamic-grid {
+        grid-template-columns: repeat(min(var(--qtd-colunas), 4), minmax(0, 1fr));
+      }
+    }
+    @media (max-width: 640px) {
+      .dynamic-grid {
+        grid-template-columns: repeat(min(var(--qtd-colunas), 2), minmax(0, 1fr));
+      }
+    }
+
+    /* Animação de Shake para Erro na Bipagem */
+    @keyframes shakeAnimation {
+      0% { transform: translateX(0); }
+      20% { transform: translateX(-12px); }
+      40% { transform: translateX(12px); }
+      60% { transform: translateX(-8px); }
+      80% { transform: translateX(8px); }
+      100% { transform: translateX(0); }
+    }
+
+    .shake-error {
+      animation: shakeAnimation 0.4s ease-in-out;
+      border-color: #ffb4ab !important;
+      box-shadow: 0 0 15px rgba(255, 180, 171, 0.4);
+    }
+
+    /* Toggle Switch Customizado */
+    .toggle-checkbox:checked {
+      right: 0;
+      border-color: #4de082;
+    }
+    .toggle-checkbox:checked + .toggle-label {
+      background-color: #00b55d;
+    }
+
+    #comprovante-print { display: none; }
+
+    /* Impressão Térmica com Zoom Ajustado em 150% */
+    @media print {
+      @page {
+        size: auto;
+        margin: 0mm 0mm 0mm 1mm;
+      }
+
+      body * { visibility: hidden; }
+      #comprovante-print, #comprovante-print * { visibility: visible; }
+
+      #comprovante-print {
+        display: block !important;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        max-width: 80mm;
+        padding: 2mm 4mm;
+        zoom: 150%;
+        transform-origin: top left;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 8pt;
+        font-weight: 700;
+        line-height: 1.15;
+        white-space: pre;
+        color: #000000 !important;
+        background: #ffffff;
+      }
+
+      .qrcode-container {
+        margin-top: 8px;
+        width: 100%;
+        text-align: center;
+        display: block;
+      }
+
+      .qrcode-label {
+        font-size: 8pt;
+        margin-bottom: 4px;
+        text-align: center;
+        width: 100%;
+      }
+
+      #qrcode-target {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+      }
+
+      #qrcode-target img {
+        margin: 0 auto !important;
+        display: block !important;
+      }
+    }
+
+    /* Conferência de Guias — componentes reutilizáveis */
+    .sa-input { width:100%; height:44px; padding:0 12px; background:#1e2022; border:1px solid #414753; border-radius:0.75rem; color:#e2e2e5; font-size:.875rem; outline:none; }
+    .sa-input:focus { border-color:#a9c7ff; box-shadow:0 0 0 1px #a9c7ff; }
+    .sa-label { display:block; font-size:.75rem; font-weight:700; color:#c1c6d5; margin-bottom:6px; }
+    .sa-result { min-height:18px; margin-top:5px; font-size:.7rem; font-family:'JetBrains Mono',monospace; color:#8b919e; }
+    .sa-check { display:flex; gap:10px; align-items:center; padding:12px 14px; border:1px solid #414753; border-radius:.75rem; background:#282a2c; font-size:.8rem; cursor:pointer; }
+    .sa-check input { width:18px; height:18px; accent-color:#4de082; }
+  </style>
+</head>
+
+<body class="bg-background text-on-surface min-h-screen flex flex-col">
+  <!-- GATE DE AUTENTICAÇÃO CLINITOOL -->
+  <div id="clinifat-auth-gate" class="fixed inset-0 z-[100] bg-background flex items-center justify-center p-6">
+    <div class="w-full max-w-md bg-surface-container-high border border-outline-variant rounded-2xl p-7 shadow-2xl">
+      <div class="text-center mb-5">
+        <h1 class="text-2xl font-bold text-primary font-headline-lg">CliniFat</h1>
+        <p class="text-sm text-on-surface-variant mt-1">Faturamento e conferência • CliniTool</p>
+      </div>
+      <div id="clinifat-auth-status" class="text-sm text-center text-on-surface-variant">Verificando sessão...</div>
+      <form id="clinifat-login-form" class="hidden mt-5 flex-col gap-3">
+        <div><label class="sa-label">Usuário</label><input id="clinifat-login-user" class="sa-input" autocomplete="username"></div>
+        <div><label class="sa-label">Senha</label><input id="clinifat-login-pass" type="password" class="sa-input" autocomplete="current-password"></div>
+        <button type="submit" class="w-full h-11 rounded-xl bg-primary-container text-on-primary-container font-bold">Entrar</button>
+        <button type="button" onclick="window.location.href='./index.html'" class="w-full h-10 rounded-xl bg-surface-container border border-outline-variant text-on-surface">Voltar ao CliniTool</button>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- TopNavBar -->
+  <header class="flex justify-between items-center px-6 py-4 w-full bg-surface-container-low border-b border-outline-variant sticky top-0 z-50">
+    <div class="flex items-center gap-4 cursor-pointer" onclick="navegar('tela-inicio')">
+      <span class="text-xl font-bold text-primary font-headline-md">CliniFat</span>
+      <span class="text-xs px-2 py-1 bg-surface-container-highest rounded text-on-surface-variant font-label-sm hidden sm:inline-block">CliniTool • v10.7</span>
+    </div>
+
+    <!-- Controles de Colunas (Tela Contador) -->
+    <div id="header-controls" class="hidden items-center gap-2 bg-surface-container rounded-full px-3 py-1 border border-outline-variant">
+      <span class="text-xs text-on-surface-variant font-label-sm">Colunas por linha:</span>
+      <button onclick="alterarColunas(-1)" class="w-7 h-7 flex items-center justify-center bg-surface-container-high hover:bg-outline-variant rounded-full text-on-surface font-bold transition-all">-</button>
+      <span id="lbl-colunas" class="font-label-sm font-bold text-primary px-2 min-w-[20px] text-center">10</span>
+      <button onclick="alterarColunas(1)" class="w-7 h-7 flex items-center justify-center bg-surface-container-high hover:bg-outline-variant rounded-full text-on-surface font-bold transition-all">+</button>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <span id="clinifat-user-label" class="hidden md:inline text-xs text-on-surface-variant font-label-sm"></span>
+      <button id="btn-configuracoes" class="p-2 rounded-full hover:bg-surface-container-high transition-colors hidden" onclick="abrirConfiguracoes()" title="Configurações">
+        <span class="material-symbols-outlined text-outline">settings</span>
+      </button>
+      <button class="p-2 rounded-full hover:bg-surface-container-high transition-colors" onclick="window.location.href='./index.html'" title="Voltar ao CliniTool">
+        <span class="material-symbols-outlined text-outline">apps</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="flex-grow container mx-auto px-6 py-8 pb-48">
+
+    <!-- TELA INICIAL -->
+    <div id="tela-inicio" class="screen active">
+      <div class="max-w-xl mx-auto mt-6 bg-surface-container-high border border-outline-variant rounded-2xl p-8 shadow-2xl flex flex-col gap-6">
+        <div class="text-center">
+          <h1 class="text-3xl font-bold text-primary font-headline-lg mb-2">Contador de Atendimentos</h1>
+          <p class="text-sm text-on-surface-variant">Selecione o módulo para iniciar a operação</p>
+        </div>
+
+        <div id="status-sync" class="p-3 rounded-xl bg-surface-container text-center font-label-sm text-sm border border-outline-variant transition-all">
+          🔄 Carregando dados do CliniFat...
+        </div>
+
+        <div class="flex flex-col gap-4">
+          <button onclick="escolherTipo('consulta')" class="w-full h-16 bg-primary-container text-on-primary-container hover:opacity-90 font-bold rounded-xl text-lg transition-all flex items-center justify-center gap-3 shadow-lg">
+            <span class="material-symbols-outlined">medical_services</span>
+            CONSULTA
+          </button>
+          
+          <button onclick="escolherTipo('sadt')" class="w-full h-16 bg-tertiary-container text-on-tertiary-container hover:opacity-90 font-bold rounded-xl text-lg transition-all flex items-center justify-center gap-3 shadow-lg">
+            <span class="material-symbols-outlined">biotech</span>
+            SADT
+          </button>
+
+          <!-- BOTÃO DE CONFERÊNCIA DE GUIA -->
+          <button onclick="abrirConferenciaGuia()" class="w-full h-16 bg-surface-container-highest text-primary hover:border-primary border border-outline-variant font-bold rounded-xl text-lg transition-all flex items-center justify-center gap-3 shadow-lg">
+            <span class="material-symbols-outlined">rule</span>
+            CONFERIR GUIA DE CONSULTA
+          </button>
+
+          <!-- BOTÃO DE CONFERÊNCIA DE LOTE -->
+          <button onclick="navegar('tela-conferencia')" class="w-full h-16 bg-secondary-container text-on-secondary-container hover:opacity-90 font-bold rounded-xl text-lg transition-all flex items-center justify-center gap-3 shadow-lg">
+            <span class="material-symbols-outlined">fact_check</span>
+            CONFERIR LOTE (PDF)
+          </button>
+        </div>
+
+        <button onclick="carregarDadosSupabase(true)" class="w-full py-3 bg-surface-container hover:bg-surface-container-highest border border-outline-variant text-on-surface font-label-sm rounded-xl transition-all flex items-center justify-center gap-2">
+          <span class="material-symbols-outlined text-sm">refresh</span>
+          Atualizar Dados
+        </button>
+
+        <div id="debug-box" class="p-3 bg-surface-container-lowest text-secondary font-mono text-xs rounded-xl max-h-36 overflow-y-auto hidden border border-outline-variant"></div>
+      </div>
+    </div>
+
+    <!-- TELA SELEÇÃO DE CONVÊNIO PARA CONFERÊNCIA DE GUIA -->
+    <div id="tela-conferencia-guia" class="screen">
+      <div class="max-w-5xl mx-auto flex flex-col gap-6">
+        <div class="bg-surface-container-high p-6 rounded-2xl border border-outline-variant shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-bold text-primary font-headline-md flex items-center gap-2"><span class="material-symbols-outlined">rule</span>Conferir Guia de Consulta</h2>
+            <p class="text-sm text-on-surface-variant mt-1">Qual é o convênio?</p>
+          </div>
+          <button onclick="navegar('tela-inicio')" class="px-5 py-2.5 bg-surface-container-highest hover:bg-outline-variant rounded-xl text-on-surface font-label-sm transition-all flex items-center gap-2"><span class="material-symbols-outlined text-sm">arrow_back</span>Voltar</button>
+        </div>
+        <div id="grid-convenios-conferencia" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+      </div>
+    </div>
+
+    <!-- TELA SULAMÉRICA SADT -->
+    <div id="tela-sulamerica-sadt" class="screen">
+      <div class="max-w-6xl mx-auto flex flex-col gap-6">
+        <div class="bg-surface-container-high p-6 rounded-2xl border border-outline-variant shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2 text-xs font-label-sm text-secondary uppercase font-bold mb-1"><span class="material-symbols-outlined text-sm">verified</span>SulAmérica • SADT</div>
+            <h2 class="text-2xl font-bold text-primary font-headline-md">Conferência de Guia</h2>
+            <p class="text-sm text-on-surface-variant mt-1">Preencha os dados da guia e da VPP. O sistema compara o que for automatizável e destaca o que exige conferência visual.</p>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="limparConferenciaSulamerica()" class="px-4 py-2.5 border border-error text-error hover:bg-error-container rounded-xl font-label-sm flex items-center gap-2"><span class="material-symbols-outlined text-sm">restart_alt</span>Limpar</button>
+            <button onclick="navegar('tela-conferencia-guia')" class="px-4 py-2.5 bg-surface-container-highest hover:bg-outline-variant rounded-xl text-on-surface font-label-sm flex items-center gap-2"><span class="material-symbols-outlined text-sm">arrow_back</span>Convênios</button>
+          </div>
+        </div>
+
+        <div id="sa-status-geral" class="p-4 rounded-xl border border-outline-variant bg-surface-container text-sm font-bold text-on-surface-variant">Preencha os campos para iniciar a conferência.</div>
+
+        <!-- VPP -->
+        <section class="bg-surface-container p-6 rounded-2xl border border-outline-variant flex flex-col gap-5">
+          <div><h3 class="text-lg font-bold text-secondary font-headline-md">1. Conferência da VPP</h3><p class="text-xs text-on-surface-variant mt-1">Os dados da guia devem estar idênticos aos dados correspondentes da Validação Prévia de Procedimentos.</p></div>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="grid grid-cols-2 gap-2"><label class="col-span-2 text-xs font-bold text-on-surface-variant">10 Nome do Paciente ↔ VPP Nome</label><input id="sa-guia-nome" oninput="validarSulamerica()" placeholder="Guia" class="sa-input"><input id="sa-vpp-nome" oninput="validarSulamerica()" placeholder="VPP" class="sa-input"><div id="sa-r-nome" class="col-span-2 sa-result"></div></div>
+            <div class="grid grid-cols-2 gap-2"><label class="col-span-2 text-xs font-bold text-on-surface-variant">3 Nº Guia Principal ↔ VPP Nº Guia no Prestador</label><input id="sa-guia-numero" oninput="somenteNumeros(this);validarSulamerica()" inputmode="numeric" placeholder="Guia" class="sa-input"><input id="sa-vpp-numero" oninput="somenteNumeros(this);validarSulamerica()" inputmode="numeric" placeholder="VPP" class="sa-input"><div id="sa-r-numero" class="col-span-2 sa-result"></div></div>
+            <div class="grid grid-cols-2 gap-2"><label class="col-span-2 text-xs font-bold text-on-surface-variant">4 Data da Autorização ↔ VPP Data da Solicitação</label><input id="sa-guia-autorizacao" oninput="formatarDataCampo(this);validarSulamerica()" inputmode="numeric" maxlength="10" placeholder="DD/MM/AAAA" class="sa-input"><input id="sa-vpp-solicitacao" oninput="formatarDataCampo(this);validarSulamerica()" inputmode="numeric" maxlength="10" placeholder="DD/MM/AAAA" class="sa-input"><div id="sa-r-autorizacao" class="col-span-2 sa-result"></div></div>
+            <div class="grid grid-cols-2 gap-2"><label class="col-span-2 text-xs font-bold text-on-surface-variant">5 Senha ↔ VPP Senha</label><input id="sa-guia-senha" oninput="validarSulamerica()" placeholder="Guia" class="sa-input"><input id="sa-vpp-senha" oninput="validarSulamerica()" placeholder="VPP" class="sa-input"><div id="sa-r-senha" class="col-span-2 sa-result"></div></div>
+            <div class="grid grid-cols-2 gap-2"><label class="col-span-2 text-xs font-bold text-on-surface-variant">6 Validade da Senha ↔ VPP Data de validade</label><input id="sa-guia-validade" oninput="formatarDataCampo(this);validarSulamerica()" inputmode="numeric" maxlength="10" placeholder="DD/MM/AAAA" class="sa-input"><input id="sa-vpp-validade" oninput="formatarDataCampo(this);validarSulamerica()" inputmode="numeric" maxlength="10" placeholder="DD/MM/AAAA" class="sa-input"><div id="sa-r-validade" class="col-span-2 sa-result"></div></div>
+            <div class="grid grid-cols-2 gap-2"><label class="col-span-2 text-xs font-bold text-on-surface-variant">VPP Quantidades</label><input id="sa-vpp-qtd-solicitada" oninput="somenteNumeros(this);validarSulamerica()" inputmode="numeric" placeholder="Qtd. solicitada (01)" class="sa-input"><input id="sa-vpp-qtd-autorizada" oninput="somenteNumeros(this);validarSulamerica()" inputmode="numeric" placeholder="Qtd. autorizada (01)" class="sa-input"><div id="sa-r-quantidades" class="col-span-2 sa-result"></div></div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-surface-container-high p-4 rounded-xl border border-outline-variant">
+            <div><label class="text-xs font-bold text-on-surface-variant">56 Data do Atendimento</label><input id="sa-data-atendimento" oninput="formatarDataCampo(this);validarSulamerica()" inputmode="numeric" maxlength="10" placeholder="DD/MM/AAAA" class="sa-input mt-1"></div>
+            <div class="md:col-span-2"><label class="text-xs font-bold text-on-surface-variant">Validação da senha</label><div id="sa-r-periodo-senha" class="mt-1 min-h-[44px] flex items-center px-4 rounded-xl border border-outline-variant bg-surface-container text-sm font-bold text-on-surface-variant">Aguardando datas...</div></div>
+          </div>
+        </section>
+
+        <!-- GUIA -->
+        <section class="bg-surface-container p-6 rounded-2xl border border-outline-variant flex flex-col gap-5">
+          <div><h3 class="text-lg font-bold text-primary font-headline-md">2. Campos da Guia</h3><p class="text-xs text-on-surface-variant mt-1">Campos de regra fixa são validados automaticamente. Dados do médico e referências podem ser preenchidos para comparação.</p></div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div><label class="sa-label">12 Atendimento RN — sempre Não</label><select id="sa-c12" onchange="validarSulamerica()" class="sa-input"><option value="">Selecione</option><option>Não</option><option>Sim</option></select><div id="sa-r-c12" class="sa-result"></div></div>
+            <div><label class="sa-label">13 Código na Operadora — CNPJ</label><input id="sa-ref-cnpj" oninput="somenteNumeros(this);validarSulamerica()" placeholder="CNPJ esperado (referência)" class="sa-input mb-2"><input id="sa-c13" oninput="somenteNumeros(this);validarSulamerica()" placeholder="Campo 13 da guia" class="sa-input"><div id="sa-r-c13" class="sa-result"></div></div>
+            <div><label class="sa-label">14 Nome do Contratado</label><input id="sa-ref-contratado" oninput="validarSulamerica()" placeholder="Nome fantasia esperado" class="sa-input mb-2"><input id="sa-c14" oninput="validarSulamerica()" placeholder="Campo 14 da guia" class="sa-input"><div id="sa-r-c14" class="sa-result"></div></div>
+            <div><label class="sa-label">15 Profissional Solicitante</label><input id="sa-c15" oninput="validarSulamerica()" placeholder="Nome do médico" class="sa-input"><div id="sa-r-c15" class="sa-result"></div></div>
+            <div><label class="sa-label">16 Conselho — sempre CRM</label><input id="sa-c16" oninput="validarSulamerica()" placeholder="CRM" class="sa-input"><div id="sa-r-c16" class="sa-result"></div></div>
+            <div><label class="sa-label">17 Número do Conselho — sem 52</label><input id="sa-c17" oninput="somenteNumeros(this);validarSulamerica()" inputmode="numeric" placeholder="CRM do médico" class="sa-input"><div id="sa-r-c17" class="sa-result"></div></div>
+            <div><label class="sa-label">18 UF do médico</label><input id="sa-ref-uf" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z]/g,'').slice(0,2);validarSulamerica()" maxlength="2" placeholder="UF esperada" class="sa-input mb-2"><input id="sa-c18" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z]/g,'').slice(0,2);validarSulamerica()" maxlength="2" placeholder="Campo 18" class="sa-input"><div id="sa-r-c18" class="sa-result"></div></div>
+            <div><label class="sa-label">19 CBO da especialidade</label><select id="sa-ref-especialidade" onchange="preencherCBOReferencia();validarSulamerica()" class="sa-input mb-2"><option value="">Especialidade</option><option value="225133">Psiquiatria — 225133</option><option value="225112">Neurologia — 225112</option><option value="outro">Outra / conferir manualmente</option></select><input id="sa-c19" oninput="somenteNumeros(this);validarSulamerica()" placeholder="CBO da guia" class="sa-input"><div id="sa-r-c19" class="sa-result"></div></div>
+            <div><label class="sa-label">21 Caráter — sempre Eletivo</label><input id="sa-c21" oninput="validarSulamerica()" placeholder="Eletivo" class="sa-input"><div id="sa-r-c21" class="sa-result"></div></div>
+            <div><label class="sa-label">22 Data da Solicitação — igual ao campo 4</label><input id="sa-c22" oninput="formatarDataCampo(this);validarSulamerica()" maxlength="10" inputmode="numeric" placeholder="DD/MM/AAAA" class="sa-input"><div id="sa-r-c22" class="sa-result"></div></div>
+            <div><label class="sa-label">23 Indicação Clínica — CID</label><input id="sa-ref-cid" oninput="validarSulamerica()" placeholder="CID do encaminhamento" class="sa-input mb-2"><input id="sa-c23" oninput="validarSulamerica()" placeholder="CID na guia" class="sa-input"><div id="sa-r-c23" class="sa-result"></div></div>
+            <div><label class="sa-label">32 Tipo de atendimento</label><input id="sa-c32" oninput="validarSulamerica()" placeholder="Outras terapias" class="sa-input"><div id="sa-r-c32" class="sa-result"></div></div>
+            <div><label class="sa-label">33 Indicação de acidente</label><input id="sa-c33" oninput="validarSulamerica()" placeholder="Não acidente" class="sa-input"><div id="sa-r-c33" class="sa-result"></div></div>
+            <div><label class="sa-label">34 Tipo de consulta</label><select id="sa-c34" onchange="validarSulamerica()" class="sa-input"><option value="">Selecione</option><option>Primeira vez</option><option>Retorno</option></select><p class="text-[10px] text-outline mt-1">Encaminhamento original = Primeira vez; caso contrário = Retorno.</p><div id="sa-r-c34" class="sa-result"></div></div>
+            <div><label class="sa-label">91 Regime — sempre Ambulatorial</label><input id="sa-c91" oninput="validarSulamerica()" placeholder="Ambulatorial" class="sa-input"><div id="sa-r-c91" class="sa-result"></div></div>
+            <div><label class="sa-label">42 Quantidade — sempre 1</label><input id="sa-c42" oninput="somenteNumeros(this);validarSulamerica()" inputmode="numeric" placeholder="1" class="sa-input"><div id="sa-r-c42" class="sa-result"></div></div>
+            <div><label class="sa-label">44 Técnica — Convencional</label><input id="sa-c44" oninput="validarSulamerica()" placeholder="Convencional" class="sa-input"><div id="sa-r-c44" class="sa-result"></div></div>
+            <div class="lg:col-span-2"><label class="sa-label">46 Valor Unitário / 47 Valor Total</label><div class="grid grid-cols-2 gap-2"><input id="sa-c46" placeholder="Valor unitário" class="sa-input"><input id="sa-c47" placeholder="Valor total" class="sa-input"></div><div class="sa-result text-tertiary">Conferir com a tabela vigente. Automação prevista para uma etapa futura.</div></div>
+          </div>
+        </section>
+
+        <!-- VISUAL -->
+        <section class="bg-surface-container p-6 rounded-2xl border border-outline-variant flex flex-col gap-5">
+          <div><h3 class="text-lg font-bold text-tertiary font-headline-md">3. Conferência Visual e Documental</h3><p class="text-xs text-on-surface-variant mt-1">Marque cada item somente após verificar o documento físico.</p></div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="sa-checklist-visual">
+            <label class="sa-check"><input type="checkbox" data-sa-required onchange="validarSulamerica()">56 — Data do atendimento preenchida à caneta</label>
+            <label class="sa-check"><input type="checkbox" data-sa-required onchange="validarSulamerica()">56 — Rubrica do paciente</label>
+            <label class="sa-check"><input type="checkbox" data-sa-required onchange="validarSulamerica()">58 — Carimbo do psicólogo</label>
+            <label class="sa-check"><input type="checkbox" data-sa-required onchange="validarSulamerica()">58 — Rubrica do psicólogo</label>
+            <label class="sa-check"><input type="checkbox" data-sa-required onchange="validarSulamerica()">66 — Assinatura do psicólogo</label>
+            <label class="sa-check"><input type="checkbox" data-sa-required onchange="validarSulamerica()">67 — Assinatura ou rubrica do paciente</label>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-surface-container-high p-4 rounded-xl border border-outline-variant">
+            <div><label class="sa-label">Data de emissão do encaminhamento</label><input id="sa-data-encaminhamento" oninput="formatarDataCampo(this);validarSulamerica()" maxlength="10" inputmode="numeric" placeholder="DD/MM/AAAA" class="sa-input"></div>
+            <div><label class="sa-label">Data usada na comparação</label><div class="h-11 flex items-center px-3 rounded-xl bg-surface-container border border-outline-variant text-xs text-on-surface-variant">Será usada a Data do Atendimento (campo 56).</div></div>
+            <div><label class="sa-label">Validade do encaminhamento</label><div id="sa-r-encaminhamento" class="h-11 flex items-center px-3 rounded-xl bg-surface-container border border-outline-variant text-sm font-bold text-on-surface-variant">Aguardando datas...</div></div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- MODAL TIPO DA CONFERÊNCIA -->
+    <div id="modal-tipo-conferencia-guia" class="fixed inset-0 z-[70] bg-background/80 backdrop-blur-sm hidden items-center justify-center p-4">
+      <div class="bg-surface-container-high border border-outline-variant rounded-2xl p-6 max-w-md w-full shadow-2xl flex flex-col gap-5">
+        <div class="flex justify-between items-center border-b border-outline-variant pb-3"><div><h3 id="cg-modal-convenio" class="text-lg font-bold text-on-surface">Convênio</h3><p class="text-xs text-on-surface-variant">A guia é de Consulta ou SADT?</p></div><button onclick="fecharModalTipoConferencia()" class="text-outline hover:text-on-surface"><span class="material-symbols-outlined">close</span></button></div>
+        <button onclick="selecionarTipoConferencia('consulta')" class="w-full py-4 bg-primary-container text-on-primary-container hover:opacity-90 font-bold rounded-xl flex items-center justify-center gap-2"><span class="material-symbols-outlined">medical_services</span>CONSULTA</button>
+        <button onclick="selecionarTipoConferencia('sadt')" class="w-full py-4 bg-tertiary-container text-on-tertiary-container hover:opacity-90 font-bold rounded-xl flex items-center justify-center gap-2"><span class="material-symbols-outlined">biotech</span>SADT</button>
+      </div>
+    </div>
+
+
+    <!-- TELA CONFIGURAÇÕES CLINIFAT -->
+    <div id="tela-configuracoes" class="screen">
+      <div class="max-w-6xl mx-auto flex flex-col gap-6">
+        <div class="bg-surface-container-high p-6 rounded-2xl border border-outline-variant flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div class="text-xs uppercase font-bold text-secondary font-label-sm mb-1">CliniFat</div>
+            <h2 class="text-2xl font-bold text-primary font-headline-md">Configurações</h2>
+            <p class="text-sm text-on-surface-variant mt-1">Cadastre profissionais e convênios usados pelo contador.</p>
+          </div>
+          <button onclick="navegar('tela-inicio')" class="px-5 py-2.5 bg-surface-container-highest hover:bg-outline-variant rounded-xl text-on-surface font-label-sm flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">arrow_back</span>Voltar
+          </button>
+        </div>
+
+        <div id="config-no-master" class="hidden p-4 rounded-xl border border-tertiary bg-tertiary-container/10 text-tertiary text-sm font-bold">
+          Apenas usuários Master podem alterar os cadastros nesta etapa.
+        </div>
+
+        <section class="bg-surface-container p-6 rounded-2xl border border-outline-variant">
+          <div class="flex items-center justify-between gap-3 mb-5">
+            <div><h3 class="text-lg font-bold text-secondary">Profissionais</h3><p class="text-xs text-on-surface-variant">Profissionais exibidos nos contadores de Consulta e SADT.</p></div>
+          </div>
+
+          <div id="form-profissional" class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-5">
+            <input id="cfg-prof-nome" class="sa-input md:col-span-2" placeholder="Nome do profissional">
+            <select id="cfg-prof-tipo" class="sa-input"><option value="consulta">Consulta</option><option value="sadt">SADT</option></select>
+            <button onclick="adicionarProfissional()" class="h-11 rounded-xl bg-secondary text-on-secondary font-bold flex items-center justify-center gap-2"><span class="material-symbols-outlined text-sm">person_add</span>Adicionar</button>
+          </div>
+          <div id="cfg-prof-lista" class="grid grid-cols-1 md:grid-cols-2 gap-2"></div>
+        </section>
+
+        <section class="bg-surface-container p-6 rounded-2xl border border-outline-variant">
+          <div class="mb-5"><h3 class="text-lg font-bold text-primary">Convênios</h3><p class="text-xs text-on-surface-variant">Convênios e valores unitários utilizados no cálculo do contador.</p></div>
+          <div id="form-convenio" class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-5">
+            <input id="cfg-conv-nome" class="sa-input md:col-span-2" placeholder="Nome do convênio">
+            <input id="cfg-conv-valor" class="sa-input" inputmode="decimal" placeholder="Valor (ex.: 85,50)">
+            <select id="cfg-conv-tipo" class="sa-input"><option value="consulta">Consulta</option><option value="sadt">SADT</option></select>
+            <button onclick="adicionarConvenio()" class="h-11 rounded-xl bg-primary-container text-on-primary-container font-bold flex items-center justify-center gap-2"><span class="material-symbols-outlined text-sm">add_business</span>Adicionar</button>
+          </div>
+          <div id="cfg-conv-lista" class="grid grid-cols-1 md:grid-cols-2 gap-2"></div>
+        </section>
+      </div>
+    </div>
+
+    <!-- TELA CONTADOR -->
+    <div id="tela-contador" class="screen">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+        <h2 id="titulo-tipo" class="text-2xl font-bold text-primary font-headline-md">Contador</h2>
+        <div class="flex items-center gap-3">
+          <span id="status-leitor-qr" class="text-xs font-label-sm text-on-surface-variant hidden sm:inline">--/--/---- --:--:--</span>
+          <button id="btn-ler-qr" onclick="ativarLeituraQRCode()" class="h-11 px-4 rounded-xl bg-surface-container-high border border-outline-variant hover:border-primary hover:text-primary text-on-surface font-label-sm transition-all flex items-center gap-2">
+            <span class="material-symbols-outlined text-base">qr_code_scanner</span>
+            Ler QR Code
+          </button>
+        </div>
+      </div>
+
+      <textarea id="input-captura-qr" aria-label="Captura do leitor QR Code" autocomplete="off" spellcheck="false" style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;"></textarea>
+
+      <section class="grid grid-cols-1 md:grid-cols-12 gap-4 mb-8">
+        <div class="md:col-span-4 relative">
+          <label class="absolute -top-2.5 left-4 bg-background px-2 text-xs font-label-sm text-primary z-10">Convênio</label>
+          <div class="relative">
+            <select id="select-convenio" onchange="selecionarConvenio()" class="w-full h-14 pl-4 pr-10 bg-surface-container border border-outline-variant rounded-xl focus:border-primary focus:ring-0 transition-all appearance-none text-on-surface">
+            </select>
+            <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-outline">expand_more</span>
+          </div>
+        </div>
+
+        <div class="md:col-span-2 relative">
+          <label class="absolute -top-2.5 left-4 bg-background px-2 text-xs font-label-sm text-primary z-10">Lote</label>
+          <input type="text" id="input-lote" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'')" placeholder="Nº do lote" class="w-full h-14 px-4 bg-surface-container border border-outline-variant rounded-xl focus:border-primary focus:ring-0 transition-all text-on-surface">
+        </div>
+
+        <div class="md:col-span-2 relative">
+          <label class="absolute -top-2.5 left-4 bg-background px-2 text-xs font-label-sm text-primary z-10">Protocolo</label>
+          <input type="text" id="input-protocolo" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'')" placeholder="Nº protocolo" class="w-full h-14 px-4 bg-surface-container border border-outline-variant rounded-xl focus:border-primary focus:ring-0 transition-all text-on-surface">
+        </div>
+
+        <div class="md:col-span-2 relative">
+          <label class="absolute -top-2.5 left-4 bg-background px-2 text-xs font-label-sm text-primary z-10">Data Fechamento</label>
+          <input type="text" id="input-data-fechamento" inputmode="numeric" maxlength="10" oninput="formatarDataFechamento(this)" placeholder="DD/MM/AAAA" class="w-full h-14 px-4 bg-surface-container border border-outline-variant rounded-xl focus:border-primary focus:ring-0 transition-all text-on-surface">
+        </div>
+
+        <div class="md:col-span-2 flex items-center justify-center bg-surface-container border border-outline-variant rounded-xl h-14 px-4">
+          <label for="switch-prioridade" class="flex items-center justify-between gap-3 w-full cursor-pointer select-none">
+            <span class="text-xs font-label-sm text-on-surface font-bold">Prioridade</span>
+            <div class="relative inline-block w-10 shrink-0">
+              <input type="checkbox" id="switch-prioridade" class="sr-only peer">
+              <div class="w-10 h-6 bg-surface-container-highest rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"></div>
+            </div>
+          </label>
+        </div>
+      </section>
+
+      <div id="grid-contadores" class="dynamic-grid"></div>
+    </div>
+
+    <!-- TELA CONFERÊNCIA DE LOTE POR PDF -->
+    <div id="tela-conferencia" class="screen">
+      <div class="max-w-4xl mx-auto flex flex-col gap-6">
+        
+        <!-- Header da Tela de Conferência -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-surface-container-high p-6 rounded-2xl border border-outline-variant shadow-lg">
+          <div>
+            <h2 class="text-2xl font-bold text-secondary font-headline-md flex items-center gap-2">
+              <span class="material-symbols-outlined text-secondary">fact_check</span>
+              Conferência de Guia no Lote
+            </h2>
+            <p class="text-sm text-on-surface-variant mt-1">Carregue o PDF da capa do lote e bipe as guias físicas para verificação automatizada.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <!-- BOTÃO LIMPAR -->
+            <button onclick="limparConferencia(true)" class="px-4 py-2.5 bg-error-container/40 hover:bg-error-container text-error border border-error/30 rounded-xl font-label-sm transition-all flex items-center gap-2" title="Limpar PDF e zera conferência">
+              <span class="material-symbols-outlined text-sm">delete_sweep</span>
+              Limpar
+            </button>
+            <button onclick="navegar('tela-inicio')" class="px-5 py-2.5 bg-surface-container-highest hover:bg-outline-variant rounded-xl text-on-surface font-label-sm transition-all flex items-center gap-2">
+              <span class="material-symbols-outlined text-sm">arrow_back</span>
+              Voltar
+            </button>
+          </div>
+        </div>
+
+        <!-- Seção 1: Upload do PDF & Ações do Arquivo -->
+        <div class="bg-surface-container p-6 rounded-2xl border border-outline-variant flex flex-col md:flex-row items-center justify-between gap-6">
+          <div class="flex items-center gap-4 w-full md:w-auto">
+            <div class="w-12 h-12 rounded-xl bg-primary-container text-on-primary-container flex items-center justify-center shrink-0">
+              <span class="material-symbols-outlined">picture_as_pdf</span>
+            </div>
+            <div>
+              <h3 class="font-bold text-on-surface text-base" id="pdf-nome-lbl">Capa do Lote (PDF)</h3>
+              <p class="text-xs text-on-surface-variant" id="pdf-status-desc">Nenhum arquivo carregado ainda</p>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
+            <!-- BOTÃO COPIAR NOME DO PDF -->
+            <button id="btn-copiar-nome" onclick="copiarNomePDF()" class="hidden px-4 py-3.5 bg-surface-container-highest hover:bg-outline-variant text-primary font-bold font-label-md rounded-xl transition-all items-center gap-2 border border-outline-variant">
+              <span class="material-symbols-outlined text-sm">content_copy</span>
+              Copiar Nome
+            </button>
+
+            <label class="px-6 py-3.5 bg-primary text-on-primary font-bold font-label-md rounded-xl cursor-pointer hover:opacity-90 transition-all text-center flex items-center justify-center gap-2 shadow-md shrink-0">
+              <span class="material-symbols-outlined">upload_file</span>
+              Selecionar PDF do Lote
+              <input type="file" id="pdf-file-input" accept="application/pdf" class="hidden" onchange="carregarPDFLote(event)">
+            </label>
+          </div>
+        </div>
+
+        <!-- Área Principal de Verificação (Visível apenas após carregar PDF) -->
+        <div id="area-verificacao" class="hidden flex-col gap-6">
+          
+          <!-- Placar e Estatísticas -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-surface-container p-4 rounded-xl border border-outline-variant flex flex-col">
+              <span class="text-xs text-outline font-label-sm uppercase">Total de Guias no PDF</span>
+              <span class="text-3xl font-bold font-headline-lg text-primary" id="lbl-total-pdf">0</span>
+            </div>
+            <div class="bg-surface-container p-4 rounded-xl border border-outline-variant flex flex-col">
+              <span class="text-xs text-outline font-label-sm uppercase">Guias Conferidas</span>
+              <span class="text-3xl font-bold font-headline-lg text-secondary" id="lbl-conferidas-pdf">0</span>
+            </div>
+            <div class="bg-surface-container p-4 rounded-xl border border-outline-variant flex flex-col">
+              <span class="text-xs text-outline font-label-sm uppercase">Guias Pendentes</span>
+              <span class="text-3xl font-bold font-headline-lg text-tertiary" id="lbl-pendentes-pdf">0</span>
+            </div>
+          </div>
+
+          <!-- BOTÃO CONTAR -->
+          <div class="bg-surface-container-high p-4 rounded-2xl border border-outline-variant flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <span class="material-symbols-outlined text-primary text-2xl">calculate</span>
+              <div>
+                <span class="font-bold text-on-surface text-sm block">Pronto para contar este lote?</span>
+                <span class="text-xs text-on-surface-variant block" id="lbl-convenio-detectado">Convênio detectado: Não identificado automaticamente (Pendência)</span>
+              </div>
+            </div>
+            <button onclick="abrirModalContar()" class="w-full sm:w-auto px-6 py-3 bg-secondary text-on-secondary font-bold font-label-md rounded-xl hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-lg">
+              <span class="material-symbols-outlined">arrow_forward</span>
+              Contar Lote
+            </button>
+          </div>
+
+          <!-- Caixa de Entrada de Bipagem/Digitação + SWITCH DE PREFIXO -->
+          <div class="bg-surface-container-high p-6 rounded-2xl border border-outline-variant shadow-md flex flex-col gap-4 transition-all" id="box-bipador">
+            
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-outline-variant/50">
+              <label class="text-xs font-label-sm text-primary font-bold uppercase tracking-wider flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">barcode_reader</span>
+                Digitar ou Bipar Código da Guia
+              </label>
+
+              <!-- SWITCH E INPUT DE PREFIXO -->
+              <div class="flex items-center gap-3 bg-surface-container px-3 py-1.5 rounded-xl border border-outline-variant">
+                <div class="flex items-center gap-2">
+                  <label for="switch-prefixo" class="text-xs font-label-sm text-on-surface-variant cursor-pointer select-none">Inserir Prefixo</label>
+                  <div class="relative inline-block w-10 align-middle select-none">
+                    <input type="checkbox" id="switch-prefixo" class="sr-only peer" onchange="togglePrefixo(this.checked)">
+                    <div class="w-10 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"></div>
+                  </div>
+                </div>
+
+                <div id="container-input-prefixo" class="hidden items-center gap-1 border-l border-outline-variant pl-3">
+                  <span class="text-xs text-outline font-label-sm">Prefixo:</span>
+                  <input type="text" id="input-prefixo-val" value="20" class="w-14 h-8 px-2 bg-surface-container-high border border-outline-variant rounded-lg text-xs font-mono text-center text-primary font-bold focus:border-primary focus:ring-0">
+                </div>
+              </div>
+            </div>
+
+            <div class="flex gap-3">
+              <input type="text" id="input-bipador" placeholder="Insira o número da guia e pressione ENTER..." class="flex-grow h-14 px-4 bg-surface-container border border-outline-variant rounded-xl focus:border-primary focus:ring-0 transition-all font-mono text-lg text-on-surface" onkeydown="processarBipagem(event)">
+              <button onclick="executarBipagemManual()" class="px-6 bg-secondary text-on-secondary font-bold font-label-md rounded-xl hover:opacity-90 transition-all flex items-center gap-2">
+                Conferir
+              </button>
+            </div>
+            <div id="msg-feedback" class="text-xs font-label-sm min-h-[20px] transition-all"></div>
+          </div>
+
+          <!-- Tabela/Listagem das Guias -->
+          <div class="bg-surface-container p-6 rounded-2xl border border-outline-variant flex flex-col gap-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-3 border-b border-outline-variant">
+              <h4 class="font-bold text-on-surface font-label-md flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">list_alt</span>
+                Listagem de Guias do Lote
+              </h4>
+              
+              <!-- Filtros de Visualização -->
+              <div class="flex gap-2">
+                <button onclick="filtrarListaGuias('todas')" id="btn-filtro-todas" class="px-3 py-1.5 rounded-lg text-xs font-label-sm bg-primary text-on-primary font-bold">Todas</button>
+                <button onclick="filtrarListaGuias('pendentes')" id="btn-filtro-pendentes" class="px-3 py-1.5 rounded-lg text-xs font-label-sm bg-surface-container-highest text-on-surface-variant hover:bg-outline-variant">Pendentes</button>
+                <button onclick="filtrarListaGuias('conferidas')" id="btn-filtro-conferidas" class="px-3 py-1.5 rounded-lg text-xs font-label-sm bg-surface-container-highest text-on-surface-variant hover:bg-outline-variant">Conferidas</button>
+              </div>
+            </div>
+
+            <!-- Grid com Scroll das Guias -->
+            <div id="grid-guias-pdf" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-96 overflow-y-auto pr-2">
+              <!-- Elementos inseridos dinamicamente -->
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODAL DE SELEÇÃO TIPO LOTE (CONSULTA / SADT) -->
+  <div id="modal-contar" class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-surface-container-high border border-outline-variant rounded-2xl p-6 max-w-md w-full shadow-2xl flex flex-col gap-5">
+      <div class="flex justify-between items-center border-b border-outline-variant pb-3">
+        <h3 class="text-lg font-bold text-on-surface font-headline-md flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary">pin</span>
+          Selecione o Tipo do Lote
+        </h3>
+        <button onclick="fecharModalContar()" class="text-outline hover:text-on-surface">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <p class="text-sm text-on-surface-variant">Qual é a modalidade deste lote de atendimentos?</p>
+
+      <div class="flex flex-col gap-3">
+        <button onclick="confirmarMigracaoContador('consulta')" class="w-full py-4 bg-primary-container text-on-primary-container hover:opacity-90 font-bold rounded-xl text-base transition-all flex items-center justify-center gap-2 shadow-md">
+          <span class="material-symbols-outlined">medical_services</span>
+          CONSULTA
+        </button>
+        <button onclick="confirmarMigracaoContador('sadt')" class="w-full py-4 bg-tertiary-container text-on-tertiary-container hover:opacity-90 font-bold rounded-xl text-base transition-all flex items-center justify-center gap-2 shadow-md">
+          <span class="material-symbols-outlined">biotech</span>
+          SADT
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resumo Fixo & Barra de Ações do Contador -->
+  <div id="summary-bar" class="fixed bottom-[48px] left-0 w-full z-40 px-6 pb-4 hidden">
+    <div class="max-w-7xl mx-auto glass-summary rounded-2xl shadow-2xl border border-outline-variant p-6 flex flex-col md:flex-row justify-between items-center gap-6">
+      <div class="flex items-center gap-8">
+        <div class="flex flex-col">
+          <span class="text-xs font-label-sm text-outline uppercase tracking-wider">Quantidade Total</span>
+          <span class="text-2xl font-bold font-headline-lg text-secondary" id="lbl-qtd">0</span>
+        </div>
+        <div class="w-[1px] h-10 bg-outline-variant"></div>
+        <div class="flex flex-col">
+          <span class="text-xs font-label-sm text-outline uppercase tracking-wider">Valor Total</span>
+          <span class="text-2xl font-bold font-headline-lg text-secondary" id="lbl-valor">R$ 0,00</span>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3">
+        <button onclick="zerar()" class="h-12 px-6 rounded-xl border border-error text-error font-label-md hover:bg-error-container hover:text-on-error-container transition-all flex items-center gap-2">
+          <span class="material-symbols-outlined text-sm">refresh</span>
+          Zerar
+        </button>
+        <button onclick="ce()" class="h-12 px-6 rounded-xl border border-tertiary text-tertiary font-label-md hover:bg-tertiary-container hover:text-on-tertiary-container transition-all flex items-center gap-2" title="Zerar contadores mantendo o convênio selecionado">
+          <span class="material-symbols-outlined text-sm">restart_alt</span>
+          CE
+        </button>
+        <button onclick="navegar('tela-inicio')" class="h-12 px-6 rounded-xl bg-surface-container-highest text-on-surface font-label-md hover:bg-outline-variant transition-all">
+          Voltar
+        </button>
+        <button onclick="imprimirComprovante()" class="h-12 px-6 rounded-xl bg-primary-container text-on-primary-container font-label-md shadow-md hover:opacity-90 transition-all flex items-center gap-2">
+          <span class="material-symbols-outlined text-sm">print</span>
+          Imprimir
+        </button>
+        <button onclick="salvarArquivoTXT()" class="h-12 px-6 rounded-xl bg-secondary text-on-secondary font-label-md shadow-md hover:opacity-90 transition-all flex items-center gap-2">
+          <span class="material-symbols-outlined text-sm">download</span>
+          Baixar TXT
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="fixed bottom-0 w-full z-50 flex justify-between items-center px-6 py-2 bg-surface-container border-t border-outline-variant text-xs text-on-surface-variant">
+    <div class="flex items-center gap-3">
+      <span class="font-bold text-primary font-label-md">CliniFat</span>
+      <span>© 2026 Gabriel Santos. Todos os direitos reservados.</span>
+    </div>
+    <div class="flex items-center gap-4 hidden sm:flex font-label-sm">
+      <a href="#" class="hover:text-primary transition-colors">Suporte</a>
+      <a href="#" class="hover:text-primary transition-colors">Privacidade</a>
+    </div>
+  </footer>
+
+  <!-- Div de Impressão -->
+  <div id="comprovante-print"></div>
+
+  <script>
+    // Inicialização da biblioteca PDF.js
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    // =======================================================
+    // CLINITOOL / SUPABASE
+    // =======================================================
+    const SUPABASE_URL = "https://sgnygzsbgqskcftfgncj.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNnbnlnenNiZ3Fza2NmdGZnbmNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1MDk3NjgsImV4cCI6MjEwMTA4NTc2OH0.oBAjEGtPZCeyjjz4aeSovvM-DKZzxIeIAHIHD79B6go";
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const AUTH_EMAIL_DOMAIN = 'getchat.app';
+
+    let currentUserProfile = null;
+    let isClinifatMaster = false;
+
+    let dados = {
+      profissionais: { consulta: [], sadt: [] },
+      convenios: { consulta: [], sadt: [] }
+    };
+
+    let tipoAtual = 'consulta';
+    let valorAtual = 0.0;
+    let contadores = {};
+
+    // Estado da Conferência de Lote
+    let guiasLote = [];
+    let filtroGuiaAtual = 'todas';
+    let nomeArquivoPdfSemExtensao = "";
+
+    let colunasAtuais = parseInt(localStorage.getItem('pref_colunas')) || 10;
+
+    function normalizeUsername(value) {
+      return String(value || '').trim().toLowerCase().normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9._-]/g, '');
+    }
+
+    function usernameToInternalEmail(username) {
+      return `${normalizeUsername(username)}@${AUTH_EMAIL_DOMAIN}`;
+    }
+
+    async function carregarPerfilCliniFat(authUser) {
+      const { data: profile, error } = await _supabase
+        .from('profiles')
+        .select('id, username, nome_completo, nome_exibicao, is_master, is_banned')
+        .eq('id', authUser.id)
+        .single();
+
+      if (error || !profile) throw new Error('Perfil CliniTool não encontrado.');
+      if (profile.is_banned) {
+        await _supabase.auth.signOut();
+        throw new Error('Sua conta está bloqueada.');
+      }
+
+      const { data: allowed, error: accessError } = await _supabase.rpc('has_app_access', { p_app_key: 'clinifat' });
+      if (accessError) throw new Error('Não foi possível verificar o acesso ao CliniFat.');
+      if (allowed !== true) throw new Error('Sua conta não possui acesso ao CliniFat.');
+
+      currentUserProfile = profile;
+      isClinifatMaster = profile.is_master === true;
+
+      const label = document.getElementById('clinifat-user-label');
+      if (label) label.textContent = profile.nome_exibicao || profile.nome_completo || profile.username;
+
+      document.getElementById('btn-configuracoes')?.classList.remove('hidden');
+      document.getElementById('config-no-master')?.classList.toggle('hidden', isClinifatMaster);
+      document.getElementById('form-profissional')?.classList.toggle('hidden', !isClinifatMaster);
+      document.getElementById('form-convenio')?.classList.toggle('hidden', !isClinifatMaster);
+    }
+
+    async function liberarCliniFat(authUser) {
+      await carregarPerfilCliniFat(authUser);
+      await carregarDadosSupabase();
+      document.getElementById('clinifat-auth-gate').classList.add('hidden');
+    }
+
+    async function verificarSessaoCliniFat() {
+      const status = document.getElementById('clinifat-auth-status');
+      const form = document.getElementById('clinifat-login-form');
+      const { data: { session }, error } = await _supabase.auth.getSession();
+
+      if (!error && session?.user) {
+        try {
+          await liberarCliniFat(session.user);
+          return;
+        } catch (err) {
+          status.textContent = err.message;
+          if (String(err.message).includes('não possui acesso')) {
+            setTimeout(() => window.location.href = './index.html', 1600);
+            return;
+          }
+        }
+      }
+
+      status.textContent = 'Entre com sua conta CliniTool.';
+      form.classList.remove('hidden');
+      form.classList.add('flex');
+    }
+
+    document.getElementById('clinifat-login-form')?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const status = document.getElementById('clinifat-auth-status');
+      status.textContent = 'Entrando...';
+      const username = normalizeUsername(document.getElementById('clinifat-login-user').value);
+      const password = document.getElementById('clinifat-login-pass').value;
+
+      const { data, error } = await _supabase.auth.signInWithPassword({
+        email: usernameToInternalEmail(username),
+        password
+      });
+
+      if (error || !data.user) {
+        status.textContent = 'Usuário ou senha incorretos.';
+        return;
+      }
+
+      try {
+        await liberarCliniFat(data.user);
+      } catch (err) {
+        status.textContent = err.message || 'Não foi possível abrir o CliniFat.';
+      }
+    });
+
+    async function carregarDadosSupabase(mostrarStatus = false) {
+      const statusEl = document.getElementById('status-sync');
+      if (statusEl && (mostrarStatus || !dados.profissionais.consulta.length)) {
+        statusEl.innerText = '🔄 Carregando profissionais e convênios do Supabase...';
+        statusEl.className = 'p-3 rounded-xl bg-surface-container text-center font-label-sm text-sm border border-outline-variant text-primary';
+      }
+
+      const [profRes, convRes] = await Promise.all([
+        _supabase.from('clinifat_profissionais')
+          .select('id,nome,tipo,ativo,ordem')
+          .eq('ativo', true)
+          .order('tipo').order('ordem').order('nome'),
+        _supabase.from('clinifat_convenios')
+          .select('id,nome,tipo,valor,ativo,ordem')
+          .eq('ativo', true)
+          .order('tipo').order('ordem').order('nome')
+      ]);
+
+      if (profRes.error) throw new Error('Erro ao carregar profissionais: ' + profRes.error.message);
+      if (convRes.error) throw new Error('Erro ao carregar convênios: ' + convRes.error.message);
+
+      dados = {
+        profissionais: { consulta: [], sadt: [] },
+        convenios: { consulta: [], sadt: [] }
+      };
+
+      (profRes.data || []).forEach(p => {
+        if (dados.profissionais[p.tipo]) dados.profissionais[p.tipo].push(p.nome);
+      });
+
+      (convRes.data || []).forEach(c => {
+        if (dados.convenios[c.tipo]) {
+          dados.convenios[c.tipo].push({
+            id: c.id,
+            nome: c.nome,
+            valor: Number(c.valor || 0)
+          });
+        }
+      });
+
+      if (statusEl) {
+        const totalP = (profRes.data || []).length;
+        const totalC = (convRes.data || []).length;
+        statusEl.innerText = `🟢 CliniFat atualizado — ${totalP} profissionais • ${totalC} convênios`;
+        statusEl.className = 'p-3 rounded-xl bg-surface-container text-center font-label-sm text-sm border border-outline-variant text-secondary';
+      }
+
+      if (document.getElementById('tela-configuracoes')?.classList.contains('active')) {
+        await renderizarConfiguracoes();
+      }
+    }
+
+    async function abrirConfiguracoes() {
+      navegar('tela-configuracoes');
+      await renderizarConfiguracoes();
+    }
+
+    async function renderizarConfiguracoes() {
+      const [profRes, convRes] = await Promise.all([
+        _supabase.from('clinifat_profissionais').select('*').order('tipo').order('ordem').order('nome'),
+        _supabase.from('clinifat_convenios').select('*').order('tipo').order('ordem').order('nome')
+      ]);
+
+      const profList = document.getElementById('cfg-prof-lista');
+      const convList = document.getElementById('cfg-conv-lista');
+      if (!profList || !convList) return;
+
+      if (profRes.error) {
+        profList.innerHTML = `<div class="text-error text-sm">${escapeHtmlCF(profRes.error.message)}</div>`;
+      } else {
+        profList.innerHTML = (profRes.data || []).map(p => `
+          <div class="flex items-center gap-3 p-3 rounded-xl border border-outline-variant bg-surface-container-high ${p.ativo ? '' : 'opacity-50'}">
+            <div class="min-w-0 flex-1">
+              <div class="font-bold text-sm truncate">${escapeHtmlCF(p.nome)}</div>
+              <div class="text-[10px] uppercase text-on-surface-variant font-label-sm">${p.tipo}</div>
+            </div>
+            ${isClinifatMaster ? `<button onclick="alternarProfissional(${p.id},${!p.ativo})" class="p-2 rounded-lg hover:bg-outline-variant" title="${p.ativo?'Desativar':'Ativar'}"><span class="material-symbols-outlined text-sm">${p.ativo?'visibility_off':'visibility'}</span></button>
+            <button onclick="excluirProfissional(${p.id},'${escapeJsCF(p.nome)}')" class="p-2 rounded-lg text-error hover:bg-error-container/30" title="Excluir"><span class="material-symbols-outlined text-sm">delete</span></button>` : ''}
+          </div>`).join('') || '<div class="text-sm text-on-surface-variant">Nenhum profissional cadastrado.</div>';
+      }
+
+      if (convRes.error) {
+        convList.innerHTML = `<div class="text-error text-sm">${escapeHtmlCF(convRes.error.message)}</div>`;
+      } else {
+        convList.innerHTML = (convRes.data || []).map(c => `
+          <div class="flex items-center gap-3 p-3 rounded-xl border border-outline-variant bg-surface-container-high ${c.ativo ? '' : 'opacity-50'}">
+            <div class="min-w-0 flex-1">
+              <div class="font-bold text-sm truncate">${escapeHtmlCF(c.nome)}</div>
+              <div class="text-[10px] text-on-surface-variant font-label-sm uppercase">${c.tipo} • R$ ${Number(c.valor||0).toFixed(2).replace('.',',')}</div>
+            </div>
+            ${isClinifatMaster ? `<button onclick="alternarConvenio(${c.id},${!c.ativo})" class="p-2 rounded-lg hover:bg-outline-variant" title="${c.ativo?'Desativar':'Ativar'}"><span class="material-symbols-outlined text-sm">${c.ativo?'visibility_off':'visibility'}</span></button>
+            <button onclick="excluirConvenio(${c.id},'${escapeJsCF(c.nome)}')" class="p-2 rounded-lg text-error hover:bg-error-container/30" title="Excluir"><span class="material-symbols-outlined text-sm">delete</span></button>` : ''}
+          </div>`).join('') || '<div class="text-sm text-on-surface-variant">Nenhum convênio cadastrado.</div>';
+      }
+    }
+
+    function escapeHtmlCF(v) {
+      return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+    }
+    function escapeJsCF(v) {
+      return String(v ?? '').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    }
+
+    async function adicionarProfissional() {
+      if (!isClinifatMaster) return alert('Acesso restrito ao Master.');
+      const nome = document.getElementById('cfg-prof-nome').value.trim();
+      const tipo = document.getElementById('cfg-prof-tipo').value;
+      if (!nome) return alert('Informe o nome do profissional.');
+
+      const { error } = await _supabase.from('clinifat_profissionais').insert({ nome, tipo });
+      if (error) return alert('Erro ao cadastrar profissional: ' + error.message);
+      document.getElementById('cfg-prof-nome').value = '';
+      await carregarDadosSupabase();
+      await renderizarConfiguracoes();
+    }
+
+    async function adicionarConvenio() {
+      if (!isClinifatMaster) return alert('Acesso restrito ao Master.');
+      const nome = document.getElementById('cfg-conv-nome').value.trim();
+      const tipo = document.getElementById('cfg-conv-tipo').value;
+      const raw = document.getElementById('cfg-conv-valor').value.trim().replace(/\./g,'').replace(',','.');
+      const valor = Number(raw);
+      if (!nome) return alert('Informe o nome do convênio.');
+      if (!Number.isFinite(valor) || valor < 0) return alert('Informe um valor válido.');
+
+      const { error } = await _supabase.from('clinifat_convenios').insert({ nome, tipo, valor });
+      if (error) return alert('Erro ao cadastrar convênio: ' + error.message);
+      document.getElementById('cfg-conv-nome').value = '';
+      document.getElementById('cfg-conv-valor').value = '';
+      await carregarDadosSupabase();
+      await renderizarConfiguracoes();
+    }
+
+    async function alternarProfissional(id, ativo) {
+      const { error } = await _supabase.from('clinifat_profissionais').update({ ativo }).eq('id', id);
+      if (error) return alert(error.message);
+      await carregarDadosSupabase(); await renderizarConfiguracoes();
+    }
+    async function alternarConvenio(id, ativo) {
+      const { error } = await _supabase.from('clinifat_convenios').update({ ativo }).eq('id', id);
+      if (error) return alert(error.message);
+      await carregarDadosSupabase(); await renderizarConfiguracoes();
+    }
+    async function excluirProfissional(id, nome) {
+      if (!confirm(`Excluir definitivamente o profissional "${nome}"?`)) return;
+      const { error } = await _supabase.from('clinifat_profissionais').delete().eq('id', id);
+      if (error) return alert(error.message);
+      await carregarDadosSupabase(); await renderizarConfiguracoes();
+    }
+    async function excluirConvenio(id, nome) {
+      if (!confirm(`Excluir definitivamente o convênio "${nome}"?`)) return;
+      const { error } = await _supabase.from('clinifat_convenios').delete().eq('id', id);
+      if (error) return alert(error.message);
+      await carregarDadosSupabase(); await renderizarConfiguracoes();
+    }
+
+    function navegar(idTela) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(idTela).classList.add('active');
+
+      const headerControls = document.getElementById('header-controls');
+      const summaryBar = document.getElementById('summary-bar');
+
+      if (idTela === 'tela-contador') {
+        headerControls.classList.remove('hidden');
+        headerControls.classList.add('flex');
+        summaryBar.classList.remove('hidden');
+      } else {
+        headerControls.classList.add('hidden');
+        headerControls.classList.remove('flex');
+        summaryBar.classList.add('hidden');
+      }
+
+      if (idTela === 'tela-conferencia') {
+        setTimeout(() => {
+          const input = document.getElementById('input-bipador');
+          if (input) input.focus();
+        }, 100);
+      }
+    }
+
+    function escolherTipo(tipo) {
+      tipoAtual = tipo;
+      document.getElementById('titulo-tipo').innerText = `Contador - ${tipo.toUpperCase()}`;
+      carregarDropdownConvenios();
+      iniciarContadores();
+      navegar('tela-contador');
+    }
+
+    function carregarDropdownConvenios() {
+      const select = document.getElementById('select-convenio');
+      select.innerHTML = '<option value="">Selecione um convênio</option>';
+      const lista = dados.convenios[tipoAtual] || [];
+      
+      lista.forEach((c, index) => {
+        const opt = document.createElement('option');
+        opt.value = index;
+        opt.textContent = `${c.nome} | R$ ${parseFloat(c.valor).toFixed(2)}`;
+        select.appendChild(opt);
+      });
+      valorAtual = 0.0;
+      atualizarTotais();
+    }
+
+    function selecionarConvenio() {
+      const idx = document.getElementById('select-convenio').value;
+      if (idx !== "") {
+        valorAtual = parseFloat(dados.convenios[tipoAtual][idx].valor);
+      } else {
+        valorAtual = 0.0;
+      }
+      atualizarTotais();
+    }
+
+    function iniciarContadores() {
+      const grid = document.getElementById('grid-contadores');
+      grid.innerHTML = '';
+      contadores = {};
+      const nomes = dados.profissionais[tipoAtual] || [];
+
+      nomes.forEach(nome => {
+        contadores[nome] = 0;
+        const card = document.createElement('div');
+        card.className = 'bg-surface-container-high border border-outline-variant rounded-xl p-4 flex flex-col gap-3 transition-all hover:border-primary hover:shadow-lg professional-card';
+        card.id = `card-${nome}`;
+        card.setAttribute('data-count', '0');
+        
+        card.innerHTML = `
+          <span class="font-label-md text-xs text-on-surface-variant truncate font-bold text-center">${nome}</span>
+          <div class="flex-grow flex items-center justify-center py-2">
+            <span class="font-headline-xl text-3xl font-bold counter-value" id="qtd-${nome}">0</span>
+          </div>
+          <div class="flex justify-between items-center bg-surface-container-highest rounded-xl p-1 gap-1">
+            <button onclick="alterarQtd('${nome}', -1)" class="w-10 h-10 flex items-center justify-center rounded-lg bg-surface-container-high text-on-surface-variant hover:bg-outline-variant transition-colors">
+              <span class="material-symbols-outlined">remove</span>
+            </button>
+            <button onclick="alterarQtd('${nome}', 1)" class="w-10 h-10 flex items-center justify-center rounded-lg bg-primary-container text-on-primary-container hover:opacity-90 transition-colors shadow-sm">
+              <span class="material-symbols-outlined">add</span>
+            </button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+      atualizarTotais();
+    }
+
+    function alterarQtd(nome, delta) {
+      if (contadores[nome] + delta >= 0) {
+        contadores[nome] += delta;
+        
+        const qtdEl = document.getElementById(`qtd-${nome}`);
+        const cardEl = document.getElementById(`card-${nome}`);
+        
+        qtdEl.innerText = contadores[nome];
+        cardEl.setAttribute('data-count', contadores[nome]);
+
+        if (contadores[nome] > 0) {
+          cardEl.classList.add('card-active');
+          qtdEl.classList.add('text-active');
+        } else {
+          cardEl.classList.remove('card-active');
+          qtdEl.classList.remove('text-active');
+        }
+
+        atualizarTotais();
+      }
+    }
+
+    function formatarDataFechamento(input) {
+      const digitos = input.value.replace(/\D/g, '').slice(0, 8);
+      let formatado = digitos;
+      if (digitos.length > 4) {
+        formatado = `${digitos.slice(0, 2)}/${digitos.slice(2, 4)}/${digitos.slice(4)}`;
+      } else if (digitos.length > 2) {
+        formatado = `${digitos.slice(0, 2)}/${digitos.slice(2)}`;
+      }
+      input.value = formatado;
+    }
+
+    let timerCapturaQR = null;
+    let leituraQRAtiva = false;
+
+    function textoDataHoraAtual() {
+      return new Date().toLocaleString('pt-BR', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', second: '2-digit'
+      });
+    }
+
+    function atualizarRelogioQR() {
+      if (leituraQRAtiva) return;
+      const status = document.getElementById('status-leitor-qr');
+      if (!status || status.dataset.estado === 'resultado') return;
+      status.innerText = textoDataHoraAtual();
+    }
+
+    function resetarEstadoLeitorQR() {
+      leituraQRAtiva = false;
+      clearTimeout(timerCapturaQR);
+
+      const captura = document.getElementById('input-captura-qr');
+      const status = document.getElementById('status-leitor-qr');
+      const btn = document.getElementById('btn-ler-qr');
+
+      if (captura) {
+        captura.value = '';
+        captura.blur();
+      }
+      if (status) {
+        status.dataset.estado = 'inicial';
+        status.innerText = textoDataHoraAtual();
+        status.className = 'text-xs font-label-sm text-on-surface-variant hidden sm:inline';
+      }
+      if (btn) btn.classList.remove('border-tertiary', 'text-tertiary');
+    }
+
+    function ativarLeituraQRCode() {
+      if (leituraQRAtiva) {
+        resetarEstadoLeitorQR();
+        return;
+      }
+
+      const captura = document.getElementById('input-captura-qr');
+      const status = document.getElementById('status-leitor-qr');
+      const btn = document.getElementById('btn-ler-qr');
+
+      leituraQRAtiva = true;
+      captura.value = '';
+      status.dataset.estado = 'aguardando';
+      status.innerText = '🟡 Aguardando leitura do QR Code...';
+      status.className = 'text-xs font-label-sm text-tertiary hidden sm:inline';
+      btn.classList.add('border-tertiary', 'text-tertiary');
+      captura.focus();
+    }
+
+    function processarDadosQRCode(texto) {
+      const linhas = texto
+        .split(/\r?\n/)
+        .map(l => l.trim())
+        .filter(Boolean);
+
+      if (linhas.length < 3) return false;
+
+      const protocolo = (linhas[0] || '').replace(/\D/g, '');
+      const lote = (linhas[1] || '').replace(/\D/g, '');
+      const dataDigitos = (linhas[2] || '').replace(/\D/g, '').slice(0, 8);
+
+      if (!protocolo || !lote || dataDigitos.length !== 8) return false;
+
+      document.getElementById('input-protocolo').value = protocolo;
+      document.getElementById('input-lote').value = lote;
+
+      const campoData = document.getElementById('input-data-fechamento');
+      campoData.value = dataDigitos;
+      formatarDataFechamento(campoData);
+
+      const status = document.getElementById('status-leitor-qr');
+      const btn = document.getElementById('btn-ler-qr');
+      leituraQRAtiva = false;
+      status.dataset.estado = 'resultado';
+      status.innerText = `🟢 QR lido: protocolo ${protocolo} | lote ${lote}`;
+      status.className = 'text-xs font-label-sm text-secondary hidden sm:inline';
+      btn.classList.remove('border-tertiary', 'text-tertiary');
+
+      document.getElementById('input-captura-qr').value = '';
+      return true;
+    }
+
+    document.getElementById('input-captura-qr').addEventListener('input', function() {
+      clearTimeout(timerCapturaQR);
+      timerCapturaQR = setTimeout(() => {
+        if (!processarDadosQRCode(this.value)) {
+          const status = document.getElementById('status-leitor-qr');
+          const btn = document.getElementById('btn-ler-qr');
+          leituraQRAtiva = false;
+          status.dataset.estado = 'resultado';
+          status.innerText = '🔴 QR Code inválido ou incompleto';
+          status.className = 'text-xs font-label-sm text-error hidden sm:inline';
+          btn.classList.remove('border-tertiary', 'text-tertiary');
+          this.value = '';
+        }
+      }, 250);
+    });
+
+    function atualizarTotais() {
+      const qtdTotal = Object.values(contadores).reduce((a, b) => a + b, 0);
+      const valorTotal = qtdTotal * valorAtual;
+      
+      document.getElementById('lbl-qtd').innerText = qtdTotal;
+      document.getElementById('lbl-valor').innerText = `R$ ${valorTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    }
+
+    function zerar() {
+      if(confirm('Deseja zerar todos os contadores e limpar a tela de conferência de guias?')) {
+        resetarEstadoLeitorQR();
+        for (let k in contadores) {
+          contadores[k] = 0;
+          const el = document.getElementById(`qtd-${k}`);
+          if (el) el.innerText = "0";
+          
+          const cardEl = document.getElementById(`card-${k}`);
+          if (cardEl) {
+            cardEl.classList.remove('card-active');
+            cardEl.setAttribute('data-count', '0');
+          }
+          if (el) el.classList.remove('text-active');
+        }
+        document.getElementById('input-lote').value = '';
+        document.getElementById('input-protocolo').value = '';
+        document.getElementById('input-data-fechamento').value = '';
+        document.getElementById('switch-prioridade').checked = false;
+        document.getElementById('select-convenio').value = '';
+        valorAtual = 0.0;
+        atualizarTotais();
+
+        limparConferencia(false);
+      }
+    }
+
+    function ce() {
+      if(confirm('Deseja zerar todos os contadores mantendo o convênio selecionado?')) {
+        resetarEstadoLeitorQR();
+        for (let k in contadores) {
+          contadores[k] = 0;
+          const el = document.getElementById(`qtd-${k}`);
+          if (el) el.innerText = "0";
+
+          const cardEl = document.getElementById(`card-${k}`);
+          if (cardEl) {
+            cardEl.classList.remove('card-active');
+            cardEl.setAttribute('data-count', '0');
+          }
+          if (el) el.classList.remove('text-active');
+        }
+
+        document.getElementById('input-lote').value = '';
+        document.getElementById('input-protocolo').value = '';
+        document.getElementById('input-data-fechamento').value = '';
+        document.getElementById('switch-prioridade').checked = false;
+        atualizarTotais();
+        limparConferencia(false);
+      }
+    }
+
+    function gerarTextoComprovante() {
+      const agora = new Date().toLocaleString('pt-BR');
+      const lote = document.getElementById('input-lote').value.trim();
+      const protocolo = document.getElementById('input-protocolo').value.trim();
+      const dataFechamento = document.getElementById('input-data-fechamento').value.trim();
+      const prioridade = document.getElementById('switch-prioridade').checked;
+      const idxConv = document.getElementById('select-convenio').value;
+      
+      let linhas = [];
+      linhas.push("RESUMO ATENDIMENTOS");
+      linhas.push(`Data: ${agora}`);
+      linhas.push(`Tipo: ${tipoAtual.toUpperCase()}`);
+      if (protocolo) linhas.push(`Protocolo: ${protocolo}`);
+      if (lote) linhas.push(`Lote: ${lote}`);
+      if (dataFechamento) linhas.push(`Fechamento: ${dataFechamento}`);
+      
+      if (idxConv !== "") {
+        const conv = dados.convenios[tipoAtual][idxConv];
+        linhas.push(`Convênio: ${conv.nome}`);
+        linhas.push(`Valor Un.: R$ ${valorAtual.toFixed(2)}`);
+      }
+
+      if (prioridade) linhas.push("OBS: Prioridade Correios");
+
+      linhas.push("─".repeat(28));
+      linhas.push("Profissional           Quant.");
+      linhas.push("─".repeat(28));
+
+      let totalQtd = 0;
+      const TAMANHO_LINHA = 28;
+      const TAMANHO_QTD = 4;
+
+      for (const [nome, qtd] of Object.entries(contadores)) {
+        if (qtd > 0) {
+          const qtdStr = qtd.toString().padStart(TAMANHO_QTD, ' ');
+          const maxNomeLen = TAMANHO_LINHA - TAMANHO_QTD;
+
+          let nomeFormatado = nome;
+          if (nomeFormatado.length > maxNomeLen) {
+            nomeFormatado = nomeFormatado.substring(0, maxNomeLen - 2) + "..";
+          } else {
+            nomeFormatado = nomeFormatado.padEnd(maxNomeLen, ' ');
+          }
+
+          linhas.push(`${nomeFormatado}${qtdStr}`);
+          totalQtd += qtd;
+        }
+      }
+
+      linhas.push("─".repeat(28));
+      let totalValor = totalQtd * valorAtual;
+
+      if (valorAtual > 0) {
+        linhas.push(`Total: ${totalQtd} atendimentos`);
+        linhas.push(`Valor Total: R$ ${totalValor.toFixed(2)}`);
+      } else {
+        linhas.push(`TOTAL: ${totalQtd} atendimentos`);
+      }
+
+      linhas.push("─".repeat(28));
+      linhas.push("     STATUS DO LOTE\n");
+      linhas.push("►PLANILHA - ►DIGITALIZADO\n");
+      linhas.push("►ENVIADO - ►ARQUIVADO\n");
+      linhas.push("Ver 10.4 WebServer");
+      linhas.push("Dev. GB - Since 02/2026");
+
+      return linhas.join("\n");
+    }
+
+    function imprimirComprovante() {
+      const texto = gerarTextoComprovante();
+      const lote = document.getElementById('input-lote').value.trim();
+      const protocolo = document.getElementById('input-protocolo').value.trim();
+      const container = document.getElementById('comprovante-print');
+      
+      container.innerText = texto;
+
+      // Prioridade do QR impresso:
+      // 1) Protocolo, quando preenchido (mesmo que o lote também esteja preenchido).
+      // 2) Lote, somente quando não houver protocolo.
+      const valorQR = protocolo || lote;
+      const rotuloQR = protocolo ? 'PROTOCOLO' : 'LOTE';
+
+      if (valorQR) {
+        const qrDiv = document.createElement('div');
+        qrDiv.className = 'qrcode-container';
+        qrDiv.innerHTML = `<div class="qrcode-label">${rotuloQR}: ${valorQR}</div><div id="qrcode-target"></div>`;
+        container.appendChild(qrDiv);
+
+        new QRCode(document.getElementById("qrcode-target"), {
+          text: valorQR,
+          width: 65,
+          height: 65,
+          colorDark: "#000000",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.H
+        });
+      }
+
+      setTimeout(() => {
+        window.print();
+      }, 250);
+    }
+
+    function salvarArquivoTXT() {
+      const texto = gerarTextoComprovante();
+      const blob = new Blob([texto], { type: 'text/plain;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `comprovante_${new Date().getTime()}.txt`;
+      a.click();
+    }
+
+    /* ==========================================================================
+       CONFERÊNCIA DE LOTE (LÓGICA DE PREFIXO & PDF)
+       ========================================================================== */
+
+    function togglePrefixo(ativo) {
+      const containerInput = document.getElementById('container-input-prefixo');
+      if (ativo) {
+        containerInput.classList.remove('hidden');
+        containerInput.classList.add('flex');
+      } else {
+        containerInput.classList.add('hidden');
+        containerInput.classList.remove('flex');
+      }
+    }
+
+    async function carregarPDFLote(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      nomeArquivoPdfSemExtensao = file.name.replace(/\.[^/.]+$/, "");
+
+      const descEl = document.getElementById('pdf-status-desc');
+      const nomeLbl = document.getElementById('pdf-nome-lbl');
+      const btnCopiar = document.getElementById('btn-copiar-nome');
+
+      nomeLbl.innerText = file.name;
+      descEl.innerText = "⏳ Extraindo dados do PDF...";
+      btnCopiar.classList.remove('hidden');
+      btnCopiar.classList.add('flex');
+
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        
+        let textoCompleto = "";
+        
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          const strings = content.items.map(item => item.str);
+          textoCompleto += strings.join(" ") + "\n";
+        }
+
+        const regexNumeros = /\b\d{8,12}\b/g;
+        const matches = textoCompleto.match(regexNumeros) || [];
+        const numerosUnicos = [...new Set(matches)];
+
+        if (numerosUnicos.length === 0) {
+          alert("Nenhum número de guia foi encontrado no PDF. Certifique-se de que o arquivo possui OCR/Texto.");
+          descEl.innerText = "❌ Falha: Nenhuma guia identificada.";
+          return;
+        }
+
+        guiasLote = numerosUnicos.map(num => ({ numero: num, conferida: false }));
+
+        descEl.innerText = `🟢 Guias encontradas: ${guiasLote.length}`;
+        document.getElementById('area-verificacao').classList.remove('hidden');
+        document.getElementById('area-verificacao').classList.add('flex');
+
+        atualizarDashboardConferencia();
+        renderizarListaGuias();
+
+        setTimeout(() => {
+          document.getElementById('input-bipador').focus();
+        }, 100);
+
+      } catch (err) {
+        console.error(err);
+        alert("Erro ao ler arquivo PDF.");
+        descEl.innerText = "❌ Erro na leitura do PDF.";
+      }
+    }
+
+    function copiarNomePDF() {
+      if (!nomeArquivoPdfSemExtensao) return;
+
+      navigator.clipboard.writeText(nomeArquivoPdfSemExtensao).then(() => {
+        const btn = document.getElementById('btn-copiar-nome');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = `<span class="material-symbols-outlined text-sm text-secondary">check</span> Copiado!`;
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+        }, 2000);
+      });
+    }
+
+    function abrirModalContar() {
+      document.getElementById('modal-contar').classList.remove('hidden');
+      document.getElementById('modal-contar').classList.add('flex');
+    }
+
+    function fecharModalContar() {
+      document.getElementById('modal-contar').classList.add('hidden');
+      document.getElementById('modal-contar').classList.remove('flex');
+    }
+
+    function confirmarMigracaoContador(tipo) {
+      fecharModalContar();
+      escolherTipo(tipo);
+
+      const inputLote = document.getElementById('input-lote');
+      if (inputLote && nomeArquivoPdfSemExtensao) {
+        inputLote.value = nomeArquivoPdfSemExtensao;
+      }
+    }
+
+    function limparConferencia(solicitarConfirmacao = true) {
+      if (solicitarConfirmacao && (guiasLote.length > 0 || nomeArquivoPdfSemExtensao)) {
+        if (!confirm("Deseja realmente limpar os dados do PDF e zerar a conferência?")) {
+          return;
+        }
+      }
+
+      guiasLote = [];
+      nomeArquivoPdfSemExtensao = "";
+
+      document.getElementById('pdf-file-input').value = "";
+      document.getElementById('pdf-nome-lbl').innerText = "Capa do Lote (PDF)";
+      document.getElementById('pdf-status-desc').innerText = "Nenhum arquivo carregado ainda";
+      
+      const btnCopiar = document.getElementById('btn-copiar-nome');
+      btnCopiar.classList.add('hidden');
+      btnCopiar.classList.remove('flex');
+
+      document.getElementById('area-verificacao').classList.add('hidden');
+      document.getElementById('area-verificacao').classList.remove('flex');
+
+      document.getElementById('input-bipador').value = "";
+      document.getElementById('msg-feedback').innerText = "";
+
+      atualizarDashboardConferencia();
+      renderizarListaGuias();
+    }
+
+    function atualizarDashboardConferencia() {
+      const total = guiasLote.length;
+      const conferidas = guiasLote.filter(g => g.conferida).length;
+      const pendentes = total - conferidas;
+
+      document.getElementById('lbl-total-pdf').innerText = total;
+      document.getElementById('lbl-conferidas-pdf').innerText = conferidas;
+      document.getElementById('lbl-pendentes-pdf').innerText = pendentes;
+    }
+
+    function renderizarListaGuias() {
+      const grid = document.getElementById('grid-guias-pdf');
+      grid.innerHTML = '';
+
+      let listaFiltrada = guiasLote;
+      if (filtroGuiaAtual === 'pendentes') listaFiltrada = guiasLote.filter(g => !g.conferida);
+      if (filtroGuiaAtual === 'conferidas') listaFiltrada = guiasLote.filter(g => g.conferida);
+
+      listaFiltrada.forEach(g => {
+        const item = document.createElement('div');
+        const statusClass = g.conferida 
+          ? 'bg-secondary-container/20 border-secondary text-secondary' 
+          : 'bg-surface-container-high border-outline-variant text-on-surface-variant';
+        
+        const icon = g.conferida ? 'check_circle' : 'pending';
+
+        item.className = `p-3 rounded-xl border font-mono text-sm flex items-center justify-between font-bold transition-all ${statusClass}`;
+        item.innerHTML = `
+          <span>${g.numero}</span>
+          <span class="material-symbols-outlined text-base">${icon}</span>
+        `;
+        grid.appendChild(item);
+      });
+    }
+
+    function filtrarListaGuias(tipo) {
+      filtroGuiaAtual = tipo;
+      
+      ['todas', 'pendentes', 'conferidas'].forEach(t => {
+        const btn = document.getElementById(`btn-filtro-${t}`);
+        if (t === tipo) {
+          btn.className = "px-3 py-1.5 rounded-lg text-xs font-label-sm bg-primary text-on-primary font-bold";
+        } else {
+          btn.className = "px-3 py-1.5 rounded-lg text-xs font-label-sm bg-surface-container-highest text-on-surface-variant hover:bg-outline-variant";
+        }
+      });
+
+      renderizarListaGuias();
+    }
+
+    function processarBipagem(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        executarBipagemManual();
+      }
+    }
+
+    function executarBipagemManual() {
+      const input = document.getElementById('input-bipador');
+      const box = document.getElementById('box-bipador');
+      const msg = document.getElementById('msg-feedback');
+      
+      const switchPrefixo = document.getElementById('switch-prefixo').checked;
+      const valPrefixo = document.getElementById('input-prefixo-val').value.trim();
+
+      let valor = input.value.trim();
+
+      if (!valor) return;
+
+      // Aplica prefixo caso a chave esteja ativa
+      if (switchPrefixo && valPrefixo && !valor.startsWith(valPrefixo)) {
+        valor = valPrefixo + valor;
+      }
+
+      // Procura primeiro por correspondência exata
+      let idx = guiasLote.findIndex(g => g.numero === valor);
+      
+      // Caso não encontre exato, busca por terminação (flexibilidade de leitura)
+      if (idx === -1) {
+        idx = guiasLote.findIndex(g => g.numero.endsWith(valor) || valor.endsWith(g.numero));
+      }
+
+      if (idx !== -1) {
+        if (guiasLote[idx].conferida) {
+          msg.innerText = `⚠️ Guia ${guiasLote[idx].numero} JÁ FOI CONFERIDA anteriormente!`;
+          msg.className = "text-xs font-label-sm text-tertiary font-bold";
+        } else {
+          guiasLote[idx].conferida = true;
+          msg.innerText = `✅ Guia ${guiasLote[idx].numero} CONFERIDA com sucesso!`;
+          msg.className = "text-xs font-label-sm text-secondary font-bold";
+          
+          atualizarDashboardConferencia();
+          renderizarListaGuias();
+        }
+      } else {
+        msg.innerText = `❌ ATENÇÃO: Guia ${valor} NÃO ENCONTRADA na capa do lote!`;
+        msg.className = "text-xs font-label-sm text-error font-bold";
+
+        box.classList.add('shake-error');
+        setTimeout(() => {
+          box.classList.remove('shake-error');
+        }, 450);
+      }
+
+      input.value = '';
+      input.focus();
+    }
+
+    window.addEventListener('keydown', function(e) {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'p' || e.key === 'P')) {
+        e.preventDefault();
+        if (document.getElementById('tela-contador').classList.contains('active')) {
+          imprimirComprovante();
+        }
+      }
+    });
+
+
+    /* ==========================================================================
+       CONFERÊNCIA DE GUIAS — MOTOR REUTILIZÁVEL / SULAMÉRICA SADT
+       ========================================================================== */
+    const CONVENIOS_CONFERENCIA = ['Amil','Assim','Blue','Bradesco','Gama','Life','Mediservice','Petrobras','Porto','Postal Saúde','SulAmérica','Vale/Pasa'];
+    let convenioConferenciaAtual = '';
+
+    function abrirConferenciaGuia() {
+      renderizarConveniosConferencia();
+      navegar('tela-conferencia-guia');
+    }
+
+    function renderizarConveniosConferencia() {
+      const grid = document.getElementById('grid-convenios-conferencia');
+      grid.innerHTML = '';
+      CONVENIOS_CONFERENCIA.forEach(nome => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'min-h-20 px-4 py-4 bg-surface-container-high border border-outline-variant hover:border-primary hover:text-primary rounded-xl text-on-surface font-bold font-label-md transition-all shadow-md flex items-center justify-center text-center';
+        btn.textContent = nome;
+        btn.onclick = () => selecionarConvenioConferencia(nome);
+        grid.appendChild(btn);
+      });
+    }
+
+    function selecionarConvenioConferencia(nome) {
+      convenioConferenciaAtual = nome;
+      document.getElementById('cg-modal-convenio').innerText = nome;
+      const modal = document.getElementById('modal-tipo-conferencia-guia');
+      modal.classList.remove('hidden'); modal.classList.add('flex');
+    }
+    function fecharModalTipoConferencia() { const m=document.getElementById('modal-tipo-conferencia-guia'); m.classList.add('hidden'); m.classList.remove('flex'); }
+    function selecionarTipoConferencia(tipo) {
+      fecharModalTipoConferencia();
+      if (convenioConferenciaAtual === 'SulAmérica' && tipo === 'sadt') { navegar('tela-sulamerica-sadt'); validarSulamerica(); return; }
+      alert(`${convenioConferenciaAtual} — ${tipo.toUpperCase()}: processo de conferência ainda não configurado.`);
+    }
+
+    function somenteNumeros(el) { el.value = el.value.replace(/\D/g,''); }
+    function formatarDataCampo(el) {
+      let d=el.value.replace(/\D/g,'').slice(0,8);
+      if(d.length>4) d=d.slice(0,2)+'/'+d.slice(2,4)+'/'+d.slice(4);
+      else if(d.length>2) d=d.slice(0,2)+'/'+d.slice(2);
+      el.value=d;
+    }
+    function normalizarTexto(v){ return (v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().replace(/\s+/g,' ').toUpperCase(); }
+    function parseDataBR(v){ const m=(v||'').match(/^(\d{2})\/(\d{2})\/(\d{4})$/); if(!m)return null; const d=new Date(+m[3],+m[2]-1,+m[1],12); if(d.getFullYear()!=+m[3]||d.getMonth()!=+m[2]-1||d.getDate()!=+m[1])return null; return d; }
+    function diffDias(a,b){ return Math.floor((b-a)/86400000); }
+    function valor(id){ const el=document.getElementById(id); return el?el.value.trim():''; }
+    function setResultado(id, estado, msg){ const el=document.getElementById(id); if(!el)return; const cls=estado==='ok'?'text-secondary':estado==='erro'?'text-error':'text-outline'; el.className=`sa-result ${cls} font-bold`; el.textContent=msg||''; }
+    function compararCampos(idA,idB,idR,rotulo='Campos'){ const a=valor(idA),b=valor(idB); if(!a&&!b){setResultado(idR,'pendente','');return null;} if(!a||!b){setResultado(idR,'erro','⚠ Preencha os dois campos');return false;} const ok=normalizarTexto(a)===normalizarTexto(b); setResultado(idR,ok?'ok':'erro',ok?'✓ OK':`✕ ${rotulo} divergentes`); return ok; }
+    function validarFixo(id,esperado,idR,aceitos=[]){ const v=valor(id); if(!v){setResultado(idR,'pendente','');return null;} const n=normalizarTexto(v); const lista=[esperado,...aceitos].map(normalizarTexto); const ok=lista.includes(n); setResultado(idR,ok?'ok':'erro',ok?'✓ OK':`✕ Esperado: ${esperado}`); return ok; }
+    function validarReferencia(idValor,idRef,idR,rotulo='Referência'){ const v=valor(idValor),r=valor(idRef); if(!v&&!r){setResultado(idR,'pendente','');return null;} if(!r){setResultado(idR,'pendente',`Informe ${rotulo.toLowerCase()} para comparar`);return null;} if(!v){setResultado(idR,'erro','⚠ Campo da guia não preenchido');return false;} const ok=normalizarTexto(v)===normalizarTexto(r); setResultado(idR,ok?'ok':'erro',ok?'✓ OK':`✕ Diverge da ${rotulo.toLowerCase()}`); return ok; }
+    function preencherCBOReferencia(){ }
+
+    function validarSulamerica() {
+      const resultados=[];
+      resultados.push(compararCampos('sa-guia-nome','sa-vpp-nome','sa-r-nome','Nomes'));
+      resultados.push(compararCampos('sa-guia-numero','sa-vpp-numero','sa-r-numero','Números da guia'));
+      resultados.push(compararCampos('sa-guia-autorizacao','sa-vpp-solicitacao','sa-r-autorizacao','Datas'));
+      resultados.push(compararCampos('sa-guia-senha','sa-vpp-senha','sa-r-senha','Senhas'));
+      resultados.push(compararCampos('sa-guia-validade','sa-vpp-validade','sa-r-validade','Validades'));
+
+      const qs=valor('sa-vpp-qtd-solicitada'), qa=valor('sa-vpp-qtd-autorizada');
+      if(!qs&&!qa){setResultado('sa-r-quantidades','pendente',''); resultados.push(null);} else { const ok=(parseInt(qs,10)===1 && parseInt(qa,10)===1); setResultado('sa-r-quantidades',ok?'ok':'erro',ok?'✓ Solicitada 01 e Autorizada 01':'✕ Ambas as quantidades devem ser 01'); resultados.push(ok); }
+
+      const aut=parseDataBR(valor('sa-guia-autorizacao')), val=parseDataBR(valor('sa-guia-validade')), atend=parseDataBR(valor('sa-data-atendimento'));
+      const rp=document.getElementById('sa-r-periodo-senha');
+      if(aut&&val&&atend){
+        let ok=true,msg='✓ OK — atendimento dentro do período válido';
+        if(atend<aut){ok=false;msg='✕ Atendimento anterior à autorização';}
+        else if(atend>val){ok=false;msg='✕ Senha Vencida';}
+        else if(diffDias(aut,atend)>30 || diffDias(aut,val)>30){ok=false;msg='✕ Senha Vencida';}
+        rp.textContent=msg; rp.className=`mt-1 min-h-[44px] flex items-center px-4 rounded-xl border bg-surface-container text-sm font-bold ${ok?'border-secondary text-secondary':'border-error text-error'}`; resultados.push(ok);
+      } else { rp.textContent='Aguardando datas...'; rp.className='mt-1 min-h-[44px] flex items-center px-4 rounded-xl border border-outline-variant bg-surface-container text-sm font-bold text-on-surface-variant'; resultados.push(null); }
+
+      resultados.push(validarFixo('sa-c12','Não','sa-r-c12'));
+      resultados.push(validarReferencia('sa-c13','sa-ref-cnpj','sa-r-c13','CNPJ esperado'));
+      resultados.push(validarReferencia('sa-c14','sa-ref-contratado','sa-r-c14','nome fantasia esperado'));
+      const nmed=valor('sa-c15'); if(nmed){setResultado('sa-r-c15','ok','✓ Nome preenchido — confirme visualmente se está correto'); resultados.push(true);} else {setResultado('sa-r-c15','pendente',''); resultados.push(null);}
+      resultados.push(validarFixo('sa-c16','CRM','sa-r-c16'));
+      const crm=valor('sa-c17'); if(crm){const ok=!crm.startsWith('52');setResultado('sa-r-c17',ok?'ok':'erro',ok?'✓ OK':'✕ Remover o 52 do início');resultados.push(ok)}else{setResultado('sa-r-c17','pendente','');resultados.push(null)}
+      resultados.push(validarReferencia('sa-c18','sa-ref-uf','sa-r-c18','UF esperada'));
+      const esp=valor('sa-ref-especialidade'),cbo=valor('sa-c19'); if(!esp&&!cbo){setResultado('sa-r-c19','pendente','');resultados.push(null)} else if(esp==='outro'){setResultado('sa-r-c19','pendente','Conferir CBO manualmente para esta especialidade');resultados.push(null)} else if(!esp){setResultado('sa-r-c19','pendente','Selecione a especialidade');resultados.push(null)} else {const ok=cbo===esp;setResultado('sa-r-c19',ok?'ok':'erro',ok?'✓ OK':`✕ Esperado: ${esp}`);resultados.push(ok)}
+      resultados.push(validarFixo('sa-c21','Eletivo','sa-r-c21'));
+      const c22=valor('sa-c22'),c4=valor('sa-guia-autorizacao'); if(!c22&&!c4){setResultado('sa-r-c22','pendente','');resultados.push(null)} else {const ok=!!c22&&!!c4&&c22===c4;setResultado('sa-r-c22',ok?'ok':'erro',ok?'✓ OK':'✕ Deve ser igual ao campo 4');resultados.push(ok)}
+      resultados.push(validarReferencia('sa-c23','sa-ref-cid','sa-r-c23','CID do encaminhamento'));
+      resultados.push(validarFixo('sa-c32','Outras terapias','sa-r-c32'));
+      resultados.push(validarFixo('sa-c33','Não acidente','sa-r-c33',['Nao acidente']));
+      const c34=valor('sa-c34'); if(c34){setResultado('sa-r-c34','ok','✓ Opção válida — confirme conforme o encaminhamento');resultados.push(true)}else{setResultado('sa-r-c34','pendente','');resultados.push(null)}
+      resultados.push(validarFixo('sa-c91','Ambulatorial','sa-r-c91'));
+      resultados.push(validarFixo('sa-c42','1','sa-r-c42',['01']));
+      resultados.push(validarFixo('sa-c44','Convencional','sa-r-c44'));
+
+      const emiss=parseDataBR(valor('sa-data-encaminhamento'));
+      const re=document.getElementById('sa-r-encaminhamento');
+      if(emiss&&atend){ const dias=diffDias(emiss,atend); const ok=dias<=90 && dias>=0; re.textContent=ok?`✓ OK — ${dias} dias`:'✕ Encaminhamento Vencido'; re.className=`h-11 flex items-center px-3 rounded-xl bg-surface-container border text-sm font-bold ${ok?'border-secondary text-secondary':'border-error text-error'}`; resultados.push(ok); }
+      else {re.textContent='Aguardando datas...';re.className='h-11 flex items-center px-3 rounded-xl bg-surface-container border border-outline-variant text-sm font-bold text-on-surface-variant';resultados.push(null)}
+
+      const checks=[...document.querySelectorAll('[data-sa-required]')];
+      const marcados=checks.filter(c=>c.checked).length;
+      if(marcados>0 || resultados.some(v=>v!==null)) resultados.push(marcados===checks.length);
+
+      const status=document.getElementById('sa-status-geral');
+      if(resultados.includes(false)){status.textContent='❌ CONFERÊNCIA COM PENDÊNCIAS — verifique os itens destacados em vermelho.';status.className='p-4 rounded-xl border border-error bg-error-container/30 text-sm font-bold text-error';}
+      else if(resultados.length && resultados.every(v=>v===true)){status.textContent='✅ SULAMÉRICA SADT — CONFERÊNCIA OK';status.className='p-4 rounded-xl border border-secondary bg-secondary-container/20 text-sm font-bold text-secondary';}
+      else {status.textContent='🟡 CONFERÊNCIA EM ANDAMENTO — complete os campos e as verificações visuais.';status.className='p-4 rounded-xl border border-tertiary bg-tertiary-container/10 text-sm font-bold text-tertiary';}
+    }
+
+    function limparConferenciaSulamerica(){
+      if(!confirm('Deseja limpar todos os dados desta conferência?')) return;
+      document.querySelectorAll('#tela-sulamerica-sadt input').forEach(el=>{ if(el.type==='checkbox')el.checked=false; else el.value=''; });
+      document.querySelectorAll('#tela-sulamerica-sadt select').forEach(el=>el.value='');
+      document.querySelectorAll('#tela-sulamerica-sadt .sa-result').forEach(el=>el.textContent='');
+      validarSulamerica();
+    }
+
+    // Inicialização
+    aplicarColunas(colunasAtuais);
+    resetarEstadoLeitorQR();
+    setInterval(atualizarRelogioQR, 1000);
+    verificarSessaoCliniFat();
+  </script>
+</body>
+</html>
