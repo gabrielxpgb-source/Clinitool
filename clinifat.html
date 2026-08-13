@@ -275,6 +275,57 @@
     .cf-list-row.is-inactive { opacity:.5; }
     .cf-list-empty { padding:1rem;color:#8b919e;font-size:.75rem;text-align:center; }
 
+
+    /* GuideCheck Calibration */
+    .gc-calibration-stage {
+      position: relative;
+      display: inline-block;
+      line-height: 0;
+      user-select: none;
+      touch-action: none;
+    }
+    .gc-calibration-stage canvas {
+      display: block;
+      max-width: 100%;
+      background: #fff;
+    }
+    .gc-calibration-overlay {
+      position: absolute;
+      inset: 0;
+      cursor: crosshair;
+      z-index: 5;
+    }
+    .gc-zone {
+      position: absolute;
+      border: 2px solid #4de082;
+      background: rgba(77,224,130,.12);
+      box-shadow: 0 0 0 1px rgba(0,0,0,.35);
+      pointer-events: none;
+    }
+    .gc-zone.is-selected {
+      border-color: #a9c7ff;
+      background: rgba(169,199,255,.16);
+    }
+    .gc-zone-label {
+      position: absolute;
+      left: 0;
+      top: -22px;
+      background: #121416;
+      border: 1px solid #414753;
+      color: #e2e2e5;
+      font: 700 10px 'JetBrains Mono', monospace;
+      padding: 3px 6px;
+      border-radius: 6px;
+      white-space: nowrap;
+      line-height: 1.2;
+    }
+    .gc-draft-zone {
+      position: absolute;
+      border: 2px dashed #ffb873;
+      background: rgba(255,184,115,.14);
+      pointer-events: none;
+    }
+
   </style>
 </head>
 
@@ -301,7 +352,7 @@
   <header class="flex justify-between items-center px-6 py-4 w-full bg-surface-container-low border-b border-outline-variant sticky top-0 z-50">
     <div class="flex items-center gap-4 cursor-pointer" onclick="navegar('tela-inicio')">
       <span class="text-xl font-bold text-primary font-headline-md">CliniFat</span>
-      <span class="text-xs px-2 py-1 bg-surface-container-highest rounded text-on-surface-variant font-label-sm hidden sm:inline-block">CliniTool • v11.1</span>
+      <span class="text-xs px-2 py-1 bg-surface-container-highest rounded text-on-surface-variant font-label-sm hidden sm:inline-block">CliniTool • v11.2</span>
     </div>
 
     <!-- Controles de Colunas (Tela Contador) -->
@@ -533,6 +584,112 @@
                 </div>
               </div>
             </details>
+          </div>
+        </details>
+
+        <!-- CALIBRAÇÃO DE GUIAS -->
+        <details class="bg-surface-container rounded-2xl border border-outline-variant overflow-hidden">
+          <summary class="cursor-pointer select-none p-5 bg-surface-container-high hover:bg-surface-container-highest flex items-center justify-between gap-3">
+            <div>
+              <h3 class="text-lg font-bold text-primary">Calibração de Guias</h3>
+              <p class="text-xs text-on-surface-variant mt-1">Ensine ao GuideCheck onde cada campo fica no layout do convênio.</p>
+            </div>
+            <span class="material-symbols-outlined text-outline">expand_more</span>
+          </summary>
+
+          <div class="p-6 flex flex-col gap-5">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+              <div class="md:col-span-4">
+                <label class="sa-label">Perfil</label>
+                <select id="cal-profile-select" class="sa-input" onchange="calibracaoSelecionarPerfil()">
+                  <option value="">Selecione...</option>
+                </select>
+              </div>
+
+              <div class="md:col-span-4">
+                <label class="sa-label">Layout</label>
+                <select id="cal-layout-select" class="sa-input" onchange="calibracaoSelecionarLayout()">
+                  <option value="">Selecione...</option>
+                </select>
+              </div>
+
+              <div class="md:col-span-3">
+                <label class="sa-label">Novo layout</label>
+                <input id="cal-layout-name" class="sa-input" placeholder="Ex.: SulAmérica Padrão 2026">
+              </div>
+
+              <div class="md:col-span-1 flex items-end">
+                <button onclick="criarLayoutCalibracao()" class="w-full h-11 rounded-xl bg-secondary text-on-secondary font-bold" title="Criar layout">
+                  <span class="material-symbols-outlined">add</span>
+                </button>
+              </div>
+            </div>
+
+            <div id="cal-layout-actions" class="hidden flex flex-wrap gap-3">
+              <label class="px-5 py-2.5 bg-primary-container text-on-primary-container rounded-xl font-bold cursor-pointer flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">upload_file</span>
+                Guia modelo
+                <input type="file" id="cal-pdf-input" accept="application/pdf" class="hidden" onchange="carregarPDFCalibracao(event)">
+              </label>
+              <button onclick="excluirLayoutCalibracao()" class="px-4 py-2.5 border border-error text-error rounded-xl font-bold">
+                Excluir layout
+              </button>
+              <span id="cal-status" class="text-xs font-label-sm text-on-surface-variant flex items-center"></span>
+            </div>
+
+            <div id="cal-editor" class="hidden grid grid-cols-1 xl:grid-cols-12 gap-5">
+              <aside class="xl:col-span-3 bg-surface-container-high border border-outline-variant rounded-2xl overflow-hidden">
+                <div class="p-4 border-b border-outline-variant">
+                  <div class="font-bold">Campos do perfil</div>
+                  <div class="text-[10px] text-on-surface-variant font-label-sm mt-1">Clique no campo e desenhe sua área na guia.</div>
+                </div>
+                <div id="cal-fields-list" class="p-2 flex flex-col gap-2 max-h-[680px] overflow-y-auto"></div>
+              </aside>
+
+              <section class="xl:col-span-7 bg-surface-container-lowest border border-outline-variant rounded-2xl overflow-hidden">
+                <div class="p-4 border-b border-outline-variant flex items-center justify-between gap-3">
+                  <div>
+                    <div class="font-bold">Guia modelo</div>
+                    <div id="cal-page-info" class="text-[10px] text-on-surface-variant font-label-sm">Nenhum PDF carregado</div>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button onclick="navegarPaginaCalibracao(-1)" class="h-9 px-3 rounded-lg bg-surface-container-high border border-outline-variant">‹</button>
+                    <button onclick="navegarPaginaCalibracao(1)" class="h-9 px-3 rounded-lg bg-surface-container-high border border-outline-variant">›</button>
+                  </div>
+                </div>
+
+                <div class="p-4 overflow-auto min-h-[680px] flex justify-center items-start">
+                  <div id="cal-stage" class="gc-calibration-stage">
+                    <canvas id="cal-canvas"></canvas>
+                    <div id="cal-overlay" class="gc-calibration-overlay"></div>
+                  </div>
+                </div>
+              </section>
+
+              <aside class="xl:col-span-2 bg-surface-container-high border border-outline-variant rounded-2xl overflow-hidden">
+                <div class="p-4 border-b border-outline-variant">
+                  <div class="font-bold">Área selecionada</div>
+                </div>
+                <div class="p-4 flex flex-col gap-4">
+                  <div class="p-3 rounded-xl bg-surface-container border border-outline-variant">
+                    <div class="text-[10px] uppercase text-outline font-label-sm">Campo</div>
+                    <div id="cal-selected-field-label" class="text-sm font-bold mt-1">Selecione um campo</div>
+                  </div>
+
+                  <div id="cal-draft-info" class="text-xs text-on-surface-variant">
+                    Desenhe um retângulo sobre o valor do campo na guia.
+                  </div>
+
+                  <button id="cal-save-zone-btn" onclick="salvarZonaCalibracao()" disabled class="h-11 rounded-xl bg-secondary text-on-secondary font-bold disabled:opacity-40">
+                    Salvar área
+                  </button>
+
+                  <button id="cal-delete-zone-btn" onclick="excluirZonaCalibracao()" disabled class="h-11 rounded-xl border border-error text-error font-bold disabled:opacity-40">
+                    Remover área
+                  </button>
+                </div>
+              </aside>
+            </div>
           </div>
         </details>
 
@@ -1323,6 +1480,7 @@
       document.getElementById('cfg-conv-total-count').textContent = `${(convRes.data || []).length} item(ns)`;
 
       await renderizarCamposGuideCheck();
+      await carregarPerfisCalibracao();
     }
 
     async function renderizarCamposGuideCheck() {
@@ -1539,6 +1697,426 @@
       if (error) return alert(error.message);
       await carregarDadosSupabase(); await renderizarConfiguracoes();
     }
+
+
+    // ============================================================
+    // GUIDECHECK - CALIBRAÇÃO VISUAL
+    // ============================================================
+    let calProfileId = null;
+    let calLayoutId = null;
+    let calFields = [];
+    let calZones = [];
+    let calSelectedFieldId = null;
+    let calPdfDoc = null;
+    let calPage = 1;
+    let calDraft = null;
+    let calDrawing = false;
+    let calStartX = 0;
+    let calStartY = 0;
+
+    async function carregarPerfisCalibracao() {
+      const select = document.getElementById('cal-profile-select');
+      if (!select) return;
+
+      const { data, error } = await _supabase
+        .from('guidecheck_profiles')
+        .select('id,nome,profile_key,ativo')
+        .eq('ativo', true)
+        .order('nome');
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+
+      const atual = select.value;
+      select.innerHTML = '<option value="">Selecione...</option>' +
+        (data || []).map(p => `<option value="${p.id}">${escapeHtmlCF(p.nome)}</option>`).join('');
+
+      if (atual && (data || []).some(p => String(p.id) === String(atual))) {
+        select.value = atual;
+      }
+    }
+
+    async function calibracaoSelecionarPerfil() {
+      calProfileId = Number(document.getElementById('cal-profile-select').value) || null;
+      calLayoutId = null;
+      calSelectedFieldId = null;
+      calFields = [];
+      calZones = [];
+      calDraft = null;
+
+      document.getElementById('cal-layout-select').innerHTML = '<option value="">Selecione...</option>';
+      document.getElementById('cal-layout-actions').classList.add('hidden');
+      document.getElementById('cal-editor').classList.add('hidden');
+
+      if (!calProfileId) return;
+
+      const [fieldsRes, layoutsRes] = await Promise.all([
+        _supabase.from('guidecheck_fields')
+          .select('id,numero_campo,nome_campo,tipo_regra,ordem')
+          .eq('profile_id', calProfileId)
+          .eq('ativo', true)
+          .order('ordem'),
+        _supabase.from('guidecheck_layouts')
+          .select('id,nome,ativo')
+          .eq('profile_id', calProfileId)
+          .order('nome')
+      ]);
+
+      if (fieldsRes.error) return alert(fieldsRes.error.message);
+      if (layoutsRes.error) return alert(layoutsRes.error.message);
+
+      calFields = fieldsRes.data || [];
+      const layoutSelect = document.getElementById('cal-layout-select');
+      layoutSelect.innerHTML = '<option value="">Selecione...</option>' +
+        (layoutsRes.data || []).map(l => `<option value="${l.id}">${escapeHtmlCF(l.nome)}</option>`).join('');
+
+      renderizarCamposCalibracao();
+    }
+
+    async function criarLayoutCalibracao() {
+      if (!isClinifatMaster) return alert('Somente o Master pode criar layouts.');
+      if (!calProfileId) return alert('Selecione primeiro o perfil.');
+
+      const input = document.getElementById('cal-layout-name');
+      const nome = input.value.trim();
+      if (!nome) return alert('Informe o nome do layout.');
+
+      const { data, error } = await _supabase
+        .from('guidecheck_layouts')
+        .insert({ profile_id: calProfileId, nome })
+        .select('id,nome')
+        .single();
+
+      if (error) return alert('Erro ao criar layout: ' + error.message);
+
+      input.value = '';
+      await calibracaoSelecionarPerfil();
+      document.getElementById('cal-layout-select').value = data.id;
+      await calibracaoSelecionarLayout();
+    }
+
+    async function calibracaoSelecionarLayout() {
+      calLayoutId = Number(document.getElementById('cal-layout-select').value) || null;
+      calSelectedFieldId = null;
+      calDraft = null;
+
+      document.getElementById('cal-layout-actions').classList.toggle('hidden', !calLayoutId);
+      document.getElementById('cal-editor').classList.toggle('hidden', !calLayoutId);
+
+      if (!calLayoutId) return;
+
+      await carregarZonasCalibracao();
+      renderizarCamposCalibracao();
+      atualizarBotoesZonaCalibracao();
+
+      if (calPdfDoc) {
+        await renderizarPaginaCalibracao();
+      }
+    }
+
+    async function carregarZonasCalibracao() {
+      if (!calLayoutId) {
+        calZones = [];
+        return;
+      }
+
+      const { data, error } = await _supabase
+        .from('guidecheck_zones')
+        .select('id,layout_id,field_id,pagina,x_ratio,y_ratio,w_ratio,h_ratio,ativo')
+        .eq('layout_id', calLayoutId)
+        .eq('ativo', true);
+
+      if (error) return alert('Erro ao carregar áreas: ' + error.message);
+      calZones = data || [];
+    }
+
+    function renderizarCamposCalibracao() {
+      const box = document.getElementById('cal-fields-list');
+      if (!box) return;
+
+      box.innerHTML = (calFields || []).map(f => {
+        const zona = calZones.find(z => Number(z.field_id) === Number(f.id));
+        const selecionado = Number(calSelectedFieldId) === Number(f.id);
+
+        return `
+          <button type="button"
+            onclick="selecionarCampoCalibracao(${f.id})"
+            class="w-full p-3 rounded-xl border text-left flex items-center gap-3 ${
+              selecionado ? 'border-primary bg-primary/10' :
+              zona ? 'border-secondary bg-secondary/10' :
+              'border-outline-variant bg-surface-container'
+            }">
+            <div class="w-9 h-9 rounded-lg border ${
+              zona ? 'border-secondary text-secondary' : 'border-outline-variant text-primary'
+            } flex items-center justify-center font-label-sm font-bold shrink-0">
+              ${f.numero_campo}
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="font-bold text-xs truncate">${escapeHtmlCF(f.nome_campo)}</div>
+              <div class="text-[10px] font-label-sm ${zona ? 'text-secondary' : 'text-outline'}">
+                ${zona ? 'Área calibrada' : 'Não calibrado'}
+              </div>
+            </div>
+          </button>
+        `;
+      }).join('') || '<div class="cf-list-empty">Nenhum campo configurado.</div>';
+    }
+
+    function selecionarCampoCalibracao(fieldId) {
+      calSelectedFieldId = Number(fieldId);
+      calDraft = null;
+
+      const f = calFields.find(x => Number(x.id) === Number(fieldId));
+      document.getElementById('cal-selected-field-label').textContent =
+        f ? `${f.numero_campo} — ${f.nome_campo}` : 'Campo';
+
+      renderizarCamposCalibracao();
+      desenharZonasCalibracao();
+      atualizarBotoesZonaCalibracao();
+    }
+
+    async function carregarPDFCalibracao(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      try {
+        const buffer = await file.arrayBuffer();
+        calPdfDoc = await pdfjsLib.getDocument({ data: buffer }).promise;
+        calPage = 1;
+        document.getElementById('cal-status').textContent = `${file.name} • ${calPdfDoc.numPages} página(s)`;
+        await renderizarPaginaCalibracao();
+      } catch (err) {
+        console.error(err);
+        alert('Erro ao abrir guia modelo: ' + (err.message || err));
+      }
+    }
+
+    async function navegarPaginaCalibracao(delta) {
+      if (!calPdfDoc) return;
+      const next = calPage + delta;
+      if (next < 1 || next > calPdfDoc.numPages) return;
+      calPage = next;
+      calDraft = null;
+      await renderizarPaginaCalibracao();
+    }
+
+    async function renderizarPaginaCalibracao() {
+      if (!calPdfDoc) return;
+
+      const page = await calPdfDoc.getPage(calPage);
+      const canvas = document.getElementById('cal-canvas');
+      const wrap = document.getElementById('cal-stage');
+
+      const base = page.getViewport({ scale: 1 });
+      const maxWidth = Math.min(900, Math.max(520, wrap.parentElement.clientWidth - 40));
+      const scale = maxWidth / base.width;
+      const viewport = page.getViewport({ scale });
+
+      canvas.width = Math.floor(viewport.width);
+      canvas.height = Math.floor(viewport.height);
+      canvas.style.width = `${Math.floor(viewport.width)}px`;
+      canvas.style.height = `${Math.floor(viewport.height)}px`;
+
+      const overlay = document.getElementById('cal-overlay');
+      overlay.style.width = `${Math.floor(viewport.width)}px`;
+      overlay.style.height = `${Math.floor(viewport.height)}px`;
+
+      await page.render({
+        canvasContext: canvas.getContext('2d'),
+        viewport
+      }).promise;
+
+      document.getElementById('cal-page-info').textContent =
+        `Página ${calPage} / ${calPdfDoc.numPages}`;
+
+      desenharZonasCalibracao();
+    }
+
+    function desenharZonasCalibracao() {
+      const overlay = document.getElementById('cal-overlay');
+      if (!overlay) return;
+      overlay.innerHTML = '';
+
+      const zones = calZones.filter(z => Number(z.pagina) === Number(calPage));
+
+      zones.forEach(z => {
+        const field = calFields.find(f => Number(f.id) === Number(z.field_id));
+        const div = document.createElement('div');
+        div.className = 'gc-zone' + (Number(z.field_id) === Number(calSelectedFieldId) ? ' is-selected' : '');
+        div.style.left = `${Number(z.x_ratio) * 100}%`;
+        div.style.top = `${Number(z.y_ratio) * 100}%`;
+        div.style.width = `${Number(z.w_ratio) * 100}%`;
+        div.style.height = `${Number(z.h_ratio) * 100}%`;
+        div.innerHTML = `<span class="gc-zone-label">${field ? `${field.numero_campo} ${escapeHtmlCF(field.nome_campo)}` : 'Campo'}</span>`;
+        overlay.appendChild(div);
+      });
+
+      if (calDraft && Number(calDraft.pagina) === Number(calPage)) {
+        const div = document.createElement('div');
+        div.className = 'gc-draft-zone';
+        div.style.left = `${calDraft.x * 100}%`;
+        div.style.top = `${calDraft.y * 100}%`;
+        div.style.width = `${calDraft.w * 100}%`;
+        div.style.height = `${calDraft.h * 100}%`;
+        overlay.appendChild(div);
+      }
+    }
+
+    function posicaoRelativaCalibracao(event) {
+      const overlay = document.getElementById('cal-overlay');
+      const rect = overlay.getBoundingClientRect();
+
+      const clientX = event.touches?.[0]?.clientX ?? event.clientX;
+      const clientY = event.touches?.[0]?.clientY ?? event.clientY;
+
+      return {
+        x: Math.max(0, Math.min(1, (clientX - rect.left) / rect.width)),
+        y: Math.max(0, Math.min(1, (clientY - rect.top) / rect.height))
+      };
+    }
+
+    function iniciarDesenhoCalibracao(event) {
+      if (!calPdfDoc || !calLayoutId || !calSelectedFieldId) return;
+      event.preventDefault();
+
+      const p = posicaoRelativaCalibracao(event);
+      calDrawing = true;
+      calStartX = p.x;
+      calStartY = p.y;
+      calDraft = { pagina: calPage, x:p.x, y:p.y, w:0, h:0 };
+      desenharZonasCalibracao();
+    }
+
+    function moverDesenhoCalibracao(event) {
+      if (!calDrawing) return;
+      event.preventDefault();
+
+      const p = posicaoRelativaCalibracao(event);
+      const x = Math.min(calStartX, p.x);
+      const y = Math.min(calStartY, p.y);
+      const w = Math.abs(p.x - calStartX);
+      const h = Math.abs(p.y - calStartY);
+
+      calDraft = { pagina: calPage, x, y, w, h };
+      desenharZonasCalibracao();
+      atualizarBotoesZonaCalibracao();
+    }
+
+    function finalizarDesenhoCalibracao(event) {
+      if (!calDrawing) return;
+      event.preventDefault();
+      calDrawing = false;
+
+      if (!calDraft || calDraft.w < 0.005 || calDraft.h < 0.005) {
+        calDraft = null;
+      }
+
+      desenharZonasCalibracao();
+      atualizarBotoesZonaCalibracao();
+    }
+
+    async function salvarZonaCalibracao() {
+      if (!isClinifatMaster) return alert('Somente o Master pode calibrar.');
+      if (!calLayoutId || !calSelectedFieldId || !calDraft) return;
+
+      const payload = {
+        layout_id: calLayoutId,
+        field_id: calSelectedFieldId,
+        pagina: calDraft.pagina,
+        x_ratio: calDraft.x,
+        y_ratio: calDraft.y,
+        w_ratio: calDraft.w,
+        h_ratio: calDraft.h,
+        ativo: true
+      };
+
+      const { error } = await _supabase
+        .from('guidecheck_zones')
+        .upsert(payload, { onConflict: 'layout_id,field_id,pagina' });
+
+      if (error) return alert('Erro ao salvar área: ' + error.message);
+
+      calDraft = null;
+      await carregarZonasCalibracao();
+      renderizarCamposCalibracao();
+      desenharZonasCalibracao();
+      atualizarBotoesZonaCalibracao();
+
+      document.getElementById('cal-status').textContent = 'Área salva.';
+    }
+
+    async function excluirZonaCalibracao() {
+      if (!isClinifatMaster || !calLayoutId || !calSelectedFieldId) return;
+
+      const zona = calZones.find(z =>
+        Number(z.field_id) === Number(calSelectedFieldId) &&
+        Number(z.pagina) === Number(calPage)
+      );
+      if (!zona) return;
+
+      if (!confirm('Remover a calibração deste campo nesta página?')) return;
+
+      const { error } = await _supabase
+        .from('guidecheck_zones')
+        .delete()
+        .eq('id', zona.id);
+
+      if (error) return alert(error.message);
+
+      await carregarZonasCalibracao();
+      renderizarCamposCalibracao();
+      desenharZonasCalibracao();
+      atualizarBotoesZonaCalibracao();
+    }
+
+    function atualizarBotoesZonaCalibracao() {
+      const save = document.getElementById('cal-save-zone-btn');
+      const del = document.getElementById('cal-delete-zone-btn');
+
+      if (save) save.disabled = !(calDraft && calSelectedFieldId && calLayoutId);
+
+      const temZona = calZones.some(z =>
+        Number(z.field_id) === Number(calSelectedFieldId) &&
+        Number(z.pagina) === Number(calPage)
+      );
+
+      if (del) del.disabled = !temZona;
+    }
+
+    async function excluirLayoutCalibracao() {
+      if (!isClinifatMaster || !calLayoutId) return;
+      if (!confirm('Excluir este layout e todas as áreas calibradas?')) return;
+
+      const { error } = await _supabase
+        .from('guidecheck_layouts')
+        .delete()
+        .eq('id', calLayoutId);
+
+      if (error) return alert(error.message);
+
+      calLayoutId = null;
+      calPdfDoc = null;
+      calZones = [];
+      document.getElementById('cal-layout-actions').classList.add('hidden');
+      document.getElementById('cal-editor').classList.add('hidden');
+      await calibracaoSelecionarPerfil();
+    }
+
+    // Eventos do editor de calibração
+    (() => {
+      const overlay = document.getElementById('cal-overlay');
+      if (!overlay) return;
+
+      overlay.addEventListener('pointerdown', iniciarDesenhoCalibracao);
+      overlay.addEventListener('pointermove', moverDesenhoCalibracao);
+      overlay.addEventListener('pointerup', finalizarDesenhoCalibracao);
+      overlay.addEventListener('pointercancel', finalizarDesenhoCalibracao);
+      overlay.addEventListener('pointerleave', (event) => {
+        if (calDrawing) finalizarDesenhoCalibracao(event);
+      });
+    })();
 
     function navegar(idTela) {
       const destino = document.getElementById(idTela);
