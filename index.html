@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CliniTool</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      color: #111827;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 760px;
+      background: white;
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.06);
+    }
+
+    h1, h2, p {
+      margin-top: 0;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .login-box {
+      max-width: 380px;
+      margin: 0 auto;
+    }
+
+    label {
+      display: block;
+      font-weight: 700;
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+
+    input {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      margin-bottom: 14px;
+      font-size: 14px;
+    }
+
+    button {
+      border: none;
+      border-radius: 8px;
+      padding: 11px 16px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .btn-primary {
+      width: 100%;
+      background: #2563eb;
+      color: white;
+    }
+
+    .btn-secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .apps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+    }
+
+    .app-card {
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      padding: 18px;
+      background: #fafafa;
+    }
+
+    .app-card h3 {
+      margin: 0 0 8px;
+    }
+
+    .app-card p {
+      font-size: 13px;
+      color: #4b5563;
+      min-height: 36px;
+    }
+
+    .app-card button {
+      width: 100%;
+      background: #111827;
+      color: white;
+    }
+
+    .status {
+      margin-top: 12px;
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    .error {
+      color: #b91c1c;
+      font-size: 13px;
+      margin-top: 10px;
+    }
+
+    .empty {
+      border: 1px dashed #cbd5e1;
+      border-radius: 10px;
+      padding: 24px;
+      text-align: center;
+      color: #6b7280;
+    }
+
+    @media (max-width: 600px) {
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+
+    <section id="login-view">
+      <div class="login-box">
+        <h1>CliniTool</h1>
+        <p>Entre com sua conta CliniTool.</p>
+
+        <form id="login-form">
+          <label for="username">Usuário</label>
+          <input id="username" type="text" autocomplete="username" required />
+
+          <label for="password">Senha</label>
+          <input id="password" type="password" autocomplete="current-password" required />
+
+          <button class="btn-primary" type="submit">Entrar</button>
+        </form>
+
+        <div id="login-status" class="status"></div>
+        <div id="login-error" class="error"></div>
+      </div>
+    </section>
+
+    <section id="portal-view" class="hidden">
+      <div class="topbar">
+        <div>
+          <h2 id="welcome-title">Olá</h2>
+          <p id="welcome-subtitle">Selecione uma aplicação.</p>
+        </div>
+
+        <button id="logout-button" class="btn-secondary" type="button">Sair</button>
+      </div>
+
+      <div id="apps-grid" class="apps-grid"></div>
+      <div id="portal-status" class="status"></div>
+    </section>
+
+  </div>
+
+  <script>
+    // ============================================================
+    // CONFIGURAÇÃO SUPABASE
+    // Base central do CliniTool
+    // ============================================================
+
+    const SUPABASE_URL = "https://sgnygzsbgqskcftfgncj.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNnbnlnenNiZ3Fza2NmdGZnbmNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1MDk3NjgsImV4cCI6MjEwMTA4NTc2OH0.oBAjEGtPZCeyjjz4aeSovvM-DKZzxIeIAHIHD79B6go";
+
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const AUTH_EMAIL_DOMAIN = "getchat.app";
+
+    // ============================================================
+    // LINKS DOS APLICATIVOS
+    // Trocaremos pelos endereços definitivos depois.
+    // ============================================================
+
+    const APP_URLS = {
+      clinichat: "./clinichat.html",
+      clinifat: "./clinifat.html",
+      admin: "./admin.html"
+    };
+
+    function normalizeUsername(value) {
+      return value
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9._-]/g, "");
+    }
+
+    function usernameToInternalEmail(username) {
+      return `${normalizeUsername(username)}@${AUTH_EMAIL_DOMAIN}`;
+    }
+
+    function showLogin(message = "") {
+      document.getElementById("portal-view").classList.add("hidden");
+      document.getElementById("login-view").classList.remove("hidden");
+      document.getElementById("login-status").textContent = message;
+    }
+
+    function showPortal() {
+      document.getElementById("login-view").classList.add("hidden");
+      document.getElementById("portal-view").classList.remove("hidden");
+    }
+
+    function setLoginError(message = "") {
+      document.getElementById("login-error").textContent = message;
+    }
+
+    async function loadProfile(userId) {
+      const { data, error } = await _supabase
+        .from("profiles")
+        .select("id, username, nome_completo, nome_exibicao, is_master, is_banned")
+        .eq("id", userId)
+        .single();
+
+      if (error || !data) {
+        throw new Error("Perfil não encontrado.");
+      }
+
+      if (data.is_banned) {
+        await _supabase.auth.signOut();
+        throw new Error("Sua conta está bloqueada.");
+      }
+
+      return data;
+    }
+
+    async function loadMyApps() {
+      const { data, error } = await _supabase
+        .from("my_app_access")
+        .select("app_key, nome, descricao, ordem, can_access")
+        .eq("can_access", true)
+        .order("ordem", { ascending: true });
+
+      if (error) {
+        throw new Error("Não foi possível carregar as permissões: " + error.message);
+      }
+
+      return data || [];
+    }
+
+    function renderApps(apps) {
+      const container = document.getElementById("apps-grid");
+      container.innerHTML = "";
+
+      if (!apps.length) {
+        container.innerHTML = `
+          <div class="empty">
+            Sua conta não possui nenhuma aplicação liberada.
+          </div>
+        `;
+        return;
+      }
+
+      apps.forEach(app => {
+        const url = APP_URLS[app.app_key] || "#";
+
+        const card = document.createElement("div");
+        card.className = "app-card";
+
+        card.innerHTML = `
+          <h3>${escapeHtml(app.nome)}</h3>
+          <p>${escapeHtml(app.descricao || "")}</p>
+          <button type="button">Acessar</button>
+        `;
+
+        card.querySelector("button").addEventListener("click", () => {
+          if (url === "#") {
+            alert("Esta aplicação ainda não possui endereço configurado.");
+            return;
+          }
+
+          window.location.href = url;
+        });
+
+        container.appendChild(card);
+      });
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    async function openPortalForUser(authUser) {
+      const status = document.getElementById("portal-status");
+      status.textContent = "Carregando serviços...";
+
+      const profile = await loadProfile(authUser.id);
+      const apps = await loadMyApps();
+
+      document.getElementById("welcome-title").textContent =
+        `Olá, ${profile.nome_exibicao || profile.nome_completo || profile.username}`;
+
+      document.getElementById("welcome-subtitle").textContent =
+        "Selecione uma aplicação disponível para sua conta.";
+
+      renderApps(apps);
+
+      status.textContent = "";
+      showPortal();
+    }
+
+    async function checkSession() {
+      const { data: { session }, error } = await _supabase.auth.getSession();
+
+      if (error || !session?.user) {
+        showLogin();
+        return;
+      }
+
+      try {
+        await openPortalForUser(session.user);
+      } catch (err) {
+        showLogin();
+        setLoginError(err.message || "Erro ao recuperar a sessão.");
+      }
+    }
+
+    document.getElementById("login-form").addEventListener("submit", async event => {
+      event.preventDefault();
+
+      setLoginError("");
+      document.getElementById("login-status").textContent = "Entrando...";
+
+      const username = normalizeUsername(
+        document.getElementById("username").value
+      );
+
+      const password = document.getElementById("password").value;
+
+      if (!username || !password) {
+        setLoginError("Preencha usuário e senha.");
+        document.getElementById("login-status").textContent = "";
+        return;
+      }
+
+      const { data, error } = await _supabase.auth.signInWithPassword({
+        email: usernameToInternalEmail(username),
+        password
+      });
+
+      if (error || !data.user) {
+        setLoginError("Usuário ou senha incorretos.");
+        document.getElementById("login-status").textContent = "";
+        return;
+      }
+
+      try {
+        await openPortalForUser(data.user);
+        document.getElementById("login-form").reset();
+      } catch (err) {
+        setLoginError(err.message || "Erro ao abrir o portal.");
+      } finally {
+        document.getElementById("login-status").textContent = "";
+      }
+    });
+
+    document.getElementById("logout-button").addEventListener("click", async () => {
+      await _supabase.auth.signOut();
+      showLogin();
+    });
+
+    _supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
+        showLogin();
+      }
+    });
+
+    checkSession();
+  </script>
+
+</body>
+</html>

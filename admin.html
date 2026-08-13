@@ -1,0 +1,2534 @@
+<!DOCTYPE html>
+<html class="light" lang="pt-BR">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Administração CliniTool</title>
+    
+    <!-- Tailwind CDN & Fontes -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline": "#717783",
+                        "primary-container": "#1976d2",
+                        "secondary-container": "#91f78e",
+                        "tertiary-fixed": "#ffe170",
+                        "on-tertiary-container": "#4c3e00",
+                        "on-primary-container": "#fffdff",
+                        "surface": "#f6faff",
+                        "background": "#f6faff",
+                        "primary": "#005dac",
+                        "secondary": "#006e1c",
+                        "on-surface": "#171c20",
+                        "on-surface-variant": "#414752",
+                        "error": "#ba1a1a"
+                    },
+                    "fontFamily": {
+                        "display": ["Be Vietnam Pro"],
+                        "body-sm": ["Be Vietnam Pro"],
+                        "chat-text": ["Be Vietnam Pro"],
+                        "body-md": ["Be Vietnam Pro"],
+                        "headline-sm": ["Be Vietnam Pro"],
+                        "label-bold": ["Plus Jakarta Sans"],
+                        "label-md": ["Plus Jakarta Sans"]
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #a5c8ff 0%, #d4e3ff 50%, #f6faff 100%);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        /* Estilos Modo Noturno */
+        body.dark {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            color: #f1f5f9;
+        }
+        body.dark .glass-window {
+            background: rgba(15, 23, 42, 0.75);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        body.dark .frosted-sidebar {
+            background: rgba(30, 41, 59, 0.5);
+        }
+        body.dark .message-bubble-incoming {
+            background: rgba(30, 41, 59, 0.9);
+            color: #f8fafc;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Contraste consistente para o modo noturno */
+        body.dark .text-on-surface,
+        body.dark .text-on-surface-variant,
+        body.dark .text-outline,
+        body.dark .text-gray-500,
+        body.dark .text-gray-600,
+        body.dark .text-gray-700,
+        body.dark label,
+        body.dark h1,
+        body.dark h2,
+        body.dark h3,
+        body.dark p,
+        body.dark td,
+        body.dark th {
+            color: #e5edf8 !important;
+        }
+        body.dark .text-outline,
+        body.dark .text-gray-500,
+        body.dark .text-gray-600 {
+            color: #aebed2 !important;
+        }
+        body.dark input,
+        body.dark select,
+        body.dark textarea {
+            background: rgba(15, 23, 42, 0.82) !important;
+            color: #f8fafc !important;
+            border-color: rgba(148, 163, 184, 0.42) !important;
+        }
+        body.dark input::placeholder,
+        body.dark textarea::placeholder {
+            color: #94a3b8 !important;
+            opacity: 1;
+        }
+        body.dark option {
+            background: #0f172a;
+            color: #f8fafc;
+        }
+        body.dark .bg-white\/40,
+        body.dark .bg-white\/50,
+        body.dark .bg-white\/60,
+        body.dark .bg-white\/70,
+        body.dark .bg-white\/80,
+        body.dark .glossy-pill {
+            background: rgba(30, 41, 59, 0.78) !important;
+            border-color: rgba(148, 163, 184, 0.28) !important;
+        }
+        body.dark .hover\:bg-white:hover,
+        body.dark .hover\:bg-white\/40:hover,
+        body.dark .hover\:bg-white\/60:hover {
+            background: rgba(51, 65, 85, 0.92) !important;
+        }
+        body.dark table,
+        body.dark tbody,
+        body.dark thead,
+        body.dark tr {
+            border-color: rgba(148, 163, 184, 0.22) !important;
+        }
+        body.dark .message-bubble-outgoing {
+            color: #ffffff;
+        }
+        body.dark #chat-messages {
+            color: #e5edf8;
+        }
+
+        .glass-window {
+            background: rgba(255, 255, 255, 0.55);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(255,255,255,0.3);
+        }
+
+        .gel-button {
+            background: linear-gradient(to bottom, #42a5f5, #1976d2);
+            border-top: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        .gel-button::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 50%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0) 100%);
+        }
+
+        .gel-button:active {
+            background: linear-gradient(to bottom, #1565c0, #1976d2);
+            transform: scale(0.98);
+        }
+
+        .message-bubble-incoming {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03), inset 0 1px 1px rgba(255,255,255,0.8);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .message-bubble-outgoing {
+            background: linear-gradient(135deg, rgba(227, 242, 253, 0.85) 0%, rgba(187, 222, 250, 0.85) 100%);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 2px 6px rgba(0,93,172,0.05), inset 0 1px 1px rgba(255,255,255,0.8);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .nudge-alert {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(113, 119, 131, 0.3);
+            border-radius: 10px;
+        }
+
+        .glossy-header {
+            background: linear-gradient(180deg, #1e88e5 0%, #1565c0 100%);
+            position: relative;
+            overflow: hidden;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .frosted-sidebar {
+            background: rgba(240, 244, 250, 0.4);
+            backdrop-filter: blur(10px);
+        }
+
+        .glossy-pill {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+        }
+
+        /* Fundos Dinâmicos do Chat */
+        .chat-bg-cubes { background-image: url('https://www.transparenttextures.com/patterns/cubes.png'); }
+        .chat-bg-dots { background-image: url('https://www.transparenttextures.com/patterns/subtle-dots.png'); }
+        .chat-bg-grid { background-image: url('https://www.transparenttextures.com/patterns/grid.png'); }
+        .chat-bg-none { background-image: none; }
+
+
+        /* =======================================================
+           PROJECT AURORA — ALPHA 0.4 / ENTREGA 1
+           Layout adaptativo Desktop, Tablet e Mobile
+           ======================================================= */
+        :root {
+            --aurora-app-max-width: 1680px;
+            --aurora-desktop-margin: 12px;
+            --aurora-sidebar-width: 300px;
+        }
+
+        #app-window {
+            width: min(calc(100vw - (var(--aurora-desktop-margin) * 2)), var(--aurora-app-max-width));
+            max-width: none !important;
+            height: calc(100dvh - (var(--aurora-desktop-margin) * 2));
+            max-height: none !important;
+            transition: width .25s ease, height .25s ease, border-radius .25s ease;
+        }
+
+        #chat-shell {
+            min-height: 0;
+        }
+
+        #chat-sidebar {
+            width: var(--aurora-sidebar-width);
+            flex: 0 0 var(--aurora-sidebar-width);
+            min-width: 0;
+        }
+
+        #chat-main {
+            min-width: 0;
+            min-height: 0;
+        }
+
+        #mobile-back-chat {
+            display: none;
+        }
+
+        .aurora-mobile-only {
+            display: none;
+        }
+
+        /* Tablet */
+        @media (min-width: 768px) and (max-width: 1100px) {
+            :root {
+                --aurora-desktop-margin: 8px;
+                --aurora-sidebar-width: 252px;
+            }
+
+            #app-window {
+                border-radius: 18px;
+            }
+
+            #app-window > header {
+                padding-left: 14px;
+                padding-right: 14px;
+            }
+
+            #header-user-name,
+            #header-user-badge,
+            #master-panel-btn span:last-child,
+            #app-window > header button[title="Sair da Conta"] span:last-child {
+                display: none;
+            }
+
+            #chat-sidebar > div:first-child {
+                padding: 12px;
+            }
+        }
+
+        /* Mobile: lista e conversa tornam-se telas independentes */
+        @media (max-width: 767px) {
+            body {
+                padding: 0 !important;
+                align-items: stretch !important;
+                justify-content: stretch !important;
+                min-height: 100dvh;
+                overflow: hidden;
+            }
+
+            #app-window {
+                width: 100vw !important;
+                height: 100dvh !important;
+                border-radius: 0 !important;
+                border: 0 !important;
+                box-shadow: none !important;
+            }
+
+            #app-window > header {
+                min-height: 58px;
+                padding: 8px 10px;
+                gap: 8px;
+            }
+
+            #app-window > header > div:first-child {
+                gap: 8px;
+                min-width: 0;
+                flex: 1;
+            }
+
+            #app-window > header > div:first-child > .material-symbols-outlined:not(#mobile-back-chat *) {
+                display: none;
+            }
+
+            #header-chat-title {
+                display: block;
+                max-width: 48vw;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            #header-sub-info {
+                max-width: 48vw;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            #private-badge,
+            #master-panel-btn,
+            #header-user-badge,
+            #header-user-name,
+            #app-window > header > div:last-child > div,
+            #app-window > header button[title="Sair da Conta"] span:last-child {
+                display: none !important;
+            }
+
+            #app-window > header > div:last-child {
+                gap: 6px;
+                flex-shrink: 0;
+            }
+
+            #app-window > header button[title="Configurações"],
+            #app-window > header button[title="Sair da Conta"] {
+                width: 36px;
+                height: 36px;
+                padding: 0;
+                justify-content: center;
+                border-radius: 12px;
+            }
+
+            #chat-shell {
+                position: relative;
+                display: block !important;
+                overflow: hidden;
+            }
+
+            #chat-sidebar,
+            #chat-main {
+                position: absolute;
+                inset: 0;
+                width: 100% !important;
+                height: 100%;
+                border: 0;
+                transition: transform .24s cubic-bezier(.4,0,.2,1), opacity .18s ease;
+                will-change: transform;
+            }
+
+            #chat-sidebar {
+                display: flex;
+                transform: translateX(0);
+                opacity: 1;
+                z-index: 2;
+                background: rgba(240, 244, 250, .82);
+            }
+
+            body.dark #chat-sidebar {
+                background: rgba(15, 23, 42, .94);
+            }
+
+            #chat-main {
+                display: flex;
+                transform: translateX(100%);
+                opacity: 0;
+                pointer-events: none;
+                z-index: 3;
+            }
+
+            #app-window.mobile-conversation-open #chat-sidebar {
+                transform: translateX(-18%);
+                opacity: 0;
+                pointer-events: none;
+            }
+
+            #app-window.mobile-conversation-open #chat-main {
+                transform: translateX(0);
+                opacity: 1;
+                pointer-events: auto;
+            }
+
+            #app-window.mobile-conversation-open #mobile-back-chat {
+                display: inline-flex;
+            }
+
+            #mobile-back-chat {
+                width: 36px;
+                height: 36px;
+                align-items: center;
+                justify-content: center;
+                flex: 0 0 36px;
+                border-radius: 12px;
+                background: rgba(255,255,255,.18);
+                border: 1px solid rgba(255,255,255,.25);
+            }
+
+            #chat-sidebar > div:first-child {
+                padding: 14px 16px;
+            }
+
+            #chat-sidebar .custom-scrollbar {
+                padding-left: 12px;
+                padding-right: 12px;
+            }
+
+            #chat-main > div:first-child {
+                min-height: 42px;
+                padding: 7px 12px;
+            }
+
+            #typing-indicator {
+                max-width: 48vw;
+                overflow: hidden;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                font-size: 10px;
+            }
+
+            #chat-messages {
+                padding: 12px !important;
+                scroll-padding-bottom: 10px;
+            }
+
+            #chat-main > div:last-child {
+                padding: 9px 10px calc(9px + env(safe-area-inset-bottom));
+            }
+
+            #chat-main > div:last-child > div:first-child {
+                margin-bottom: 7px;
+            }
+
+            #message-input {
+                font-size: 16px !important; /* evita zoom automático no iOS */
+                padding-left: 12px !important;
+            }
+
+            #chat-main button[onclick="sendMessage()"] {
+                width: 42px;
+                height: 42px;
+                padding: 0;
+                justify-content: center;
+                border-radius: 14px;
+            }
+
+            #chat-main button[onclick="sendMessage()"] span:first-child {
+                display: none;
+            }
+
+            #emoji-popover {
+                left: 10px !important;
+                right: 10px !important;
+                bottom: 70px !important;
+                grid-template-columns: repeat(6, minmax(0, 1fr));
+            }
+
+            #settings-modal,
+            #image-modal {
+                padding: 8px;
+            }
+
+            #settings-modal > div {
+                width: 100%;
+                max-height: calc(100dvh - 16px);
+                border-radius: 20px;
+            }
+
+            .aurora-mobile-only {
+                display: flex;
+            }
+        }
+
+
+
+        /* =======================================================
+           PROJECT AURORA — ALPHA 0.4 / ENTREGA 2
+           Personalização, acessibilidade e preferências
+           ======================================================= */
+        :root {
+            --gc-primary: #1976d2;
+            --gc-primary-dark: #0d47a1;
+            --gc-primary-soft: rgba(25,118,210,.14);
+            --gc-ui-scale: 1;
+        }
+
+        body { font-size: calc(1rem * var(--gc-ui-scale)); }
+        .glossy-header { background: linear-gradient(180deg, var(--gc-primary) 0%, var(--gc-primary-dark) 100%) !important; }
+        .gel-button { background: linear-gradient(to bottom, color-mix(in srgb, var(--gc-primary) 78%, white), var(--gc-primary)) !important; }
+        .text-primary { color: var(--gc-primary) !important; }
+        .bg-primary { background-color: var(--gc-primary) !important; }
+        .bg-primary\/10 { background-color: var(--gc-primary-soft) !important; }
+        .bg-primary\/20 { background-color: color-mix(in srgb, var(--gc-primary) 20%, transparent) !important; }
+        .border-primary\/10 { border-color: color-mix(in srgb, var(--gc-primary) 10%, transparent) !important; }
+        .border-primary\/20 { border-color: color-mix(in srgb, var(--gc-primary) 20%, transparent) !important; }
+        .focus\:ring-primary:focus, .focus\:ring-primary\/20:focus, .focus\:ring-primary\/40:focus { --tw-ring-color: color-mix(in srgb, var(--gc-primary) 40%, transparent) !important; }
+
+        .chat-bg-aurora {
+            background-color: #eef5ff;
+            background-image:
+                radial-gradient(circle at 18% 20%, rgba(125,211,252,.34), transparent 34%),
+                radial-gradient(circle at 80% 18%, rgba(196,181,253,.30), transparent 32%),
+                radial-gradient(circle at 50% 82%, rgba(110,231,183,.22), transparent 38%);
+        }
+        .chat-bg-lines {
+            background-color: #f8fbff;
+            background-image: repeating-linear-gradient(135deg, rgba(25,118,210,.07) 0 1px, transparent 1px 14px);
+        }
+        .chat-bg-paper {
+            background-color: #faf7ef;
+            background-image: linear-gradient(rgba(70,70,70,.045) 1px, transparent 1px), linear-gradient(90deg, rgba(70,70,70,.035) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        .chat-bg-solid-blue { background: #eaf3ff !important; }
+        .chat-bg-solid-gray { background: #eef1f5 !important; }
+        .chat-bg-solid-green { background: #edf8f0 !important; }
+        .chat-bg-solid-lilac { background: #f3efff !important; }
+        body.dark .chat-bg-aurora { background-color:#0f172a; background-image:radial-gradient(circle at 18% 20%,rgba(14,165,233,.16),transparent 34%),radial-gradient(circle at 80% 18%,rgba(139,92,246,.16),transparent 32%),radial-gradient(circle at 50% 82%,rgba(16,185,129,.10),transparent 38%); }
+        body.dark .chat-bg-lines, body.dark .chat-bg-paper, body.dark .chat-bg-solid-blue, body.dark .chat-bg-solid-gray, body.dark .chat-bg-solid-green, body.dark .chat-bg-solid-lilac { background-color:#111827 !important; }
+
+        .theme-choice, .accent-choice, .font-choice { transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease; }
+        .theme-choice.active, .accent-choice.active, .font-choice.active { border-color: var(--gc-primary) !important; box-shadow: 0 0 0 3px var(--gc-primary-soft); transform: translateY(-1px); }
+        .accent-choice { width: 30px; height: 30px; border-radius: 999px; border: 3px solid rgba(255,255,255,.9); box-shadow: 0 0 0 1px rgba(0,0,0,.15); }
+        .avatar-initials { font-weight: 800; letter-spacing: -.03em; }
+        html.gc-scale-small { --gc-ui-scale: .92; }
+        html.gc-scale-normal { --gc-ui-scale: 1; }
+        html.gc-scale-large { --gc-ui-scale: 1.10; }
+
+
+        /* =======================================================
+           PROJECT ECHO — ALPHA 0.5 / BUILD 00023
+           Respostas, reações, multiline, cooldown e manutenção
+           ======================================================= */
+        #message-input {
+            resize: none;
+            min-height: 42px;
+            max-height: 132px;
+            overflow-y: auto;
+            line-height: 1.35;
+        }
+        .echo-reply-bar {
+            border-left: 3px solid var(--gc-primary);
+            background: color-mix(in srgb, var(--gc-primary) 9%, white);
+        }
+        body.dark .echo-reply-bar { background: color-mix(in srgb, var(--gc-primary) 18%, #0f172a); }
+        .echo-reply-preview {
+            border-left: 3px solid color-mix(in srgb, var(--gc-primary) 55%, transparent);
+            background: rgba(255,255,255,.42);
+        }
+        body.dark .echo-reply-preview { background: rgba(15,23,42,.48); }
+        .echo-message-actions {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(2px);
+            transition: opacity .15s ease, transform .15s ease;
+        }
+        .echo-message-actions.is-open,
+        .echo-message-actions:focus-within {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+        .echo-reply-action {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateX(3px);
+            transition: opacity .1s ease, transform .1s ease;
+        }
+        .echo-reaction-actions {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(2px);
+            transition: opacity .15s ease .8s, transform .15s ease .8s;
+        }
+        @media (hover:hover) and (pointer:fine) {
+            .echo-message-bubble:hover > .echo-message-actions {
+                opacity: 1;
+                pointer-events: auto;
+                transform: translateY(0);
+            }
+            .echo-message-bubble:hover .echo-reply-action {
+                opacity: 1;
+                pointer-events: auto;
+                transform: translateX(0);
+            }
+            .echo-message-bubble:hover .echo-reaction-actions {
+                opacity: 1;
+                pointer-events: auto;
+                transform: translateY(0);
+            }
+        }
+        @media (hover:none), (pointer:coarse) {
+            .echo-message-actions.is-open .echo-reply-action,
+            .echo-message-actions.is-open .echo-reaction-actions {
+                opacity: 1;
+                pointer-events: auto;
+                transform: none;
+                transition-delay: 0s;
+            }
+        }
+        .echo-sender-link { cursor:pointer; }
+        .echo-sender-link:hover { text-decoration: underline; }
+        .echo-swipe-active { transition:none !important; }
+        .echo-reaction-pill {
+            background: rgba(255,255,255,.72);
+            border: 1px solid rgba(255,255,255,.82);
+            box-shadow: 0 1px 3px rgba(0,0,0,.06);
+        }
+        body.dark .echo-reaction-pill { background: rgba(30,41,59,.82); border-color: rgba(148,163,184,.22); }
+        .echo-reaction-pill.mine { border-color: var(--gc-primary); background: var(--gc-primary-soft); }
+        #nudge-button:disabled { opacity:.42; cursor:not-allowed; filter:grayscale(.25); }
+        #echo-emoji-popover { max-height: 310px; overflow-y:auto; }
+        .echo-danger-card { background: rgba(254,242,242,.82); border:1px solid rgba(239,68,68,.24); }
+        body.dark .echo-danger-card { background: rgba(127,29,29,.18); }
+
+
+        /* =======================================================
+           PROJECT ECHO — BUILD 00025
+           Histórico paginado, offline, leitura e refinamentos
+           ======================================================= */
+        .echo-message-row { position: relative; }
+        .echo-message-row.echo-consecutive { margin-top: -6px; }
+        .echo-message-row.echo-consecutive .echo-sender-name,
+        .echo-message-row.echo-consecutive .echo-message-avatar { display: none !important; }
+
+
+        .echo-message-actions {
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            transform: none !important;
+        }
+
+        /* A seta de resposta surge imediatamente ao hover; reações aguardam 800 ms. */
+        .echo-reply-action {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .10s ease, transform .10s ease;
+            z-index: 5;
+        }
+        .echo-message-row[data-is-me="true"] .echo-reply-action { left: -38px; }
+        .echo-message-row[data-is-me="false"] .echo-reply-action { right: -38px; }
+
+        .echo-reaction-actions {
+            position: relative;
+            margin-top: 4px;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-2px);
+            transition: opacity .14s ease .8s, transform .14s ease .8s;
+            min-height: 0;
+        }
+        @media (hover:hover) and (pointer:fine) {
+            .echo-message-bubble:hover .echo-reply-action {
+                opacity: 1;
+                pointer-events: auto;
+            }
+            .echo-message-bubble:hover + .echo-reaction-actions,
+            .echo-reaction-actions:hover {
+                opacity: 1;
+                pointer-events: auto;
+                transform: translateY(0);
+            }
+        }
+        @media (hover:none), (pointer:coarse) {
+            .echo-message-actions.is-open .echo-reaction-actions {
+                opacity: 1;
+                pointer-events: auto;
+                transform: none;
+                transition-delay: 0s;
+            }
+            .echo-reply-action { display: none !important; }
+        }
+
+        /* Reações aplicadas ficam definitivamente abaixo do balão. */
+        .echo-reactions-applied { margin-top: 4px; }
+
+        /* Modo noturno com balões próprios, sem aparência "lavada". */
+        body.dark .message-bubble-incoming {
+            background: rgba(30, 41, 59, .96) !important;
+            color: #f8fafc !important;
+            border-color: rgba(148,163,184,.18) !important;
+            box-shadow: 0 4px 14px rgba(0,0,0,.18) !important;
+        }
+        body.dark .message-bubble-outgoing {
+            background: color-mix(in srgb, var(--gc-primary) 30%, #0f172a) !important;
+            color: #f8fafc !important;
+            border-color: color-mix(in srgb, var(--gc-primary) 34%, rgba(148,163,184,.18)) !important;
+            box-shadow: 0 4px 14px rgba(0,0,0,.20) !important;
+        }
+        body.dark .message-bubble-incoming .echo-message-content,
+        body.dark .message-bubble-outgoing .echo-message-content { color: #f8fafc !important; }
+
+        .echo-read-receipt { display:inline-flex; align-items:center; line-height:1; margin-left:3px; }
+        .echo-read-receipt.is-read { color: var(--gc-primary); opacity:1 !important; }
+
+        .echo-history-loader {
+            position: sticky;
+            top: 8px;
+            z-index: 8;
+            width: fit-content;
+            margin: 0 auto 8px;
+            padding: 5px 10px;
+            border-radius: 999px;
+            background: rgba(255,255,255,.86);
+            border: 1px solid rgba(255,255,255,.92);
+            box-shadow: 0 2px 8px rgba(0,0,0,.08);
+            font-size: 10px;
+            font-weight: 700;
+            color: #64748b;
+        }
+        body.dark .echo-history-loader {
+            background: rgba(30,41,59,.94);
+            border-color: rgba(148,163,184,.22);
+            color: #cbd5e1;
+        }
+
+        .settings-save-sticky {
+            position: sticky;
+            bottom: calc(env(safe-area-inset-bottom) + 2px);
+            z-index: 10;
+            flex-shrink: 0;
+        }
+        #settings-modal > div {
+            padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)) !important;
+        }
+
+
+        /* =======================================================
+           PROJECT ECHO — BUILD 00026
+           Refinamento de agrupamento, ações e emojis
+           ======================================================= */
+        /* Mensagens consecutivas ficam visualmente agrupadas, sem “buracos”. */
+        #chat-messages { row-gap: 0 !important; }
+        .echo-message-row { margin-top: 10px; }
+        .echo-message-row.echo-consecutive { margin-top: 3px !important; }
+        .echo-message-row.echo-consecutive .echo-reactions-applied { margin-top: 1px; }
+        .echo-reactions-applied { margin-top: 2px !important; min-height: 0; }
+
+        /* Ações não participam do fluxo: não criam espaço entre os balões. */
+        .echo-message-actions { position: relative; }
+        .echo-reaction-actions {
+            position: absolute !important;
+            top: calc(100% + 3px);
+            margin-top: 0 !important;
+            z-index: 18;
+            white-space: nowrap;
+        }
+        .echo-message-row[data-is-me="true"] .echo-reaction-actions { right: 0; }
+        .echo-message-row[data-is-me="false"] .echo-reaction-actions { left: 0; }
+
+        /* Pequena seta fixa no canto do balão: 300 ms no desktop. */
+        .echo-reply-action {
+            width: 24px !important;
+            height: 24px !important;
+            top: 5px !important;
+            margin: 0 !important;
+            border-radius: 999px !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            transform: scale(.92) !important;
+            transition: opacity .12s ease .30s, transform .12s ease .30s !important;
+            z-index: 20;
+        }
+        .echo-message-row[data-is-me="true"] .echo-reply-action { left: -10px !important; right: auto !important; }
+        .echo-message-row[data-is-me="false"] .echo-reply-action { right: -10px !important; left: auto !important; }
+        @media (hover:hover) and (pointer:fine) {
+            .echo-message-actions:hover .echo-reply-action,
+            .echo-reply-action:hover {
+                opacity: 1 !important;
+                pointer-events: auto !important;
+                transform: scale(1) !important;
+            }
+            .echo-message-actions:hover .echo-reaction-actions,
+            .echo-reaction-actions:hover {
+                opacity: 1;
+                pointer-events: auto;
+                transform: translateY(0);
+                transition-delay: .8s;
+            }
+        }
+        @media (hover:none), (pointer:coarse) {
+            .echo-reply-action { display: none !important; }
+            .echo-message-actions.is-open .echo-reaction-actions {
+                position: absolute !important;
+                opacity: 1 !important;
+                pointer-events: auto !important;
+                transform: none !important;
+                transition-delay: 0s !important;
+            }
+        }
+
+        /* Emoji isolado ganha destaque, sem alterar emojis dentro de frases. */
+        .echo-message-content.echo-single-emoji {
+            font-size: 2rem !important;
+            line-height: 1.15 !important;
+            padding-top: 2px;
+            padding-bottom: 8px !important;
+        }
+
+        /* Picker completo e categorizado. */
+        #emoji-popover { width: min(390px, calc(100vw - 20px)) !important; }
+        #echo-emoji-popover { max-height: 285px; overflow-y: auto; display: grid; grid-template-columns: repeat(8,minmax(0,1fr)); gap: 3px; }
+        .echo-emoji-btn { font-size: 1.35rem; line-height: 1; padding: 6px 2px; border-radius: 8px; }
+        .echo-emoji-btn:hover { background: rgba(0,0,0,.06); }
+        body.dark .echo-emoji-btn:hover { background: rgba(255,255,255,.08); }
+        .echo-emoji-category.active { background: var(--gc-primary-soft); color: var(--gc-primary); }
+        #emoji-search { min-width: 0; }
+
+        /* Indicador de digitação passa para a barra de ações, junto ao clipe. */
+        #typing-indicator {
+            min-height: 36px;
+            max-width: min(300px, 55vw);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        @media (max-width: 767px) {
+            #typing-indicator { max-width: calc(100vw - 130px); font-size: 10px; padding-left: 8px; padding-right: 8px; }
+            #echo-emoji-popover { grid-template-columns: repeat(7,minmax(0,1fr)); }
+        }
+
+        /* =======================================================
+           ADMINISTRAÇÃO — BUILD 00027
+           Dashboard, sessões e logs administrativos
+           ======================================================= */
+        .master-nav-btn { transition: background .15s ease, color .15s ease, opacity .15s ease; }
+        .master-nav-btn.active { background: var(--gc-primary); color: white; box-shadow: 0 2px 8px rgba(15,23,42,.10); }
+        .master-nav-btn:not(.active):not(:disabled):hover { background: rgba(255,255,255,.62); }
+        body.dark .master-nav-btn:not(.active):not(:disabled):hover { background: rgba(51,65,85,.78); }
+        .admin-stat-card { background: rgba(255,255,255,.62); border: 1px solid rgba(255,255,255,.72); }
+        body.dark .admin-stat-card { background: rgba(30,41,59,.72); border-color: rgba(148,163,184,.20); }
+        .admin-user-row { background: rgba(255,255,255,.52); border: 1px solid rgba(255,255,255,.68); }
+        body.dark .admin-user-row { background: rgba(30,41,59,.58); border-color: rgba(148,163,184,.18); }
+        .admin-status-dot { width: 9px; height: 9px; border-radius: 999px; flex: 0 0 9px; }
+        .admin-log-details { max-width: 34rem; }
+        @media (max-width: 767px) {
+            #master-dashboard-section, #master-logs-section { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+        }
+
+
+        /* =======================================================
+           PROJECT ECHO — BUILD 00028
+           Pesquisa, mídia, favoritos e conversas fixadas
+           ======================================================= */
+        .content-toolbar-btn {
+            width: 34px; height: 34px; border-radius: 11px; display:inline-flex; align-items:center; justify-content:center;
+            background: rgba(255,255,255,.62); border:1px solid rgba(255,255,255,.78); color:var(--gc-primary);
+            transition: transform .15s ease, background .15s ease;
+        }
+        .content-toolbar-btn:hover { background:rgba(255,255,255,.9); transform:translateY(-1px); }
+        body.dark .content-toolbar-btn { background:rgba(30,41,59,.82); border-color:rgba(148,163,184,.22); color:#dbeafe; }
+        .content-modal-card { background:rgba(255,255,255,.92); border:1px solid rgba(255,255,255,.95); }
+        body.dark .content-modal-card { background:rgba(15,23,42,.96); border-color:rgba(148,163,184,.22); }
+        .content-result { border:1px solid rgba(148,163,184,.18); background:rgba(255,255,255,.58); }
+        body.dark .content-result { background:rgba(30,41,59,.72); border-color:rgba(148,163,184,.18); }
+        .message-favorite-btn { position:absolute; top:5px; width:24px; height:24px; border-radius:999px; opacity:0; pointer-events:none; transform:scale(.92); transition:opacity .12s ease .30s, transform .12s ease .30s; z-index:20; }
+        .echo-message-row[data-is-me="true"] .message-favorite-btn { right:-10px; }
+        .echo-message-row[data-is-me="false"] .message-favorite-btn { left:-10px; }
+        .message-favorite-btn.is-favorite { opacity:1; pointer-events:auto; color:#d97706; }
+        @media (hover:hover) and (pointer:fine) { .echo-message-actions:hover .message-favorite-btn { opacity:1; pointer-events:auto; transform:scale(1); } }
+        @media (hover:none), (pointer:coarse) { .message-favorite-btn { opacity:1; pointer-events:auto; transform:none; top:5px; } }
+        .pinned-conversation { box-shadow: inset 3px 0 0 var(--gc-primary); }
+        .media-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(145px,1fr)); gap:10px; }
+        .media-tile { min-height:130px; overflow:hidden; border-radius:16px; position:relative; }
+        .media-tile img,.media-tile video { width:100%; height:130px; object-fit:cover; }
+        .search-highlight { outline:3px solid color-mix(in srgb,var(--gc-primary) 55%,transparent); outline-offset:3px; animation:echoHighlight 1.8s ease; }
+        @keyframes echoHighlight { 0%,100%{filter:none} 35%{filter:brightness(1.12)} }
+        @media(max-width:767px){ .content-toolbar-btn{width:32px;height:32px}.content-modal-card{border-radius:18px!important}.media-grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
+
+
+        /* =======================================================
+           READ RECEIPTS 2.0 — BUILD 00029
+           Marcador de leitura por conversa
+           ======================================================= */
+        .echo-read-receipt {
+            transition: color .16s ease, opacity .16s ease, transform .16s ease;
+        }
+        .echo-read-receipt.is-read {
+            color: var(--gc-primary) !important;
+            opacity: 1 !important;
+        }
+        .echo-read-receipt.is-read .material-symbols-outlined {
+            transform: translateY(.2px);
+        }
+
+    </style>
+</head>
+<body class="p-0" id="app-body">
+
+<div id="admin-login" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/65 backdrop-blur-md p-4">
+    <div class="glass-window p-7 rounded-3xl w-full max-w-md shadow-2xl">
+        <div class="text-center mb-6">
+            <div class="w-14 h-14 mx-auto rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-3">
+                <span class="material-symbols-outlined text-3xl">admin_panel_settings</span>
+            </div>
+            <h1 class="text-xl font-black text-on-surface">Administração CliniTool</h1>
+            <p class="text-xs text-outline mt-1">Administração do Ecossistema</p>
+        </div>
+
+        <form id="admin-login-form" onsubmit="handleAdminLogin(event)" class="space-y-3">
+            <div>
+                <label class="block text-xs font-bold text-on-surface-variant mb-1">Usuário</label>
+                <input id="admin-username" autocomplete="username" required class="w-full px-4 py-2.5 rounded-xl bg-white/75 border border-white/80 text-sm"/>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-on-surface-variant mb-1">Senha</label>
+                <input id="admin-password" type="password" autocomplete="current-password" required class="w-full px-4 py-2.5 rounded-xl bg-white/75 border border-white/80 text-sm"/>
+            </div>
+            <button class="gel-button w-full py-3 rounded-xl text-white font-black text-sm shadow-md" type="submit">
+                <span class="relative z-10">Entrar</span>
+            </button>
+        </form>
+
+        <div id="admin-login-status" class="text-xs text-primary text-center mt-3"></div>
+        <div id="admin-auth-error" class="hidden text-xs text-red-700 font-bold text-center mt-3"></div>
+
+        <button type="button" onclick="goPortal()" class="w-full mt-4 py-2.5 rounded-xl bg-white/60 border border-white/75 text-xs font-bold text-on-surface">
+            Voltar ao CliniTool
+        </button>
+    </div>
+</div>
+
+<!-- PAINEL MASTER INDEPENDENTE -->
+
+<div id="master-modal" class="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-md hidden p-3 md:p-5">
+    <div class="glass-window w-full h-full max-w-[1600px] mx-auto rounded-[28px] shadow-2xl overflow-hidden flex flex-col border border-white/60">
+        <header class="glossy-header px-5 md:px-7 py-4 flex items-center justify-between text-white">
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="w-11 h-11 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center shadow-inner flex-shrink-0">
+                    <span class="material-symbols-outlined">admin_panel_settings</span>
+                </div>
+                <div class="min-w-0">
+                    <h2 class="text-lg md:text-xl font-black truncate">Administração CliniTool</h2>
+                    <p class="text-[11px] text-white/75 truncate">Administração do Ecossistema</p>
+                </div>
+            </div>
+            <button onclick="goPortal()" class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 text-xs font-bold transition-all">
+                <span class="material-symbols-outlined text-base">arrow_back</span>
+                <span class="hidden sm:inline">Voltar ao CliniTool</span>
+            </button>
+        </header>
+
+        <div class="flex flex-1 min-h-0 bg-white/35">
+            <aside class="hidden md:flex w-52 lg:w-60 border-r border-white/50 bg-white/25 p-4 flex-col gap-2">
+                <button id="master-nav-users" type="button" onclick="showMasterSection('users')" class="master-nav-btn active w-full flex items-center gap-2.5 px-3.5 py-3 rounded-xl text-xs font-bold text-left">
+                    <span class="material-symbols-outlined text-lg">group</span>
+                    Usuários
+                </button>
+                <button id="master-nav-dashboard" type="button" onclick="showMasterSection('dashboard')" class="master-nav-btn w-full flex items-center gap-2.5 px-3.5 py-3 rounded-xl text-xs font-bold text-left text-on-surface">
+                    <span class="material-symbols-outlined text-lg">dashboard</span>
+                    Dashboard
+                </button>
+                <button id="master-nav-logs" type="button" onclick="showMasterSection('logs')" class="master-nav-btn w-full flex items-center gap-2.5 px-3.5 py-3 rounded-xl text-xs font-bold text-left text-on-surface">
+                    <span class="material-symbols-outlined text-lg">history</span>
+                    Logs
+                </button>
+                <button disabled class="opacity-45 w-full flex items-center gap-2.5 px-3.5 py-3 rounded-xl text-xs font-bold text-left text-on-surface">
+                    <span class="material-symbols-outlined text-lg">settings</span>
+                    Sistema
+                    <span class="ml-auto text-[8px] uppercase">Em breve</span>
+                </button>
+
+                <div class="mt-auto rounded-2xl bg-white/55 border border-white/70 p-3.5">
+                    <div class="text-xs font-black text-on-surface">Ecossistema</div>
+                    <div class="text-[10px] text-outline mt-1">Admin Central</div>
+                    <div class="text-[10px] text-outline">Build 00001</div>
+                </div>
+            </aside>
+
+            <main class="flex-1 min-w-0 flex flex-col">
+                <div id="master-users-section" class="flex-1 min-h-0 flex flex-col">
+                <div class="px-4 md:px-6 py-4 border-b border-white/50 bg-white/20 flex items-center justify-between gap-3">
+                    <div>
+                        <h3 class="text-lg font-black text-on-surface">Usuários</h3>
+                        <p class="text-[11px] text-outline">Contas, permissões e visibilidade entre profissionais.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                    <button type="button" onclick="openMasterMaintenance()" class="px-4 py-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-700 border border-red-200 text-xs font-bold flex items-center gap-2">
+                        <span class="material-symbols-outlined text-base">delete_sweep</span><span class="hidden sm:inline">Manutenção</span>
+                    </button>
+                    <button onclick="startMasterCreateMode()" class="gel-button text-white px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 shadow-md">
+                        <span class="material-symbols-outlined text-base relative z-10">person_add</span>
+                        <span class="relative z-10">Novo usuário</span>
+                    </button>
+                    </div>
+                </div>
+
+                <div class="flex flex-1 min-h-0">
+                    <!-- LISTA -->
+                    <section class="w-full md:w-[330px] lg:w-[380px] border-r border-white/50 bg-white/25 flex flex-col min-h-0">
+                        <div class="p-4 space-y-3">
+                            <div class="grid grid-cols-3 gap-2">
+                                <div class="rounded-xl bg-white/65 border border-white/70 p-2.5">
+                                    <div class="text-[9px] uppercase font-bold text-outline">Total</div>
+                                    <div id="master-stat-total" class="text-xl font-black text-primary">0</div>
+                                </div>
+                                <div class="rounded-xl bg-white/65 border border-white/70 p-2.5">
+                                    <div class="text-[9px] uppercase font-bold text-outline">Ativos</div>
+                                    <div id="master-stat-active" class="text-xl font-black text-green-700">0</div>
+                                </div>
+                                <div class="rounded-xl bg-white/65 border border-white/70 p-2.5">
+                                    <div class="text-[9px] uppercase font-bold text-outline">Bloqueados</div>
+                                    <div id="master-stat-banned" class="text-xl font-black text-red-600">0</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 bg-white/70 p-2.5 rounded-xl border border-white/80 shadow-sm">
+                                <span class="material-symbols-outlined text-outline text-base">search</span>
+                                <input id="master-search-input" oninput="filterMasterUserList()" type="text" placeholder="Nome, exibição ou usuário..." class="w-full bg-transparent border-none text-xs focus:outline-none focus:ring-0 text-on-surface"/>
+                            </div>
+                        </div>
+                        <div id="master-users-list" class="flex-1 overflow-y-auto custom-scrollbar px-3 pb-4 space-y-2"></div>
+                    </section>
+
+                    <!-- ÁREA DE TRABALHO -->
+                    <section class="hidden md:flex flex-1 min-w-0 min-h-0 flex-col bg-white/15" id="master-workspace">
+                        <div id="master-empty-state" class="flex-1 flex flex-col items-center justify-center text-center p-8">
+                            <div class="w-20 h-20 rounded-3xl bg-primary/10 text-primary flex items-center justify-center mb-5 border border-primary/10">
+                                <span class="material-symbols-outlined text-4xl">manage_accounts</span>
+                            </div>
+                            <h4 class="text-lg font-black text-on-surface">Selecione um usuário</h4>
+                            <p class="text-xs text-outline mt-2 max-w-sm">Escolha uma conta na lista para consultar dados e, quando necessário, iniciar a edição.</p>
+                        </div>
+
+                        <div id="master-editor" class="hidden flex-1 min-h-0 flex flex-col">
+                            <div class="px-5 md:px-7 py-4 border-b border-white/50 bg-white/25 flex items-center justify-between gap-3">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <button onclick="masterMobileBackToList()" class="md:hidden w-9 h-9 rounded-xl bg-white/65 border border-white/75 flex items-center justify-center">
+                                        <span class="material-symbols-outlined">arrow_back</span>
+                                    </button>
+                                    <div id="master-editor-avatar" class="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center overflow-hidden border border-primary/10 flex-shrink-0 font-black text-lg"></div>
+                                    <div class="min-w-0">
+                                        <div class="flex items-center gap-2">
+                                            <h4 id="master-editor-title" class="text-base font-black text-on-surface truncate">Usuário</h4>
+                                            <span id="master-editor-badge" class="hidden text-[9px] uppercase font-black px-2 py-0.5 rounded-full"></span>
+                                        </div>
+                                        <p id="master-editor-subtitle" class="text-[10px] text-outline truncate"></p>
+                                    </div>
+                                </div>
+                                <button id="master-edit-btn" onclick="enableMasterEditMode()" class="px-3.5 py-2 rounded-xl bg-white/70 hover:bg-white border border-white/80 text-xs font-bold text-primary flex items-center gap-1.5">
+                                    <span class="material-symbols-outlined text-base">edit</span>
+                                    Editar
+                                </button>
+                            </div>
+
+                            <div class="flex-1 overflow-y-auto custom-scrollbar px-5 md:px-7 py-5">
+                                <form id="master-user-form" class="max-w-4xl mx-auto space-y-6" onsubmit="saveMasterUser(event)">
+                                    <input type="hidden" id="master-edit-user-id"/>
+
+                                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-[11px] font-bold text-on-surface-variant mb-1.5">Nome completo</label>
+                                            <input id="master-edit-fullname" data-master-editable type="text" disabled class="master-form-input w-full px-4 py-2.5 rounded-xl bg-white/75 border border-white text-sm disabled:opacity-75 disabled:cursor-default"/>
+                                        </div>
+                                        <div>
+                                            <label class="block text-[11px] font-bold text-on-surface-variant mb-1.5">Nome de exibição</label>
+                                            <input id="master-edit-displayname" data-master-editable type="text" disabled class="master-form-input w-full px-4 py-2.5 rounded-xl bg-white/75 border border-white text-sm disabled:opacity-75 disabled:cursor-default"/>
+                                        </div>
+                                        <div>
+                                            <label class="block text-[11px] font-bold text-on-surface-variant mb-1.5">Usuário</label>
+                                            <input id="master-edit-username" type="text" disabled class="w-full px-4 py-2.5 rounded-xl bg-slate-100/75 border border-white text-sm opacity-75 cursor-not-allowed"/>
+                                            <p class="text-[10px] text-outline mt-1">O nome de usuário não é alterado nesta etapa.</p>
+                                        </div>
+                                        <div>
+                                            <label class="block text-[11px] font-bold text-on-surface-variant mb-1.5">Data de nascimento</label>
+                                            <input id="master-edit-birthdate" data-master-editable type="date" disabled class="master-form-input w-full px-4 py-2.5 rounded-xl bg-white/75 border border-white text-sm disabled:opacity-75 disabled:cursor-default"/>
+                                        </div>
+                                        <div id="master-create-password-wrap" class="hidden lg:col-span-2">
+                                            <label class="block text-[11px] font-bold text-on-surface-variant mb-1.5">Senha inicial</label>
+                                            <input id="master-edit-password" minlength="8" type="password" class="master-form-input w-full px-4 py-2.5 rounded-xl bg-white/75 border border-white text-sm" placeholder="Mínimo de 8 caracteres"/>
+                                        </div>
+                                    </div>
+
+                                    <div id="master-password-section" class="hidden rounded-2xl bg-white/45 border border-white/70 p-4">
+                                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                                            <div>
+                                                <h5 class="text-xs font-black text-on-surface">Credenciais de acesso</h5>
+                                                <p class="text-[10px] text-outline mt-0.5">O Master pode definir uma nova senha para este usuário.</p>
+                                            </div>
+                                            <button type="button" onclick="generateMasterPassword()" class="px-3 py-2 rounded-xl bg-primary/10 text-primary text-[10px] font-black">
+                                                Gerar senha
+                                            </button>
+                                        </div>
+
+                                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="block text-[11px] font-bold text-on-surface-variant mb-1.5">Nova senha</label>
+                                                <div class="relative">
+                                                    <input id="master-new-password" type="password" minlength="8" maxlength="72" autocomplete="new-password" class="w-full px-4 py-2.5 pr-11 rounded-xl bg-white/75 border border-white text-sm" placeholder="Mínimo de 8 caracteres"/>
+                                                    <button type="button" onclick="toggleMasterPasswordVisibility()" class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg hover:bg-white/70 flex items-center justify-center text-outline" title="Mostrar ou ocultar senha">
+                                                        <span id="master-password-eye-icon" class="material-symbols-outlined text-lg">visibility</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label class="block text-[11px] font-bold text-on-surface-variant mb-1.5">Confirmar nova senha</label>
+                                                <input id="master-confirm-password" type="password" minlength="8" maxlength="72" autocomplete="new-password" class="w-full px-4 py-2.5 rounded-xl bg-white/75 border border-white text-sm" placeholder="Repita a nova senha"/>
+                                            </div>
+                                        </div>
+
+                                        <div class="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                            <div id="master-password-status" class="text-[10px] text-outline">A senha atual não pode ser exibida.</div>
+                                            <div class="flex flex-wrap gap-2">
+                                                <button type="button" onclick="copyMasterCredentials()" class="px-3.5 py-2.5 rounded-xl bg-white/70 border border-white/80 text-xs font-bold text-on-surface flex items-center gap-1.5">
+                                                    <span class="material-symbols-outlined text-base">content_copy</span>
+                                                    Copiar credenciais
+                                                </button>
+                                                <button id="master-change-password-btn" type="button" onclick="changeMasterUserPassword()" class="gel-button px-4 py-2.5 rounded-xl text-white font-bold text-xs shadow-md disabled:opacity-40 disabled:cursor-not-allowed">
+                                                    <span class="relative z-10">Alterar senha</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                        <label class="flex items-center justify-between gap-3 bg-white/60 border border-white/75 rounded-2xl p-4 cursor-pointer">
+                                            <div>
+                                                <div class="text-xs font-black text-on-surface">Sala Geral</div>
+                                                <div class="text-[10px] text-outline mt-0.5">Exibe e permite participar da sala pública.</div>
+                                            </div>
+                                            <input id="master-edit-general-access" data-master-editable type="checkbox" disabled class="rounded text-primary focus:ring-primary w-5 h-5"/>
+                                        </label>
+                                        <label class="flex items-center justify-between gap-3 bg-white/60 border border-white/75 rounded-2xl p-4 cursor-pointer">
+                                            <div>
+                                                <div class="text-xs font-black text-on-surface">Conta bloqueada</div>
+                                                <div class="text-[10px] text-outline mt-0.5">O usuário não poderá entrar no CliniChat.</div>
+                                            </div>
+                                            <input id="master-edit-banned" data-master-editable type="checkbox" disabled class="rounded text-red-600 focus:ring-red-400 w-5 h-5"/>
+                                        </label>
+                                    </div>
+
+                                    <div class="rounded-2xl bg-white/45 border border-white/70 p-4">
+                                        <div class="mb-3">
+                                            <h5 class="text-xs font-black text-on-surface">Aplicações CliniTool</h5>
+                                            <p class="text-[10px] text-outline mt-0.5">Defina quais serviços aparecem e podem ser acessados por este usuário.</p>
+                                        </div>
+                                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                            <label class="flex items-center justify-between gap-3 bg-white/60 border border-white/75 rounded-2xl p-4 cursor-pointer">
+                                                <div>
+                                                    <div class="text-xs font-black text-on-surface">CliniChat</div>
+                                                    <div class="text-[10px] text-outline mt-0.5">Comunicação interna.</div>
+                                                </div>
+                                                <input id="master-app-clinichat" data-master-editable type="checkbox" disabled class="rounded text-primary focus:ring-primary w-5 h-5"/>
+                                            </label>
+                                            <label class="flex items-center justify-between gap-3 bg-white/60 border border-white/75 rounded-2xl p-4 cursor-pointer">
+                                                <div>
+                                                    <div class="text-xs font-black text-on-surface">CliniFat</div>
+                                                    <div class="text-[10px] text-outline mt-0.5">Contagem e conferência.</div>
+                                                </div>
+                                                <input id="master-app-clinifat" data-master-editable type="checkbox" disabled class="rounded text-primary focus:ring-primary w-5 h-5"/>
+                                            </label>
+                                            <label class="flex items-center justify-between gap-3 bg-white/60 border border-white/75 rounded-2xl p-4 cursor-pointer">
+                                                <div>
+                                                    <div class="text-xs font-black text-on-surface">Administração CliniTool</div>
+                                                    <div class="text-[10px] text-outline mt-0.5">Administração central da suíte. Restrito a contas Master.</div>
+                                                </div>
+                                                <input id="master-app-admin" data-master-editable type="checkbox" disabled class="rounded text-amber-600 focus:ring-amber-400 w-5 h-5"/>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="rounded-2xl bg-white/45 border border-white/70 p-4">
+                                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                                            <div>
+                                                <h5 class="text-xs font-black text-on-surface">Contatos permitidos</h5>
+                                                <p class="text-[10px] text-outline mt-0.5">A permissão é sempre mútua.</p>
+                                            </div>
+                                            <button id="master-toggle-all-contacts" type="button" onclick="toggleAllMasterContacts()" disabled class="px-3 py-2 rounded-xl bg-primary/10 text-primary text-[10px] font-black disabled:opacity-45">
+                                                Selecionar todos
+                                            </button>
+                                        </div>
+                                        <div class="flex items-center gap-2 bg-white/70 p-2.5 rounded-xl border border-white/80 mb-3">
+                                            <span class="material-symbols-outlined text-outline text-base">search</span>
+                                            <input id="master-contact-search" oninput="filterMasterContactOptions()" type="text" placeholder="Pesquisar contato..." class="w-full bg-transparent border-none text-xs focus:outline-none focus:ring-0 text-on-surface"/>
+                                            <span id="master-edit-contact-count" class="text-[9px] bg-primary/10 text-primary font-black px-2 py-1 rounded-full whitespace-nowrap">0 selecionados</span>
+                                        </div>
+                                        <div id="master-edit-contacts-list" class="grid grid-cols-1 xl:grid-cols-2 gap-2 max-h-64 overflow-y-auto custom-scrollbar pr-1"></div>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <footer class="px-5 md:px-7 py-3.5 border-t border-white/55 bg-white/35 flex items-center justify-between gap-3">
+                                <div id="master-save-status" class="text-[11px] font-bold text-outline">
+                                    Modo de visualização
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button id="master-cancel-btn" onclick="cancelMasterEdit()" disabled class="px-4 py-2.5 rounded-xl bg-white/70 border border-white/80 text-xs font-bold text-on-surface disabled:opacity-40">
+                                        Cancelar
+                                    </button>
+                                    <button id="master-save-btn" onclick="document.getElementById('master-user-form').requestSubmit()" disabled class="gel-button px-5 py-2.5 rounded-xl text-white font-bold text-xs shadow-md disabled:opacity-40 disabled:cursor-not-allowed">
+                                        <span class="relative z-10">Salvar</span>
+                                    </button>
+                                </div>
+                            </footer>
+                        </div>
+                    </section>
+                </div>
+                </div>
+
+                <!-- DASHBOARD ADMINISTRATIVO — BUILD 00027 -->
+                <section id="master-dashboard-section" class="hidden flex-1 min-h-0 flex-col overflow-y-auto custom-scrollbar">
+                    <div class="px-4 md:px-6 py-4 border-b border-white/50 bg-white/20 flex items-center justify-between gap-3">
+                        <div>
+                            <h3 class="text-lg font-black text-on-surface">Dashboard</h3>
+                            <p class="text-[11px] text-outline">Visão geral das contas e controle de sessões.</p>
+                        </div>
+                        <button type="button" onclick="refreshMasterDashboard()" class="px-3.5 py-2 rounded-xl bg-white/70 border border-white/80 text-xs font-bold text-primary flex items-center gap-1.5">
+                            <span class="material-symbols-outlined text-base">refresh</span> Atualizar
+                        </button>
+                    </div>
+                    <div class="p-4 md:p-6 space-y-5">
+                        <div class="grid grid-cols-2 xl:grid-cols-4 gap-3">
+                            <div class="admin-stat-card rounded-2xl p-4"><div class="text-[10px] font-black uppercase tracking-wide text-outline">Total</div><div id="dash-total" class="text-3xl font-black text-primary mt-1">0</div></div>
+                            <div class="admin-stat-card rounded-2xl p-4"><div class="text-[10px] font-black uppercase tracking-wide text-outline">Online</div><div id="dash-online" class="text-3xl font-black text-green-600 mt-1">0</div></div>
+                            <div class="admin-stat-card rounded-2xl p-4"><div class="text-[10px] font-black uppercase tracking-wide text-outline">Offline</div><div id="dash-offline" class="text-3xl font-black text-slate-500 mt-1">0</div></div>
+                            <div class="admin-stat-card rounded-2xl p-4"><div class="text-[10px] font-black uppercase tracking-wide text-outline">Bloqueados</div><div id="dash-blocked" class="text-3xl font-black text-red-600 mt-1">0</div></div>
+                        </div>
+
+                        <div class="rounded-2xl bg-white/45 border border-white/70 overflow-hidden">
+                            <div class="p-4 border-b border-white/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div><h4 class="text-sm font-black text-on-surface">Sessões de usuários</h4><p class="text-[10px] text-outline mt-0.5">Desconecte uma conta específica ou todas as contas comuns.</p></div>
+                                <button type="button" onclick="forceLogoutAllUsers()" class="px-3.5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-black flex items-center gap-1.5">
+                                    <span class="material-symbols-outlined text-base">logout</span> Deslogar todos
+                                </button>
+                            </div>
+                            <div id="dashboard-users-list" class="p-3 space-y-2"></div>
+                        </div>
+                        <p id="dashboard-session-status" class="text-xs text-outline min-h-[18px]"></p>
+                    </div>
+                </section>
+
+                <!-- LOGS ADMINISTRATIVOS — BUILD 00027 -->
+                <section id="master-logs-section" class="hidden flex-1 min-h-0 flex-col overflow-hidden">
+                    <div class="px-4 md:px-6 py-4 border-b border-white/50 bg-white/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div><h3 class="text-lg font-black text-on-surface">Logs administrativos</h3><p class="text-[11px] text-outline">Últimas ações realizadas pelo Master.</p></div>
+                        <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-2 bg-white/70 px-3 py-2 rounded-xl border border-white/80">
+                                <span class="material-symbols-outlined text-outline text-base">search</span>
+                                <input id="admin-log-search" oninput="renderAdminLogs()" type="text" placeholder="Pesquisar logs..." class="w-44 bg-transparent border-none p-0 text-xs focus:outline-none focus:ring-0 text-on-surface"/>
+                            </div>
+                            <button type="button" onclick="loadAdminLogs()" class="w-9 h-9 rounded-xl bg-white/70 border border-white/80 text-primary flex items-center justify-center" title="Atualizar logs"><span class="material-symbols-outlined text-base">refresh</span></button>
+                        </div>
+                    </div>
+                    <div class="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6">
+                        <div id="admin-logs-list" class="space-y-2"></div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+</div>
+
+
+<!-- MANUTENÇÃO MASTER — PROJECT ECHO -->
+<div id="master-maintenance-modal" class="fixed inset-0 z-[70] hidden items-center justify-center bg-slate-950/70 backdrop-blur-md p-4">
+    <div class="glass-window w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden">
+        <header class="glossy-header px-5 py-4 text-white flex items-center justify-between">
+            <div><h3 class="font-black">Manutenção do histórico</h3><p class="text-[11px] text-white/75">Acesso exclusivo do Master</p></div>
+            <button type="button" onclick="closeMasterMaintenance()" class="w-9 h-9 rounded-xl bg-white/15 hover:bg-white/25"><span class="material-symbols-outlined">close</span></button>
+        </header>
+        <div class="p-5 space-y-4">
+            <div class="echo-danger-card rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div><h4 class="text-sm font-black text-red-700">Apagar Sala Geral</h4><p class="text-xs text-outline mt-1">Remove definitivamente todas as mensagens, respostas, reações e mídias da Sala Geral.</p></div>
+                <button type="button" onclick="clearMessageHistory('general')" class="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-black whitespace-nowrap">Apagar Sala Geral</button>
+            </div>
+            <div class="echo-danger-card rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div><h4 class="text-sm font-black text-red-700">Apagar Conversas Privadas</h4><p class="text-xs text-outline mt-1">Remove definitivamente todas as mensagens, respostas, reações e mídias das conversas privadas.</p></div>
+                <button type="button" onclick="clearMessageHistory('private')" class="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-black whitespace-nowrap">Apagar Privadas</button>
+            </div>
+            <p id="master-maintenance-status" class="text-xs text-outline min-h-[18px]"></p>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE AMPLIAR IMAGEM -->
+<div id="image-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md hidden" onclick="closeImageModal()">
+    <div class="relative max-w-[90vw] max-h-[90vh] p-2" onclick="event.stopPropagation()">
+        <img id="image-modal-img" src="" class="max-w-full max-h-[85vh] rounded-xl shadow-2xl border-2 border-white/40 object-contain"/>
+        <button onclick="closeImageModal()" class="absolute -top-4 -right-4 bg-red-600 text-white rounded-full p-1.5 shadow-lg hover:bg-red-700 transition-colors">
+            <span class="material-symbols-outlined text-sm">close</span>
+        </button>
+    </div>
+</div>
+
+
+<!-- BUILD 00028 — PESQUISA / GALERIA / FAVORITOS -->
+<div id="content-browser-modal" class="fixed inset-0 z-[75] hidden items-center justify-center bg-slate-950/65 backdrop-blur-md p-3 md:p-5">
+  <div class="content-modal-card w-full max-w-4xl max-h-[90dvh] rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+    <header class="glossy-header px-5 py-4 text-white flex items-center justify-between">
+      <div class="min-w-0"><h3 id="content-browser-title" class="font-black truncate">Conteúdo</h3><p id="content-browser-subtitle" class="text-[11px] text-white/75 truncate"></p></div>
+      <button type="button" onclick="closeContentBrowser()" class="w-9 h-9 rounded-xl bg-white/15 hover:bg-white/25 flex items-center justify-center"><span class="material-symbols-outlined">close</span></button>
+    </header>
+    <div id="content-browser-controls" class="p-4 border-b border-white/40"></div>
+    <div id="content-browser-results" class="flex-1 overflow-y-auto custom-scrollbar p-4"></div>
+  </div>
+</div>
+
+
+<script>
+
+    const SUPABASE_URL = "https://sgnygzsbgqskcftfgncj.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNnbnlnenNiZ3Fza2NmdGZnbmNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1MDk3NjgsImV4cCI6MjEwMTA4NTc2OH0.oBAjEGtPZCeyjjz4aeSovvM-DKZzxIeIAHIHD79B6go";
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const AUTH_EMAIL_DOMAIN = 'getchat.app';
+
+    let currentUserProfile = null;
+    let onlineUsersMap = new Map();
+    let presenceChannel = null;
+
+    let masterUsersCache = [];
+    let adminLogsCache = [];
+    let currentMasterSection = 'users';
+
+    function normalizeUsername(value) {
+        return String(value || '')
+            .trim()
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9._-]/g, '');
+    }
+
+    function usernameToInternalEmail(username) {
+        return `${normalizeUsername(username)}@${AUTH_EMAIL_DOMAIN}`;
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
+    }
+
+    function goPortal() {
+        window.location.href = './index.html';
+    }
+
+    function showAdminError(message) {
+        const box = document.getElementById('admin-auth-error');
+        box.textContent = message || '';
+        box.classList.toggle('hidden', !message);
+    }
+
+    function showAdminLogin() {
+        document.getElementById('admin-login').classList.remove('hidden');
+        document.getElementById('master-modal').classList.add('hidden');
+    }
+
+    function hideAdminLogin() {
+        document.getElementById('admin-login').classList.add('hidden');
+    }
+
+    async function loadAdminIdentity(authUser) {
+        const { data: profile, error } = await _supabase
+            .from('profiles')
+            .select('id, username, nome_completo, nome_exibicao, avatar_url, is_master, is_banned')
+            .eq('id', authUser.id)
+            .single();
+
+        if (error || !profile) throw new Error('Perfil não encontrado.');
+        if (profile.is_banned) throw new Error('Sua conta está bloqueada.');
+
+        const { data: access, error: accessError } = await _supabase
+            .from('my_app_access')
+            .select('can_access')
+            .eq('app_key', 'admin')
+            .eq('can_access', true)
+            .maybeSingle();
+
+        if (accessError) throw new Error('Não foi possível verificar a permissão do Administração CliniTool.');
+        if (!profile.is_master || !access?.can_access) {
+            throw new Error('Sua conta não possui permissão para acessar o Administração CliniTool.');
+        }
+
+        currentUserProfile = profile;
+    }
+
+    async function startAdmin() {
+        hideAdminLogin();
+        document.getElementById('master-modal').classList.remove('hidden');
+        resetMasterWorkspace();
+        await startAdminPresence();
+        await loadMasterUsersList();
+        await showMasterSection('users');
+    }
+
+    async function startAdminPresence() {
+        if (presenceChannel) {
+            await _supabase.removeChannel(presenceChannel);
+            presenceChannel = null;
+        }
+
+        presenceChannel = _supabase.channel('global-presence-geral', {
+            config: { presence: { key: currentUserProfile.id } }
+        });
+
+        presenceChannel.on('presence', { event: 'sync' }, () => {
+            const state = presenceChannel.presenceState();
+            onlineUsersMap.clear();
+
+            Object.entries(state || {}).forEach(([key, entries]) => {
+                const first = Array.isArray(entries) ? entries[0] : entries;
+                const userId = first?.userId || first?.user_id || key;
+                if (userId) onlineUsersMap.set(userId, first || {});
+            });
+
+            refreshMasterDashboardIfOpen();
+        });
+
+        presenceChannel.subscribe(async status => {
+            if (status === 'SUBSCRIBED') {
+                await presenceChannel.track({
+                    userId: currentUserProfile.id,
+                    username: currentUserProfile.username,
+                    nomeExibicao: currentUserProfile.nome_exibicao,
+                    source: 'admin'
+                });
+            }
+        });
+    }
+
+    async function checkAdminSession() {
+        showAdminError('');
+        const { data: { session }, error } = await _supabase.auth.getSession();
+
+        if (error || !session?.user) {
+            showAdminLogin();
+            return;
+        }
+
+        try {
+            await loadAdminIdentity(session.user);
+            await startAdmin();
+        } catch (err) {
+            showAdminLogin();
+            showAdminError(err.message || 'Acesso não autorizado.');
+        }
+    }
+
+    async function handleAdminLogin(event) {
+        event.preventDefault();
+        showAdminError('');
+
+        const username = normalizeUsername(document.getElementById('admin-username').value);
+        const password = document.getElementById('admin-password').value;
+        const status = document.getElementById('admin-login-status');
+
+        status.textContent = 'Entrando...';
+
+        try {
+            const { data, error } = await _supabase.auth.signInWithPassword({
+                email: usernameToInternalEmail(username),
+                password
+            });
+
+            if (error || !data.user) throw new Error('Usuário ou senha incorretos.');
+
+            await loadAdminIdentity(data.user);
+            document.getElementById('admin-login-form').reset();
+            await startAdmin();
+        } catch (err) {
+            showAdminError(err.message || 'Não foi possível entrar.');
+        } finally {
+            status.textContent = '';
+        }
+    }
+
+    _supabase.auth.onAuthStateChange(event => {
+        if (event === 'SIGNED_OUT') showAdminLogin();
+    });
+
+
+    let masterSelectedUserId = null;
+    let masterOriginalSnapshot = null;
+    let masterEditorMode = 'view'; // view | edit | create
+    let masterCurrentContactIds = [];
+    let masterContactOptionsCache = [];
+    let masterDirty = false;
+
+    async function openMasterModal() {
+        if (currentUserProfile.is_master !== true) {
+            alert("Acesso negado.");
+            return;
+        }
+
+        document.getElementById("master-modal").classList.remove("hidden");
+        resetMasterWorkspace();
+        await loadMasterUsersList();
+        showMasterSection('users');
+    }
+
+    function requestCloseMasterPanel() {
+        if (masterDirty) {
+            const discard = confirm("Existem alterações não salvas. Deseja descartá-las e voltar ao chat?");
+            if (!discard) return;
+        }
+        closeMasterModal();
+    }
+
+    function closeMasterModal() {
+        document.getElementById("master-modal").classList.add("hidden");
+        resetMasterWorkspace();
+    }
+
+    function setMasterNavActive(section) {
+        ['users','dashboard','logs'].forEach(name => {
+            const btn = document.getElementById(`master-nav-${name}`);
+            if (!btn) return;
+            btn.classList.toggle('active', name === section);
+            btn.classList.toggle('text-on-surface', name !== section);
+        });
+    }
+
+    async function showMasterSection(section) {
+        if (masterDirty && currentMasterSection === 'users' && section !== 'users') {
+            const discard = confirm('Existem alterações não salvas. Deseja descartá-las para trocar de área?');
+            if (!discard) return;
+            cancelMasterEdit();
+        }
+
+        currentMasterSection = section;
+        const users = document.getElementById('master-users-section');
+        const dashboard = document.getElementById('master-dashboard-section');
+        const logs = document.getElementById('master-logs-section');
+        [users, dashboard, logs].forEach(el => { if (el) { el.classList.add('hidden'); el.classList.remove('flex'); } });
+        const active = section === 'dashboard' ? dashboard : section === 'logs' ? logs : users;
+        if (active) { active.classList.remove('hidden'); active.classList.add('flex'); }
+        setMasterNavActive(section);
+
+        if (section === 'dashboard') await refreshMasterDashboard();
+        if (section === 'logs') await loadAdminLogs();
+    }
+
+    function getMasterOnlineIds() {
+        const ids = new Set(onlineUsersMap.keys());
+        if (currentUserProfile?.is_master) ids.add(currentUserProfile.id);
+        return ids;
+    }
+
+    function refreshMasterDashboardIfOpen() {
+        if (currentMasterSection === 'dashboard' && !document.getElementById('master-modal')?.classList.contains('hidden')) {
+            refreshMasterDashboard(false);
+        }
+    }
+
+    async function refreshMasterDashboard(reloadUsers = true) {
+        if (reloadUsers) await loadMasterUsersList();
+        const onlineIds = getMasterOnlineIds();
+        const total = masterUsersCache.length;
+        const blocked = masterUsersCache.filter(u => u.is_banned).length;
+        const online = masterUsersCache.filter(u => !u.is_banned && onlineIds.has(u.id)).length;
+        const offline = masterUsersCache.filter(u => !u.is_banned && !onlineIds.has(u.id)).length;
+
+        document.getElementById('dash-total').textContent = total;
+        document.getElementById('dash-online').textContent = online;
+        document.getElementById('dash-offline').textContent = offline;
+        document.getElementById('dash-blocked').textContent = blocked;
+
+        const list = document.getElementById('dashboard-users-list');
+        if (!list) return;
+        const ordered = [...masterUsersCache].sort((a,b) => {
+            const rank = u => u.is_banned ? 2 : (onlineIds.has(u.id) ? 0 : 1);
+            return rank(a) - rank(b) || (a.nome_exibicao || a.username).localeCompare(b.nome_exibicao || b.username, 'pt-BR');
+        });
+        list.innerHTML = ordered.map(u => {
+            const isOnline = !u.is_banned && onlineIds.has(u.id);
+            const status = u.is_banned ? 'Bloqueado' : isOnline ? 'Online' : 'Offline';
+            const dot = u.is_banned ? 'bg-red-500' : isOnline ? 'bg-green-500' : 'bg-slate-400';
+            const disabled = u.is_master;
+            return `<div class="admin-user-row rounded-2xl px-3 py-3 flex items-center gap-3">
+                <span class="admin-status-dot ${dot}"></span>
+                <div class="min-w-0 flex-1"><div class="text-xs font-black text-on-surface truncate">${escapeHtml(u.nome_exibicao || u.nome_completo || u.username)}</div><div class="text-[10px] text-outline truncate">@${escapeHtml(u.username)} · ${status}${u.is_master ? ' · Master' : ''}</div></div>
+                <button type="button" ${disabled ? 'disabled' : ''} onclick="forceLogoutUser('${u.id}', '${escapeHtml((u.nome_exibicao || u.username)).replace(/'/g,"&#39;")}')" class="px-3 py-2 rounded-xl text-[10px] font-black ${disabled ? 'bg-slate-200/60 text-slate-400 cursor-not-allowed' : 'bg-red-500/10 hover:bg-red-500/20 text-red-700 border border-red-200'}">${disabled ? 'Protegido' : 'Deslogar'}</button>
+            </div>`;
+        }).join('');
+    }
+
+    async function forceLogoutUser(userId, displayName) {
+        if (!confirm(`Deslogar ${displayName} de todas as sessões do CliniChat?`)) return;
+        const status = document.getElementById('dashboard-session-status');
+        status.textContent = `Encerrando sessão de ${displayName}...`;
+        const { data, error } = await _supabase.rpc('admin_force_logout_user', { p_target_user: userId });
+        if (error) { status.textContent = `Erro: ${error.message}`; return; }
+        status.textContent = `✓ ${displayName} foi deslogado.`;
+        await refreshMasterDashboard(false);
+        setTimeout(() => refreshMasterDashboard(false), 700);
+    }
+
+    async function forceLogoutAllUsers() {
+        if (!confirm('Deslogar todos os usuários comuns de todas as sessões?\n\nA sessão do Master será preservada.')) return;
+        const status = document.getElementById('dashboard-session-status');
+        status.textContent = 'Encerrando sessões...';
+        const { data, error } = await _supabase.rpc('admin_force_logout_all');
+        if (error) { status.textContent = `Erro: ${error.message}`; return; }
+        status.textContent = `✓ Logout solicitado para ${Number(data || 0)} usuário(s).`;
+        setTimeout(() => refreshMasterDashboard(false), 700);
+    }
+
+    async function adminWriteLog(action, targetUserId = null, details = {}) {
+        try {
+            await _supabase.rpc('admin_write_log', { p_action: action, p_target_user: targetUserId, p_details: details });
+        } catch (error) {
+            console.debug('[Logs] Não foi possível registrar ação:', error);
+        }
+    }
+
+    function adminActionLabel(action) {
+        const labels = {
+            user_created:'Usuário criado', user_updated:'Usuário alterado', password_changed:'Senha alterada',
+            history_general_cleared:'Sala Geral limpa', history_private_cleared:'Conversas privadas limpas',
+            force_logout_user:'Usuário deslogado', force_logout_all:'Todos deslogados'
+        };
+        return labels[action] || action.replaceAll('_',' ');
+    }
+
+    async function loadAdminLogs() {
+        const list = document.getElementById('admin-logs-list');
+        if (list) list.innerHTML = '<div class="text-xs text-outline p-4">Carregando logs...</div>';
+        const { data, error } = await _supabase.rpc('admin_get_logs', { p_limit: 150 });
+        if (error) { if (list) list.innerHTML = `<div class="text-xs text-red-600 p-4">Erro: ${escapeHtml(error.message)}</div>`; return; }
+        adminLogsCache = data || [];
+        renderAdminLogs();
+    }
+
+    function renderAdminLogs() {
+        const list = document.getElementById('admin-logs-list');
+        if (!list) return;
+        const q = (document.getElementById('admin-log-search')?.value || '').trim().toLowerCase();
+        const rows = adminLogsCache.filter(row => {
+            const hay = `${row.action || ''} ${row.actor_name || ''} ${row.target_name || ''} ${JSON.stringify(row.details || {})}`.toLowerCase();
+            return !q || hay.includes(q);
+        });
+        if (!rows.length) { list.innerHTML = '<div class="text-center text-xs text-outline py-10">Nenhum log encontrado.</div>'; return; }
+        list.innerHTML = rows.map(row => {
+            const when = new Date(row.created_at).toLocaleString('pt-BR');
+            const detailText = row.details && Object.keys(row.details).length ? JSON.stringify(row.details) : '';
+            return `<div class="admin-user-row rounded-2xl p-3 flex gap-3">
+                <div class="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center flex-shrink-0"><span class="material-symbols-outlined text-lg">history</span></div>
+                <div class="min-w-0 flex-1"><div class="text-xs font-black text-on-surface">${escapeHtml(adminActionLabel(row.action))}</div>
+                <div class="text-[10px] text-outline mt-0.5">${escapeHtml(row.actor_name || 'Master')}${row.target_name ? ` → ${escapeHtml(row.target_name)}` : ''} · ${escapeHtml(when)}</div>
+                ${detailText ? `<div class="admin-log-details text-[10px] text-outline/90 mt-1 break-words">${escapeHtml(detailText)}</div>` : ''}</div>
+            </div>`;
+        }).join('');
+    }
+
+    function resetMasterWorkspace() {
+        masterSelectedUserId = null;
+        masterOriginalSnapshot = null;
+        masterEditorMode = 'view';
+        masterCurrentContactIds = [];
+        masterContactOptionsCache = [];
+        masterDirty = false;
+        document.getElementById('master-password-section')?.classList.add('hidden');
+        clearMasterPasswordFields();
+
+        const empty = document.getElementById('master-empty-state');
+        const editor = document.getElementById('master-editor');
+        const workspace = document.getElementById('master-workspace');
+
+        if (empty) empty.classList.remove('hidden');
+        if (editor) editor.classList.add('hidden');
+        if (workspace) {
+            workspace.classList.add('hidden');
+            workspace.classList.remove('flex');
+            if (window.innerWidth >= 768) {
+                workspace.classList.remove('hidden');
+                workspace.classList.add('flex');
+            }
+        }
+
+        updateMasterSaveState();
+    }
+
+    async function loadMasterUsersList() {
+        const { data: profiles, error: profilesError } = await _supabase
+            .from('profiles')
+            .select('id, username, nome_completo, nome_exibicao, data_nascimento, avatar_url, is_master, is_banned, created_at')
+            .order('nome_completo', { ascending: true });
+
+        if (profilesError) {
+            alert("Erro ao carregar usuários: " + profilesError.message);
+            return;
+        }
+
+        const { data: groupPermissions, error: groupError } = await _supabase
+            .from('group_permissions')
+            .select('user_id, can_access_general');
+
+        if (groupError) {
+            alert("Erro ao carregar permissões: " + groupError.message);
+            return;
+        }
+
+        const { data: appPermissions, error: appPermError } = await _supabase
+            .from('app_permissions')
+            .select('user_id, can_access, apps(app_key)');
+
+        if (appPermError) {
+            alert("Erro ao carregar permissões de aplicações: " + appPermError.message);
+            return;
+        }
+
+        const groupMap = new Map((groupPermissions || []).map(item => [item.user_id, item.can_access_general]));
+        const appMap = new Map();
+
+        (appPermissions || []).forEach(item => {
+            const appKey = item.apps?.app_key;
+            if (!appKey) return;
+            if (!appMap.has(item.user_id)) appMap.set(item.user_id, {});
+            appMap.get(item.user_id)[appKey] = item.can_access === true;
+        });
+
+        masterUsersCache = (profiles || []).map(profile => ({
+            ...profile,
+            can_access_general: profile.is_master || groupMap.get(profile.id) === true,
+            app_access: {
+                clinichat: appMap.get(profile.id)?.clinichat === true,
+                clinifat: appMap.get(profile.id)?.clinifat === true,
+                admin: profile.is_master && appMap.get(profile.id)?.admin === true
+            }
+        }));
+
+        updateMasterStats();
+        filterMasterUserList();
+        if (currentMasterSection === 'dashboard') refreshMasterDashboard(false);
+    }
+
+    function updateMasterStats() {
+        document.getElementById('master-stat-total').textContent = masterUsersCache.length;
+        document.getElementById('master-stat-active').textContent = masterUsersCache.filter(u => !u.is_banned).length;
+        document.getElementById('master-stat-banned').textContent = masterUsersCache.filter(u => u.is_banned).length;
+    }
+
+    function renderMasterUserList(users) {
+        const container = document.getElementById("master-users-list");
+        container.innerHTML = "";
+
+        if (!users.length) {
+            container.innerHTML = `<div class="text-center text-xs text-outline bg-white/40 rounded-2xl p-8 border border-white/60">Nenhum usuário encontrado.</div>`;
+            return;
+        }
+
+        users.forEach(u => {
+            const selected = u.id === masterSelectedUserId;
+            const label = u.is_master ? 'Master' : (u.is_banned ? 'Bloqueado' : (u.can_access_general ? 'Ativo · Sala Geral' : 'Ativo · Sem Sala Geral'));
+            const initial = escapeHtml((u.nome_exibicao || u.nome_completo || u.username || '?').trim().charAt(0).toUpperCase());
+
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.onclick = () => selectMasterUser(u.id);
+            button.className = `w-full flex items-center gap-3 text-left rounded-2xl px-3 py-3 border transition-all ${
+                selected
+                    ? 'bg-primary text-white border-primary shadow-md'
+                    : 'bg-white/60 hover:bg-white/80 border-white/70 text-on-surface'
+            }`;
+
+            button.innerHTML = `
+                <div class="w-11 h-11 rounded-2xl ${selected ? 'bg-white/20 text-white border-white/20' : 'bg-primary/10 text-primary border-primary/10'} flex items-center justify-center overflow-hidden border flex-shrink-0 font-black">
+                    ${u.avatar_url ? `<img src="${escapeHtml(u.avatar_url)}" alt="" class="w-full h-full object-cover"/>` : `<span>${initial}</span>`}
+                </div>
+                <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <span class="text-sm font-black truncate">${escapeHtml(u.nome_exibicao || u.nome_completo)}</span>
+                        ${u.is_master ? `<span class="text-[8px] uppercase font-black ${selected ? 'bg-white/20 text-white' : 'bg-amber-200 text-amber-900'} px-1.5 py-0.5 rounded-full">Master</span>` : ''}
+                    </div>
+                    <div class="text-[10px] ${selected ? 'text-white/75' : 'text-outline'} truncate">@${escapeHtml(u.username)}</div>
+                    <div class="text-[9px] ${selected ? 'text-white/70' : (u.is_banned ? 'text-red-600' : 'text-outline')} mt-0.5">${escapeHtml(label)}</div>
+                </div>
+                <span class="material-symbols-outlined text-base ${selected ? 'text-white' : 'text-outline'}">chevron_right</span>
+            `;
+            container.appendChild(button);
+        });
+    }
+
+    function filterMasterUserList() {
+        const input = document.getElementById("master-search-input");
+        const query = (input?.value || '').trim().toLowerCase();
+        const filtered = masterUsersCache.filter(u =>
+            (u.nome_completo || '').toLowerCase().includes(query) ||
+            (u.nome_exibicao || '').toLowerCase().includes(query) ||
+            (u.username || '').toLowerCase().includes(query)
+        );
+        renderMasterUserList(filtered);
+    }
+
+    async function selectMasterUser(userId) {
+        if (masterDirty) {
+            const discard = confirm("Existem alterações não salvas. Deseja descartá-las?");
+            if (!discard) return;
+        }
+
+        const user = masterUsersCache.find(item => item.id === userId);
+        if (!user) return;
+
+        masterSelectedUserId = userId;
+        masterEditorMode = 'view';
+        masterDirty = false;
+
+        const { data: visibilityRows, error } = await _supabase
+            .from('user_visibility')
+            .select('target_user_id')
+            .eq('viewer_user_id', userId);
+
+        if (error) {
+            alert("Erro ao carregar contatos permitidos: " + error.message);
+            return;
+        }
+
+        masterCurrentContactIds = (visibilityRows || []).map(row => row.target_user_id);
+        masterContactOptionsCache = masterUsersCache.filter(item => item.id !== userId && !item.is_banned);
+
+        populateMasterEditor(user);
+        renderMasterContactOptions();
+        setMasterEditorEnabled(false);
+        showMasterEditor();
+        filterMasterUserList();
+    }
+
+    function showMasterEditor() {
+        document.getElementById('master-empty-state').classList.add('hidden');
+        document.getElementById('master-editor').classList.remove('hidden');
+
+        const workspace = document.getElementById('master-workspace');
+        workspace.classList.remove('hidden');
+        workspace.classList.add('flex');
+
+        if (window.innerWidth < 768) {
+            document.querySelector('#master-modal section.w-full.md\:w-\[330px\]')?.classList.add('hidden');
+        }
+    }
+
+    function masterMobileBackToList() {
+        if (masterDirty) {
+            const discard = confirm("Existem alterações não salvas. Deseja descartá-las?");
+            if (!discard) return;
+        }
+        const listSection = document.querySelector('#master-modal section.w-full.md\:w-\[330px\]');
+        const workspace = document.getElementById('master-workspace');
+        listSection?.classList.remove('hidden');
+        workspace?.classList.add('hidden');
+        workspace?.classList.remove('flex');
+    }
+
+    function populateMasterEditor(user) {
+        document.getElementById('master-edit-user-id').value = user.id;
+        document.getElementById('master-edit-fullname').value = user.nome_completo || '';
+        document.getElementById('master-edit-displayname').value = user.nome_exibicao || '';
+        document.getElementById('master-edit-username').value = user.username || '';
+        document.getElementById('master-edit-birthdate').value = user.data_nascimento || '';
+        document.getElementById('master-edit-general-access').checked = user.can_access_general === true;
+        document.getElementById('master-edit-banned').checked = user.is_banned === true;
+        document.getElementById('master-edit-banned').disabled = user.is_master === true;
+
+        document.getElementById('master-app-clinichat').checked = user.app_access?.clinichat === true;
+        document.getElementById('master-app-clinifat').checked = user.app_access?.clinifat === true;
+        document.getElementById('master-app-admin').checked = user.is_master === true && user.app_access?.admin === true;
+        document.getElementById('master-app-admin').disabled = true;
+        document.getElementById('master-create-password-wrap').classList.add('hidden');
+        document.getElementById('master-edit-password').value = '';
+        document.getElementById('master-password-section').classList.remove('hidden');
+        clearMasterPasswordFields();
+
+        document.getElementById('master-editor-title').textContent = user.nome_exibicao || user.nome_completo || user.username;
+        document.getElementById('master-editor-subtitle').textContent = `@${user.username}`;
+
+        const avatar = document.getElementById('master-editor-avatar');
+        const initial = (user.nome_exibicao || user.nome_completo || user.username || '?').trim().charAt(0).toUpperCase();
+        avatar.innerHTML = user.avatar_url
+            ? `<img src="${escapeHtml(user.avatar_url)}" alt="" class="w-full h-full object-cover"/>`
+            : `<span>${escapeHtml(initial)}</span>`;
+
+        const badge = document.getElementById('master-editor-badge');
+        badge.classList.remove('hidden', 'bg-amber-200', 'text-amber-900', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700');
+        if (user.is_master) {
+            badge.textContent = 'Master';
+            badge.classList.add('bg-amber-200', 'text-amber-900');
+        } else if (user.is_banned) {
+            badge.textContent = 'Bloqueado';
+            badge.classList.add('bg-red-100', 'text-red-700');
+        } else {
+            badge.textContent = 'Ativo';
+            badge.classList.add('bg-green-100', 'text-green-700');
+        }
+
+        masterOriginalSnapshot = captureMasterFormSnapshot();
+        updateMasterSaveState();
+    }
+
+    function renderMasterContactOptions() {
+        const container = document.getElementById('master-edit-contacts-list');
+        if (!container) return;
+
+        const search = (document.getElementById('master-contact-search')?.value || '').trim().toLowerCase();
+        const users = masterContactOptionsCache.filter(u =>
+            !search ||
+            (u.nome_completo || '').toLowerCase().includes(search) ||
+            (u.nome_exibicao || '').toLowerCase().includes(search) ||
+            (u.username || '').toLowerCase().includes(search)
+        );
+
+        if (!users.length) {
+            container.innerHTML = `<p class="text-[11px] text-outline italic p-3">Nenhum contato encontrado.</p>`;
+            updateMasterContactCount();
+            return;
+        }
+
+        container.innerHTML = users.map(u => {
+            const checked = masterCurrentContactIds.includes(u.id);
+            const initial = escapeHtml((u.nome_exibicao || u.nome_completo || u.username || '?').trim().charAt(0).toUpperCase());
+            return `
+                <label class="flex items-center gap-3 bg-white/60 hover:bg-white/80 border border-white/70 rounded-xl px-3 py-2 cursor-pointer transition-colors">
+                    <input type="checkbox" name="master-edit-contact" value="${u.id}" ${checked ? 'checked' : ''} ${masterEditorMode === 'view' ? 'disabled' : ''} onchange="handleMasterContactChange()" class="rounded text-primary focus:ring-primary"/>
+                    <div class="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center overflow-hidden flex-shrink-0 font-black text-[11px]">
+                        ${u.avatar_url ? `<img src="${escapeHtml(u.avatar_url)}" alt="" class="w-full h-full object-cover"/>` : `<span>${initial}</span>`}
+                    </div>
+                    <div class="min-w-0">
+                        <div class="text-[11px] font-bold text-on-surface truncate">${escapeHtml(u.nome_exibicao || u.nome_completo)}</div>
+                        <div class="text-[9px] text-outline truncate">@${escapeHtml(u.username)}</div>
+                    </div>
+                </label>
+            `;
+        }).join('');
+
+        updateMasterContactCount();
+    }
+
+    function filterMasterContactOptions() {
+        renderMasterContactOptions();
+    }
+
+    function handleMasterContactChange() {
+        masterCurrentContactIds = Array.from(document.querySelectorAll('input[name="master-edit-contact"]:checked')).map(input => input.value);
+        markMasterDirty();
+        updateMasterContactCount();
+    }
+
+    function updateMasterContactCount() {
+        const count = masterCurrentContactIds.length;
+        const badge = document.getElementById('master-edit-contact-count');
+        if (badge) badge.textContent = `${count} selecionado${count === 1 ? '' : 's'}`;
+
+        const toggleButton = document.getElementById('master-toggle-all-contacts');
+        if (toggleButton) {
+            const total = masterContactOptionsCache.length;
+            toggleButton.textContent = total > 0 && count === total
+                ? `✓ ${count} contatos selecionados`
+                : 'Selecionar todos';
+        }
+    }
+
+    function toggleAllMasterContacts() {
+        if (masterEditorMode === 'view') return;
+        const allIds = masterContactOptionsCache.map(user => user.id);
+        const allSelected = allIds.length > 0 && allIds.every(id => masterCurrentContactIds.includes(id));
+        masterCurrentContactIds = allSelected ? [] : allIds;
+        renderMasterContactOptions();
+        markMasterDirty();
+    }
+
+    function enableMasterEditMode() {
+        if (!masterSelectedUserId) return;
+        masterEditorMode = 'edit';
+        setMasterEditorEnabled(true);
+        document.getElementById('master-edit-btn').classList.add('hidden');
+        document.getElementById('master-save-status').textContent = '● Editando';
+        document.getElementById('master-cancel-btn').disabled = false;
+        updateMasterSaveState();
+    }
+
+    function setMasterEditorEnabled(enabled) {
+        document.querySelectorAll('[data-master-editable]').forEach(element => {
+            const selected = masterUsersCache.find(user => user.id === masterSelectedUserId);
+            if (element.id === 'master-edit-banned') {
+                element.disabled = !enabled || selected?.is_master === true;
+            } else if (element.id === 'master-app-admin') {
+                element.disabled = true;
+            } else {
+                element.disabled = !enabled;
+            }
+        });
+
+        document.getElementById('master-toggle-all-contacts').disabled = !enabled;
+        document.querySelectorAll('input[name="master-edit-contact"]').forEach(input => input.disabled = !enabled);
+    }
+
+    function captureMasterFormSnapshot() {
+        return {
+            user_id: document.getElementById('master-edit-user-id').value || null,
+            nome_completo: document.getElementById('master-edit-fullname').value.trim(),
+            nome_exibicao: document.getElementById('master-edit-displayname').value.trim(),
+            username: document.getElementById('master-edit-username').value.trim(),
+            data_nascimento: document.getElementById('master-edit-birthdate').value || null,
+            can_access_general: document.getElementById('master-edit-general-access').checked,
+            is_banned: document.getElementById('master-edit-banned').checked,
+            app_access: {
+                clinichat: document.getElementById('master-app-clinichat').checked,
+                clinifat: document.getElementById('master-app-clinifat').checked,
+                admin: document.getElementById('master-app-admin').checked
+            },
+            contact_ids: [...masterCurrentContactIds].sort()
+        };
+    }
+
+    function snapshotsEqual(a, b) {
+        return JSON.stringify(a) === JSON.stringify(b);
+    }
+
+    function markMasterDirty() {
+        if (masterEditorMode === 'view') return;
+        const current = captureMasterFormSnapshot();
+        masterDirty = !snapshotsEqual(masterOriginalSnapshot, current);
+        updateMasterSaveState();
+    }
+
+    function updateMasterSaveState() {
+        const saveButton = document.getElementById('master-save-btn');
+        const cancelButton = document.getElementById('master-cancel-btn');
+        const status = document.getElementById('master-save-status');
+        if (!saveButton || !cancelButton || !status) return;
+
+        if (masterEditorMode === 'create') {
+            saveButton.disabled = false;
+            cancelButton.disabled = false;
+            status.textContent = masterDirty ? '● Alterações pendentes' : '● Novo usuário';
+            return;
+        }
+
+        if (masterEditorMode === 'edit') {
+            saveButton.disabled = !masterDirty;
+            cancelButton.disabled = false;
+            status.textContent = masterDirty ? '● Alterações não salvas' : '● Editando';
+            return;
+        }
+
+        saveButton.disabled = true;
+        cancelButton.disabled = true;
+        status.textContent = 'Modo de visualização';
+    }
+
+    function cancelMasterEdit() {
+        if (masterEditorMode === 'create') {
+            resetMasterWorkspace();
+            filterMasterUserList();
+            return;
+        }
+
+        if (!masterSelectedUserId) return;
+        const user = masterUsersCache.find(item => item.id === masterSelectedUserId);
+        if (!user) return;
+
+        masterCurrentContactIds = [...(masterOriginalSnapshot?.contact_ids || [])];
+        populateMasterEditor(user);
+        renderMasterContactOptions();
+        masterEditorMode = 'view';
+        masterDirty = false;
+        setMasterEditorEnabled(false);
+        document.getElementById('master-edit-btn').classList.remove('hidden');
+        updateMasterSaveState();
+    }
+
+    function startMasterCreateMode() {
+        if (masterDirty) {
+            const discard = confirm("Existem alterações não salvas. Deseja descartá-las?");
+            if (!discard) return;
+        }
+
+        masterSelectedUserId = null;
+        masterEditorMode = 'create';
+        masterDirty = false;
+        masterCurrentContactIds = [];
+        masterContactOptionsCache = masterUsersCache.filter(user => !user.is_banned);
+
+        document.getElementById('master-edit-user-id').value = '';
+        document.getElementById('master-edit-fullname').value = '';
+        document.getElementById('master-edit-displayname').value = '';
+        document.getElementById('master-edit-username').value = '';
+        document.getElementById('master-edit-birthdate').value = '';
+        document.getElementById('master-edit-password').value = '';
+        document.getElementById('master-edit-general-access').checked = true;
+        document.getElementById('master-edit-banned').checked = false;
+        document.getElementById('master-app-clinichat').checked = true;
+        document.getElementById('master-app-clinifat').checked = false;
+        document.getElementById('master-app-admin').checked = false;
+        document.getElementById('master-edit-banned').disabled = true;
+        document.getElementById('master-create-password-wrap').classList.remove('hidden');
+        document.getElementById('master-password-section').classList.add('hidden');
+        clearMasterPasswordFields();
+
+        document.getElementById('master-editor-title').textContent = 'Novo usuário';
+        document.getElementById('master-editor-subtitle').textContent = 'Crie uma conta e defina as permissões iniciais.';
+        document.getElementById('master-editor-avatar').innerHTML = '<span class="material-symbols-outlined">person_add</span>';
+        document.getElementById('master-editor-badge').classList.add('hidden');
+        document.getElementById('master-edit-btn').classList.add('hidden');
+
+        masterOriginalSnapshot = captureMasterFormSnapshot();
+        renderMasterContactOptions();
+        setMasterEditorEnabled(true);
+        document.getElementById('master-edit-username').disabled = false;
+        document.getElementById('master-toggle-all-contacts').disabled = false;
+        showMasterEditor();
+        updateMasterSaveState();
+        filterMasterUserList();
+    }
+
+
+    async function saveUserAppPermissions(userId, access) {
+        const { data: apps, error: appsError } = await _supabase
+            .from('apps')
+            .select('id, app_key')
+            .in('app_key', ['clinichat', 'clinifat', 'admin']);
+
+        if (appsError) throw appsError;
+
+        const selectedUser = masterUsersCache.find(user => user.id === userId);
+        const rows = (apps || []).map(app => ({
+            user_id: userId,
+            app_id: app.id,
+            can_access: app.app_key === 'admin'
+                ? selectedUser?.is_master === true
+                : access?.[app.app_key] === true,
+            updated_by: currentUserProfile.id,
+            updated_at: new Date().toISOString()
+        }));
+
+        const { error } = await _supabase
+            .from('app_permissions')
+            .upsert(rows, { onConflict: 'user_id,app_id' });
+
+        if (error) throw error;
+    }
+
+    async function saveMasterUser(event) {
+        event.preventDefault();
+
+        if (masterEditorMode === 'view') return;
+
+        const saveButton = document.getElementById('master-save-btn');
+        const saveLabel = saveButton.querySelector('span');
+        const originalLabel = saveLabel.textContent;
+
+        const nomeCompleto = document.getElementById('master-edit-fullname').value.trim();
+        const nomeExibicao = document.getElementById('master-edit-displayname').value.trim();
+
+        if (nomeCompleto.length < 2 || nomeExibicao.length < 2) {
+            alert("Nome completo e nome de exibição precisam ter pelo menos 2 caracteres.");
+            return;
+        }
+
+        saveButton.disabled = true;
+        saveButton.classList.add('opacity-60', 'cursor-wait');
+        saveLabel.textContent = 'Salvando...';
+        document.getElementById('master-save-status').textContent = 'Salvando alterações...';
+
+        try {
+            if (masterEditorMode === 'create') {
+                const username = document.getElementById('master-edit-username').value.trim();
+                const password = document.getElementById('master-edit-password').value;
+
+                if (username.length < 3) throw new Error("O usuário precisa ter pelo menos 3 caracteres.");
+                if (password.length < 8) throw new Error("A senha precisa ter pelo menos 8 caracteres.");
+
+                const { data, error } = await _supabase.functions.invoke('create-user', {
+                    body: {
+                        username,
+                        password,
+                        nome_completo: nomeCompleto,
+                        nome_exibicao: nomeExibicao,
+                        data_nascimento: document.getElementById('master-edit-birthdate').value || null,
+                        can_access_general: document.getElementById('master-edit-general-access').checked,
+                        contact_ids: masterCurrentContactIds
+                    }
+                });
+
+                if (error) {
+                    let message = error.message;
+                    try {
+                        const body = await error.context?.json();
+                        if (body?.error) message = body.error;
+                    } catch (_) {}
+                    throw new Error(message);
+                }
+
+                if (data?.error) throw new Error(data.error);
+                await loadMasterUsersList();
+                const created = masterUsersCache.find(user => user.username === username.toLowerCase());
+                if (created) {
+                    await saveUserAppPermissions(created.id, {
+                        clinichat: document.getElementById('master-app-clinichat').checked,
+                        clinifat: document.getElementById('master-app-clinifat').checked,
+                        admin: false
+                    });
+                    await loadMasterUsersList();
+                    await adminWriteLog('user_created', created.id, {
+                        username: created.username,
+                        apps: {
+                            clinichat: document.getElementById('master-app-clinichat').checked,
+                            clinifat: document.getElementById('master-app-clinifat').checked
+                        }
+                    });
+                    await selectMasterUser(created.id);
+                }
+            } else {
+                const payload = {
+                    user_id: masterSelectedUserId,
+                    nome_completo: nomeCompleto,
+                    nome_exibicao: nomeExibicao,
+                    data_nascimento: document.getElementById('master-edit-birthdate').value || null,
+                    is_banned: document.getElementById('master-edit-banned').checked,
+                    can_access_general: document.getElementById('master-edit-general-access').checked,
+                    contact_ids: masterCurrentContactIds
+                };
+
+                const { data, error } = await _supabase.functions.invoke('update-user', { body: payload });
+
+                if (error) {
+                    let message = error.message;
+                    try {
+                        const body = await error.context?.json();
+                        if (body?.error) message = body.error;
+                    } catch (_) {}
+                    throw new Error(message);
+                }
+
+                if (data?.error) throw new Error(data.error);
+
+                await saveUserAppPermissions(masterSelectedUserId, {
+                    clinichat: document.getElementById('master-app-clinichat').checked,
+                    clinifat: document.getElementById('master-app-clinifat').checked,
+                    admin: document.getElementById('master-app-admin').checked
+                });
+
+                await adminWriteLog('user_updated', masterSelectedUserId, {
+                    is_banned: payload.is_banned,
+                    can_access_general: payload.can_access_general,
+                    contacts: payload.contact_ids?.length || 0,
+                    apps: {
+                        clinichat: document.getElementById('master-app-clinichat').checked,
+                        clinifat: document.getElementById('master-app-clinifat').checked,
+                        admin: document.getElementById('master-app-admin').checked
+                    }
+                });
+                await loadMasterUsersList();
+                await selectMasterUser(masterSelectedUserId);
+            }
+
+            masterDirty = false;
+            saveLabel.textContent = '✓ Salvo';
+            document.getElementById('master-save-status').textContent = '✔ Alterações salvas';
+            setTimeout(() => {
+                saveLabel.textContent = 'Salvar';
+                updateMasterSaveState();
+            }, 1600);
+        } catch (error) {
+            console.error('[Administração CliniTool] Falha ao salvar:', error);
+            alert("Não foi possível salvar: " + (error?.message || error));
+            saveLabel.textContent = originalLabel;
+            document.getElementById('master-save-status').textContent = 'Falha ao salvar';
+            updateMasterSaveState();
+        } finally {
+            saveButton.classList.remove('opacity-60', 'cursor-wait');
+            if (saveLabel.textContent === 'Salvando...') saveLabel.textContent = originalLabel;
+        }
+    }
+
+    // Detecta mudanças nos campos do editor sem salvar automaticamente.
+    document.addEventListener('input', event => {
+        if (event.target?.matches('.master-form-input')) markMasterDirty();
+    });
+
+    document.addEventListener('change', event => {
+        if (event.target?.matches('[data-master-editable]')) markMasterDirty();
+    });
+
+    function clearMasterPasswordFields() {
+        const password = document.getElementById('master-new-password');
+        const confirm = document.getElementById('master-confirm-password');
+        const status = document.getElementById('master-password-status');
+        const icon = document.getElementById('master-password-eye-icon');
+
+        if (password) {
+            password.value = '';
+            password.type = 'password';
+        }
+        if (confirm) {
+            confirm.value = '';
+            confirm.type = 'password';
+        }
+        if (status) status.textContent = 'A senha atual não pode ser exibida.';
+        if (icon) icon.textContent = 'visibility';
+    }
+
+    function toggleMasterPasswordVisibility() {
+        const password = document.getElementById('master-new-password');
+        const confirm = document.getElementById('master-confirm-password');
+        const icon = document.getElementById('master-password-eye-icon');
+        if (!password || !confirm) return;
+
+        const show = password.type === 'password';
+        password.type = show ? 'text' : 'password';
+        confirm.type = show ? 'text' : 'password';
+        if (icon) icon.textContent = show ? 'visibility_off' : 'visibility';
+    }
+
+    function generateMasterPassword() {
+        const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+        const lower = 'abcdefghijkmnopqrstuvwxyz';
+        const digits = '23456789';
+        const symbols = '@#$%&*!?';
+        const all = upper + lower + digits + symbols;
+        const randomChar = chars => chars[Math.floor(Math.random() * chars.length)];
+
+        const chars = [
+            randomChar(upper),
+            randomChar(lower),
+            randomChar(digits),
+            randomChar(symbols)
+        ];
+
+        while (chars.length < 12) chars.push(randomChar(all));
+        for (let i = chars.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [chars[i], chars[j]] = [chars[j], chars[i]];
+        }
+
+        const generated = chars.join('');
+        document.getElementById('master-new-password').value = generated;
+        document.getElementById('master-confirm-password').value = generated;
+        document.getElementById('master-password-status').textContent = 'Senha gerada. Confira antes de aplicar.';
+    }
+
+    async function copyTextSafely(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(text);
+            return;
+        }
+
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        const copied = document.execCommand('copy');
+        textarea.remove();
+        if (!copied) throw new Error('Não foi possível copiar automaticamente.');
+    }
+
+    async function copyMasterCredentials() {
+        const username = document.getElementById('master-edit-username')?.value.trim();
+        const password = document.getElementById('master-new-password')?.value || '';
+        const status = document.getElementById('master-password-status');
+
+        if (!username) {
+            status.textContent = 'Selecione um usuário primeiro.';
+            return;
+        }
+        if (!password) {
+            status.textContent = 'Digite ou gere uma nova senha antes de copiar.';
+            return;
+        }
+
+        const text = `CliniChat\n\nUsuário: ${username}\nSenha: ${password}`;
+        try {
+            await copyTextSafely(text);
+            status.textContent = '✓ Credenciais copiadas.';
+        } catch (error) {
+            console.error('[Administração CliniTool] Falha ao copiar credenciais:', error);
+            status.textContent = 'Não foi possível copiar as credenciais.';
+        }
+    }
+
+    async function changeMasterUserPassword() {
+        const userId = masterSelectedUserId;
+        const password = document.getElementById('master-new-password')?.value || '';
+        const confirmation = document.getElementById('master-confirm-password')?.value || '';
+        const status = document.getElementById('master-password-status');
+        const button = document.getElementById('master-change-password-btn');
+        const label = button?.querySelector('span');
+
+        if (!userId || masterEditorMode === 'create') {
+            status.textContent = 'Selecione um usuário já cadastrado.';
+            return;
+        }
+        if (password.length < 8) {
+            status.textContent = 'A nova senha precisa ter pelo menos 8 caracteres.';
+            return;
+        }
+        if (password.length > 72) {
+            status.textContent = 'A nova senha não pode ultrapassar 72 caracteres.';
+            return;
+        }
+        if (password !== confirmation) {
+            status.textContent = 'As senhas informadas não coincidem.';
+            return;
+        }
+
+        button.disabled = true;
+        button.classList.add('opacity-60', 'cursor-wait');
+        label.textContent = 'Alterando...';
+        status.textContent = 'Atualizando a senha...';
+
+        try {
+            const { data, error } = await _supabase.functions.invoke('update-user-password', {
+                body: {
+                    user_id: userId,
+                    new_password: password
+                }
+            });
+
+            if (error) {
+                let message = error.message;
+                try {
+                    const body = await error.context?.json();
+                    if (body?.error) message = body.error;
+                } catch (_) {}
+                throw new Error(message);
+            }
+            if (data?.error) throw new Error(data.error);
+
+            await adminWriteLog('password_changed', userId);
+            label.textContent = '✓ Senha alterada';
+            status.textContent = '✓ Senha alterada com sucesso. Você já pode copiar as credenciais.';
+            document.getElementById('master-confirm-password').value = password;
+
+            setTimeout(() => {
+                if (label) label.textContent = 'Alterar senha';
+                button.disabled = false;
+                button.classList.remove('opacity-60', 'cursor-wait');
+            }, 1800);
+        } catch (error) {
+            console.error('[Administração CliniTool] Falha ao alterar senha:', error);
+            status.textContent = 'Falha ao alterar a senha: ' + (error?.message || error);
+            if (label) label.textContent = 'Alterar senha';
+            button.disabled = false;
+            button.classList.remove('opacity-60', 'cursor-wait');
+        }
+    }
+
+
+
+
+    function openMasterMaintenance() {
+        const modal = document.getElementById('master-maintenance-modal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function closeMasterMaintenance() {
+        const modal = document.getElementById('master-maintenance-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
+    async function clearMessageHistory(type) {
+        const label = type === 'general'
+            ? 'todas as mensagens da Sala Geral'
+            : 'todas as conversas privadas';
+
+        if (!confirm(`Apagar definitivamente ${label}?\n\nEsta ação também remove respostas, reações e mídias e não pode ser desfeita.`)) return;
+
+        const status = document.getElementById('master-maintenance-status');
+        status.textContent = 'Apagando histórico...';
+
+        const rpc = type === 'general'
+            ? 'master_clear_general_messages'
+            : 'master_clear_private_messages';
+
+        const { data, error } = await _supabase.rpc(rpc);
+
+        if (error) {
+            status.textContent = `Erro: ${error.message}`;
+            return;
+        }
+
+        const removed = Number(data || 0);
+        await adminWriteLog(
+            type === 'general' ? 'history_general_cleared' : 'history_private_cleared',
+            null,
+            { removed }
+        );
+
+        status.textContent = `${removed} mensagem(ns) removida(s) com sucesso.`;
+    }
+
+
+window.addEventListener('beforeunload', event => {
+    if (typeof masterDirty !== 'undefined' && masterDirty) {
+        event.preventDefault();
+        event.returnValue = '';
+    }
+});
+
+checkAdminSession();
+</script>
+</body>
+</html>

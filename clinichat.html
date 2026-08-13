@@ -1,0 +1,3431 @@
+<!DOCTYPE html>
+<html class="light" lang="pt-BR">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>CliniChat — CliniTool Build 00030</title>
+    
+    <!-- Tailwind CDN & Fontes -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline": "#717783",
+                        "primary-container": "#1976d2",
+                        "secondary-container": "#91f78e",
+                        "tertiary-fixed": "#ffe170",
+                        "on-tertiary-container": "#4c3e00",
+                        "on-primary-container": "#fffdff",
+                        "surface": "#f6faff",
+                        "background": "#f6faff",
+                        "primary": "#005dac",
+                        "secondary": "#006e1c",
+                        "on-surface": "#171c20",
+                        "on-surface-variant": "#414752",
+                        "error": "#ba1a1a"
+                    },
+                    "fontFamily": {
+                        "display": ["Be Vietnam Pro"],
+                        "body-sm": ["Be Vietnam Pro"],
+                        "chat-text": ["Be Vietnam Pro"],
+                        "body-md": ["Be Vietnam Pro"],
+                        "headline-sm": ["Be Vietnam Pro"],
+                        "label-bold": ["Plus Jakarta Sans"],
+                        "label-md": ["Plus Jakarta Sans"]
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #a5c8ff 0%, #d4e3ff 50%, #f6faff 100%);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        /* Estilos Modo Noturno */
+        body.dark {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            color: #f1f5f9;
+        }
+        body.dark .glass-window {
+            background: rgba(15, 23, 42, 0.75);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        body.dark .frosted-sidebar {
+            background: rgba(30, 41, 59, 0.5);
+        }
+        body.dark .message-bubble-incoming {
+            background: rgba(30, 41, 59, 0.9);
+            color: #f8fafc;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Contraste consistente para o modo noturno */
+        body.dark .text-on-surface,
+        body.dark .text-on-surface-variant,
+        body.dark .text-outline,
+        body.dark .text-gray-500,
+        body.dark .text-gray-600,
+        body.dark .text-gray-700,
+        body.dark label,
+        body.dark h1,
+        body.dark h2,
+        body.dark h3,
+        body.dark p,
+        body.dark td,
+        body.dark th {
+            color: #e5edf8 !important;
+        }
+        body.dark .text-outline,
+        body.dark .text-gray-500,
+        body.dark .text-gray-600 {
+            color: #aebed2 !important;
+        }
+        body.dark input,
+        body.dark select,
+        body.dark textarea {
+            background: rgba(15, 23, 42, 0.82) !important;
+            color: #f8fafc !important;
+            border-color: rgba(148, 163, 184, 0.42) !important;
+        }
+        body.dark input::placeholder,
+        body.dark textarea::placeholder {
+            color: #94a3b8 !important;
+            opacity: 1;
+        }
+        body.dark option {
+            background: #0f172a;
+            color: #f8fafc;
+        }
+        body.dark .bg-white\/40,
+        body.dark .bg-white\/50,
+        body.dark .bg-white\/60,
+        body.dark .bg-white\/70,
+        body.dark .bg-white\/80,
+        body.dark .glossy-pill {
+            background: rgba(30, 41, 59, 0.78) !important;
+            border-color: rgba(148, 163, 184, 0.28) !important;
+        }
+        body.dark .hover\:bg-white:hover,
+        body.dark .hover\:bg-white\/40:hover,
+        body.dark .hover\:bg-white\/60:hover {
+            background: rgba(51, 65, 85, 0.92) !important;
+        }
+        body.dark table,
+        body.dark tbody,
+        body.dark thead,
+        body.dark tr {
+            border-color: rgba(148, 163, 184, 0.22) !important;
+        }
+        body.dark .message-bubble-outgoing {
+            color: #ffffff;
+        }
+        body.dark #chat-messages {
+            color: #e5edf8;
+        }
+
+        .glass-window {
+            background: rgba(255, 255, 255, 0.55);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(255,255,255,0.3);
+        }
+
+        .gel-button {
+            background: linear-gradient(to bottom, #42a5f5, #1976d2);
+            border-top: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        .gel-button::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 50%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0) 100%);
+        }
+
+        .gel-button:active {
+            background: linear-gradient(to bottom, #1565c0, #1976d2);
+            transform: scale(0.98);
+        }
+
+        .message-bubble-incoming {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03), inset 0 1px 1px rgba(255,255,255,0.8);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .message-bubble-outgoing {
+            background: linear-gradient(135deg, rgba(227, 242, 253, 0.85) 0%, rgba(187, 222, 250, 0.85) 100%);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 2px 6px rgba(0,93,172,0.05), inset 0 1px 1px rgba(255,255,255,0.8);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .nudge-alert {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(113, 119, 131, 0.3);
+            border-radius: 10px;
+        }
+
+        .glossy-header {
+            background: linear-gradient(180deg, #1e88e5 0%, #1565c0 100%);
+            position: relative;
+            overflow: hidden;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .frosted-sidebar {
+            background: rgba(240, 244, 250, 0.4);
+            backdrop-filter: blur(10px);
+        }
+
+        .glossy-pill {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+        }
+
+        /* Fundos Dinâmicos do Chat */
+        .chat-bg-cubes { background-image: url('https://www.transparenttextures.com/patterns/cubes.png'); }
+        .chat-bg-dots { background-image: url('https://www.transparenttextures.com/patterns/subtle-dots.png'); }
+        .chat-bg-grid { background-image: url('https://www.transparenttextures.com/patterns/grid.png'); }
+        .chat-bg-none { background-image: none; }
+
+
+        /* =======================================================
+           PROJECT AURORA — ALPHA 0.4 / ENTREGA 1
+           Layout adaptativo Desktop, Tablet e Mobile
+           ======================================================= */
+        :root {
+            --aurora-app-max-width: 1680px;
+            --aurora-desktop-margin: 12px;
+            --aurora-sidebar-width: 300px;
+        }
+
+        #app-window {
+            width: min(calc(100vw - (var(--aurora-desktop-margin) * 2)), var(--aurora-app-max-width));
+            max-width: none !important;
+            height: calc(100dvh - (var(--aurora-desktop-margin) * 2));
+            max-height: none !important;
+            transition: width .25s ease, height .25s ease, border-radius .25s ease;
+        }
+
+        #chat-shell {
+            min-height: 0;
+        }
+
+        #chat-sidebar {
+            width: var(--aurora-sidebar-width);
+            flex: 0 0 var(--aurora-sidebar-width);
+            min-width: 0;
+        }
+
+        #chat-main {
+            min-width: 0;
+            min-height: 0;
+        }
+
+        #mobile-back-chat {
+            display: none;
+        }
+
+        .aurora-mobile-only {
+            display: none;
+        }
+
+        /* Tablet */
+        @media (min-width: 768px) and (max-width: 1100px) {
+            :root {
+                --aurora-desktop-margin: 8px;
+                --aurora-sidebar-width: 252px;
+            }
+
+            #app-window {
+                border-radius: 18px;
+            }
+
+            #app-window > header {
+                padding-left: 14px;
+                padding-right: 14px;
+            }
+
+            #header-user-name,
+            #header-user-badge,
+            #master-panel-btn span:last-child,
+            #app-window > header button[title="Sair da Conta"] span:last-child {
+                display: none;
+            }
+
+            #chat-sidebar > div:first-child {
+                padding: 12px;
+            }
+        }
+
+        /* Mobile: lista e conversa tornam-se telas independentes */
+        @media (max-width: 767px) {
+            body {
+                padding: 0 !important;
+                align-items: stretch !important;
+                justify-content: stretch !important;
+                min-height: 100dvh;
+                overflow: hidden;
+            }
+
+            #app-window {
+                width: 100vw !important;
+                height: 100dvh !important;
+                border-radius: 0 !important;
+                border: 0 !important;
+                box-shadow: none !important;
+            }
+
+            #app-window > header {
+                min-height: 58px;
+                padding: 8px 10px;
+                gap: 8px;
+            }
+
+            #app-window > header > div:first-child {
+                gap: 8px;
+                min-width: 0;
+                flex: 1;
+            }
+
+            #app-window > header > div:first-child > .material-symbols-outlined:not(#mobile-back-chat *) {
+                display: none;
+            }
+
+            #header-chat-title {
+                display: block;
+                max-width: 48vw;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            #header-sub-info {
+                max-width: 48vw;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            #private-badge,
+            #master-panel-btn,
+            #header-user-badge,
+            #header-user-name,
+            #app-window > header > div:last-child > div,
+            #app-window > header button[title="Sair da Conta"] span:last-child {
+                display: none !important;
+            }
+
+            #app-window > header > div:last-child {
+                gap: 6px;
+                flex-shrink: 0;
+            }
+
+            #app-window > header button[title="Configurações"],
+            #app-window > header button[title="Sair da Conta"] {
+                width: 36px;
+                height: 36px;
+                padding: 0;
+                justify-content: center;
+                border-radius: 12px;
+            }
+
+            #chat-shell {
+                position: relative;
+                display: block !important;
+                overflow: hidden;
+            }
+
+            #chat-sidebar,
+            #chat-main {
+                position: absolute;
+                inset: 0;
+                width: 100% !important;
+                height: 100%;
+                border: 0;
+                transition: transform .24s cubic-bezier(.4,0,.2,1), opacity .18s ease;
+                will-change: transform;
+            }
+
+            #chat-sidebar {
+                display: flex;
+                transform: translateX(0);
+                opacity: 1;
+                z-index: 2;
+                background: rgba(240, 244, 250, .82);
+            }
+
+            body.dark #chat-sidebar {
+                background: rgba(15, 23, 42, .94);
+            }
+
+            #chat-main {
+                display: flex;
+                transform: translateX(100%);
+                opacity: 0;
+                pointer-events: none;
+                z-index: 3;
+            }
+
+            #app-window.mobile-conversation-open #chat-sidebar {
+                transform: translateX(-18%);
+                opacity: 0;
+                pointer-events: none;
+            }
+
+            #app-window.mobile-conversation-open #chat-main {
+                transform: translateX(0);
+                opacity: 1;
+                pointer-events: auto;
+            }
+
+            #app-window.mobile-conversation-open #mobile-back-chat {
+                display: inline-flex;
+            }
+
+            #mobile-back-chat {
+                width: 36px;
+                height: 36px;
+                align-items: center;
+                justify-content: center;
+                flex: 0 0 36px;
+                border-radius: 12px;
+                background: rgba(255,255,255,.18);
+                border: 1px solid rgba(255,255,255,.25);
+            }
+
+            #chat-sidebar > div:first-child {
+                padding: 14px 16px;
+            }
+
+            #chat-sidebar .custom-scrollbar {
+                padding-left: 12px;
+                padding-right: 12px;
+            }
+
+            #chat-main > div:first-child {
+                min-height: 42px;
+                padding: 7px 12px;
+            }
+
+            #typing-indicator {
+                max-width: 48vw;
+                overflow: hidden;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                font-size: 10px;
+            }
+
+            #chat-messages {
+                padding: 12px !important;
+                scroll-padding-bottom: 10px;
+            }
+
+            #chat-main > div:last-child {
+                padding: 9px 10px calc(9px + env(safe-area-inset-bottom));
+            }
+
+            #chat-main > div:last-child > div:first-child {
+                margin-bottom: 7px;
+            }
+
+            #message-input {
+                font-size: 16px !important; /* evita zoom automático no iOS */
+                padding-left: 12px !important;
+            }
+
+            #chat-main button[onclick="sendMessage()"] {
+                width: 42px;
+                height: 42px;
+                padding: 0;
+                justify-content: center;
+                border-radius: 14px;
+            }
+
+            #chat-main button[onclick="sendMessage()"] span:first-child {
+                display: none;
+            }
+
+            #emoji-popover {
+                left: 10px !important;
+                right: 10px !important;
+                bottom: 70px !important;
+                grid-template-columns: repeat(6, minmax(0, 1fr));
+            }
+
+            #settings-modal,
+            #image-modal {
+                padding: 8px;
+            }
+
+            #settings-modal > div {
+                width: 100%;
+                max-height: calc(100dvh - 16px);
+                border-radius: 20px;
+            }
+
+            .aurora-mobile-only {
+                display: flex;
+            }
+        }
+
+
+
+        /* =======================================================
+           PROJECT AURORA — ALPHA 0.4 / ENTREGA 2
+           Personalização, acessibilidade e preferências
+           ======================================================= */
+        :root {
+            --gc-primary: #1976d2;
+            --gc-primary-dark: #0d47a1;
+            --gc-primary-soft: rgba(25,118,210,.14);
+            --gc-ui-scale: 1;
+        }
+
+        body { font-size: calc(1rem * var(--gc-ui-scale)); }
+        .glossy-header { background: linear-gradient(180deg, var(--gc-primary) 0%, var(--gc-primary-dark) 100%) !important; }
+        .gel-button { background: linear-gradient(to bottom, color-mix(in srgb, var(--gc-primary) 78%, white), var(--gc-primary)) !important; }
+        .text-primary { color: var(--gc-primary) !important; }
+        .bg-primary { background-color: var(--gc-primary) !important; }
+        .bg-primary\/10 { background-color: var(--gc-primary-soft) !important; }
+        .bg-primary\/20 { background-color: color-mix(in srgb, var(--gc-primary) 20%, transparent) !important; }
+        .border-primary\/10 { border-color: color-mix(in srgb, var(--gc-primary) 10%, transparent) !important; }
+        .border-primary\/20 { border-color: color-mix(in srgb, var(--gc-primary) 20%, transparent) !important; }
+        .focus\:ring-primary:focus, .focus\:ring-primary\/20:focus, .focus\:ring-primary\/40:focus { --tw-ring-color: color-mix(in srgb, var(--gc-primary) 40%, transparent) !important; }
+
+        .chat-bg-aurora {
+            background-color: #eef5ff;
+            background-image:
+                radial-gradient(circle at 18% 20%, rgba(125,211,252,.34), transparent 34%),
+                radial-gradient(circle at 80% 18%, rgba(196,181,253,.30), transparent 32%),
+                radial-gradient(circle at 50% 82%, rgba(110,231,183,.22), transparent 38%);
+        }
+        .chat-bg-lines {
+            background-color: #f8fbff;
+            background-image: repeating-linear-gradient(135deg, rgba(25,118,210,.07) 0 1px, transparent 1px 14px);
+        }
+        .chat-bg-paper {
+            background-color: #faf7ef;
+            background-image: linear-gradient(rgba(70,70,70,.045) 1px, transparent 1px), linear-gradient(90deg, rgba(70,70,70,.035) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        .chat-bg-solid-blue { background: #eaf3ff !important; }
+        .chat-bg-solid-gray { background: #eef1f5 !important; }
+        .chat-bg-solid-green { background: #edf8f0 !important; }
+        .chat-bg-solid-lilac { background: #f3efff !important; }
+        body.dark .chat-bg-aurora { background-color:#0f172a; background-image:radial-gradient(circle at 18% 20%,rgba(14,165,233,.16),transparent 34%),radial-gradient(circle at 80% 18%,rgba(139,92,246,.16),transparent 32%),radial-gradient(circle at 50% 82%,rgba(16,185,129,.10),transparent 38%); }
+        body.dark .chat-bg-lines, body.dark .chat-bg-paper, body.dark .chat-bg-solid-blue, body.dark .chat-bg-solid-gray, body.dark .chat-bg-solid-green, body.dark .chat-bg-solid-lilac { background-color:#111827 !important; }
+
+        .theme-choice, .accent-choice, .font-choice { transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease; }
+        .theme-choice.active, .accent-choice.active, .font-choice.active { border-color: var(--gc-primary) !important; box-shadow: 0 0 0 3px var(--gc-primary-soft); transform: translateY(-1px); }
+        .accent-choice { width: 30px; height: 30px; border-radius: 999px; border: 3px solid rgba(255,255,255,.9); box-shadow: 0 0 0 1px rgba(0,0,0,.15); }
+        .avatar-initials { font-weight: 800; letter-spacing: -.03em; }
+        html.gc-scale-small { --gc-ui-scale: .92; }
+        html.gc-scale-normal { --gc-ui-scale: 1; }
+        html.gc-scale-large { --gc-ui-scale: 1.10; }
+
+
+        /* =======================================================
+           PROJECT ECHO — ALPHA 0.5 / BUILD 00023
+           Respostas, reações, multiline, cooldown e manutenção
+           ======================================================= */
+        #message-input {
+            resize: none;
+            min-height: 42px;
+            max-height: 132px;
+            overflow-y: auto;
+            line-height: 1.35;
+        }
+        .echo-reply-bar {
+            border-left: 3px solid var(--gc-primary);
+            background: color-mix(in srgb, var(--gc-primary) 9%, white);
+        }
+        body.dark .echo-reply-bar { background: color-mix(in srgb, var(--gc-primary) 18%, #0f172a); }
+        .echo-reply-preview {
+            border-left: 3px solid color-mix(in srgb, var(--gc-primary) 55%, transparent);
+            background: rgba(255,255,255,.42);
+        }
+        body.dark .echo-reply-preview { background: rgba(15,23,42,.48); }
+        .echo-message-actions {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(2px);
+            transition: opacity .15s ease, transform .15s ease;
+        }
+        .echo-message-actions.is-open,
+        .echo-message-actions:focus-within {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+        .echo-reply-action {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateX(3px);
+            transition: opacity .1s ease, transform .1s ease;
+        }
+        .echo-reaction-actions {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(2px);
+            transition: opacity .15s ease .8s, transform .15s ease .8s;
+        }
+        @media (hover:hover) and (pointer:fine) {
+            .echo-message-bubble:hover > .echo-message-actions {
+                opacity: 1;
+                pointer-events: auto;
+                transform: translateY(0);
+            }
+            .echo-message-bubble:hover .echo-reply-action {
+                opacity: 1;
+                pointer-events: auto;
+                transform: translateX(0);
+            }
+            .echo-message-bubble:hover .echo-reaction-actions {
+                opacity: 1;
+                pointer-events: auto;
+                transform: translateY(0);
+            }
+        }
+        @media (hover:none), (pointer:coarse) {
+            .echo-message-actions.is-open .echo-reply-action,
+            .echo-message-actions.is-open .echo-reaction-actions {
+                opacity: 1;
+                pointer-events: auto;
+                transform: none;
+                transition-delay: 0s;
+            }
+        }
+        .echo-sender-link { cursor:pointer; }
+        .echo-sender-link:hover { text-decoration: underline; }
+        .echo-swipe-active { transition:none !important; }
+        .echo-reaction-pill {
+            background: rgba(255,255,255,.72);
+            border: 1px solid rgba(255,255,255,.82);
+            box-shadow: 0 1px 3px rgba(0,0,0,.06);
+        }
+        body.dark .echo-reaction-pill { background: rgba(30,41,59,.82); border-color: rgba(148,163,184,.22); }
+        .echo-reaction-pill.mine { border-color: var(--gc-primary); background: var(--gc-primary-soft); }
+        #nudge-button:disabled { opacity:.42; cursor:not-allowed; filter:grayscale(.25); }
+        #echo-emoji-popover { max-height: 310px; overflow-y:auto; }
+        .echo-danger-card { background: rgba(254,242,242,.82); border:1px solid rgba(239,68,68,.24); }
+        body.dark .echo-danger-card { background: rgba(127,29,29,.18); }
+
+
+        /* =======================================================
+           PROJECT ECHO — BUILD 00025
+           Histórico paginado, offline, leitura e refinamentos
+           ======================================================= */
+        .echo-message-row { position: relative; }
+        .echo-message-row.echo-consecutive { margin-top: -6px; }
+        .echo-message-row.echo-consecutive .echo-sender-name,
+        .echo-message-row.echo-consecutive .echo-message-avatar { display: none !important; }
+
+
+        .echo-message-actions {
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            transform: none !important;
+        }
+
+        /* A seta de resposta surge imediatamente ao hover; reações aguardam 800 ms. */
+        .echo-reply-action {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .10s ease, transform .10s ease;
+            z-index: 5;
+        }
+        .echo-message-row[data-is-me="true"] .echo-reply-action { left: -38px; }
+        .echo-message-row[data-is-me="false"] .echo-reply-action { right: -38px; }
+
+        .echo-reaction-actions {
+            position: relative;
+            margin-top: 4px;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-2px);
+            transition: opacity .14s ease .8s, transform .14s ease .8s;
+            min-height: 0;
+        }
+        @media (hover:hover) and (pointer:fine) {
+            .echo-message-bubble:hover .echo-reply-action {
+                opacity: 1;
+                pointer-events: auto;
+            }
+            .echo-message-bubble:hover + .echo-reaction-actions,
+            .echo-reaction-actions:hover {
+                opacity: 1;
+                pointer-events: auto;
+                transform: translateY(0);
+            }
+        }
+        @media (hover:none), (pointer:coarse) {
+            .echo-message-actions.is-open .echo-reaction-actions {
+                opacity: 1;
+                pointer-events: auto;
+                transform: none;
+                transition-delay: 0s;
+            }
+            .echo-reply-action { display: none !important; }
+        }
+
+        /* Reações aplicadas ficam definitivamente abaixo do balão. */
+        .echo-reactions-applied { margin-top: 4px; }
+
+        /* Modo noturno com balões próprios, sem aparência "lavada". */
+        body.dark .message-bubble-incoming {
+            background: rgba(30, 41, 59, .96) !important;
+            color: #f8fafc !important;
+            border-color: rgba(148,163,184,.18) !important;
+            box-shadow: 0 4px 14px rgba(0,0,0,.18) !important;
+        }
+        body.dark .message-bubble-outgoing {
+            background: color-mix(in srgb, var(--gc-primary) 30%, #0f172a) !important;
+            color: #f8fafc !important;
+            border-color: color-mix(in srgb, var(--gc-primary) 34%, rgba(148,163,184,.18)) !important;
+            box-shadow: 0 4px 14px rgba(0,0,0,.20) !important;
+        }
+        body.dark .message-bubble-incoming .echo-message-content,
+        body.dark .message-bubble-outgoing .echo-message-content { color: #f8fafc !important; }
+
+        .echo-read-receipt { display:inline-flex; align-items:center; line-height:1; margin-left:3px; }
+        .echo-read-receipt.is-read { color: var(--gc-primary); opacity:1 !important; }
+
+        .echo-history-loader {
+            position: sticky;
+            top: 8px;
+            z-index: 8;
+            width: fit-content;
+            margin: 0 auto 8px;
+            padding: 5px 10px;
+            border-radius: 999px;
+            background: rgba(255,255,255,.86);
+            border: 1px solid rgba(255,255,255,.92);
+            box-shadow: 0 2px 8px rgba(0,0,0,.08);
+            font-size: 10px;
+            font-weight: 700;
+            color: #64748b;
+        }
+        body.dark .echo-history-loader {
+            background: rgba(30,41,59,.94);
+            border-color: rgba(148,163,184,.22);
+            color: #cbd5e1;
+        }
+
+        .settings-save-sticky {
+            position: sticky;
+            bottom: calc(env(safe-area-inset-bottom) + 2px);
+            z-index: 10;
+            flex-shrink: 0;
+        }
+        #settings-modal > div {
+            padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)) !important;
+        }
+
+
+        /* =======================================================
+           PROJECT ECHO — BUILD 00026
+           Refinamento de agrupamento, ações e emojis
+           ======================================================= */
+        /* Mensagens consecutivas ficam visualmente agrupadas, sem “buracos”. */
+        #chat-messages { row-gap: 0 !important; }
+        .echo-message-row { margin-top: 10px; }
+        .echo-message-row.echo-consecutive { margin-top: 3px !important; }
+        .echo-message-row.echo-consecutive .echo-reactions-applied { margin-top: 1px; }
+        .echo-reactions-applied { margin-top: 2px !important; min-height: 0; }
+
+        /* Ações não participam do fluxo: não criam espaço entre os balões. */
+        .echo-message-actions { position: relative; }
+        .echo-reaction-actions {
+            position: absolute !important;
+            top: calc(100% + 3px);
+            margin-top: 0 !important;
+            z-index: 18;
+            white-space: nowrap;
+        }
+        .echo-message-row[data-is-me="true"] .echo-reaction-actions { right: 0; }
+        .echo-message-row[data-is-me="false"] .echo-reaction-actions { left: 0; }
+
+        /* Pequena seta fixa no canto do balão: 300 ms no desktop. */
+        .echo-reply-action {
+            width: 24px !important;
+            height: 24px !important;
+            top: 5px !important;
+            margin: 0 !important;
+            border-radius: 999px !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            transform: scale(.92) !important;
+            transition: opacity .12s ease .30s, transform .12s ease .30s !important;
+            z-index: 20;
+        }
+        .echo-message-row[data-is-me="true"] .echo-reply-action { left: -10px !important; right: auto !important; }
+        .echo-message-row[data-is-me="false"] .echo-reply-action { right: -10px !important; left: auto !important; }
+        @media (hover:hover) and (pointer:fine) {
+            .echo-message-actions:hover .echo-reply-action,
+            .echo-reply-action:hover {
+                opacity: 1 !important;
+                pointer-events: auto !important;
+                transform: scale(1) !important;
+            }
+            .echo-message-actions:hover .echo-reaction-actions,
+            .echo-reaction-actions:hover {
+                opacity: 1;
+                pointer-events: auto;
+                transform: translateY(0);
+                transition-delay: .8s;
+            }
+        }
+        @media (hover:none), (pointer:coarse) {
+            .echo-reply-action { display: none !important; }
+            .echo-message-actions.is-open .echo-reaction-actions {
+                position: absolute !important;
+                opacity: 1 !important;
+                pointer-events: auto !important;
+                transform: none !important;
+                transition-delay: 0s !important;
+            }
+        }
+
+        /* Emoji isolado ganha destaque, sem alterar emojis dentro de frases. */
+        .echo-message-content.echo-single-emoji {
+            font-size: 2rem !important;
+            line-height: 1.15 !important;
+            padding-top: 2px;
+            padding-bottom: 8px !important;
+        }
+
+        /* Picker completo e categorizado. */
+        #emoji-popover { width: min(390px, calc(100vw - 20px)) !important; }
+        #echo-emoji-popover { max-height: 285px; overflow-y: auto; display: grid; grid-template-columns: repeat(8,minmax(0,1fr)); gap: 3px; }
+        .echo-emoji-btn { font-size: 1.35rem; line-height: 1; padding: 6px 2px; border-radius: 8px; }
+        .echo-emoji-btn:hover { background: rgba(0,0,0,.06); }
+        body.dark .echo-emoji-btn:hover { background: rgba(255,255,255,.08); }
+        .echo-emoji-category.active { background: var(--gc-primary-soft); color: var(--gc-primary); }
+        #emoji-search { min-width: 0; }
+
+        /* Indicador de digitação passa para a barra de ações, junto ao clipe. */
+        #typing-indicator {
+            min-height: 36px;
+            max-width: min(300px, 55vw);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        @media (max-width: 767px) {
+            #typing-indicator { max-width: calc(100vw - 130px); font-size: 10px; padding-left: 8px; padding-right: 8px; }
+            #echo-emoji-popover { grid-template-columns: repeat(7,minmax(0,1fr)); }
+        }
+
+        /* =======================================================
+           ADMINISTRAÇÃO — BUILD 00027
+           Dashboard, sessões e logs administrativos
+           ======================================================= */
+        .master-nav-btn { transition: background .15s ease, color .15s ease, opacity .15s ease; }
+        .master-nav-btn.active { background: var(--gc-primary); color: white; box-shadow: 0 2px 8px rgba(15,23,42,.10); }
+        .master-nav-btn:not(.active):not(:disabled):hover { background: rgba(255,255,255,.62); }
+        body.dark .master-nav-btn:not(.active):not(:disabled):hover { background: rgba(51,65,85,.78); }
+        .admin-stat-card { background: rgba(255,255,255,.62); border: 1px solid rgba(255,255,255,.72); }
+        body.dark .admin-stat-card { background: rgba(30,41,59,.72); border-color: rgba(148,163,184,.20); }
+        .admin-user-row { background: rgba(255,255,255,.52); border: 1px solid rgba(255,255,255,.68); }
+        body.dark .admin-user-row { background: rgba(30,41,59,.58); border-color: rgba(148,163,184,.18); }
+        .admin-status-dot { width: 9px; height: 9px; border-radius: 999px; flex: 0 0 9px; }
+        .admin-log-details { max-width: 34rem; }
+        @media (max-width: 767px) {
+            #master-dashboard-section, #master-logs-section { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+        }
+
+
+        /* =======================================================
+           PROJECT ECHO — BUILD 00028
+           Pesquisa, mídia, favoritos e conversas fixadas
+           ======================================================= */
+        .content-toolbar-btn {
+            width: 34px; height: 34px; border-radius: 11px; display:inline-flex; align-items:center; justify-content:center;
+            background: rgba(255,255,255,.62); border:1px solid rgba(255,255,255,.78); color:var(--gc-primary);
+            transition: transform .15s ease, background .15s ease;
+        }
+        .content-toolbar-btn:hover { background:rgba(255,255,255,.9); transform:translateY(-1px); }
+        body.dark .content-toolbar-btn { background:rgba(30,41,59,.82); border-color:rgba(148,163,184,.22); color:#dbeafe; }
+        .content-modal-card { background:rgba(255,255,255,.92); border:1px solid rgba(255,255,255,.95); }
+        body.dark .content-modal-card { background:rgba(15,23,42,.96); border-color:rgba(148,163,184,.22); }
+        .content-result { border:1px solid rgba(148,163,184,.18); background:rgba(255,255,255,.58); }
+        body.dark .content-result { background:rgba(30,41,59,.72); border-color:rgba(148,163,184,.18); }
+        .message-favorite-btn { position:absolute; top:5px; width:24px; height:24px; border-radius:999px; opacity:0; pointer-events:none; transform:scale(.92); transition:opacity .12s ease .30s, transform .12s ease .30s; z-index:20; }
+        .echo-message-row[data-is-me="true"] .message-favorite-btn { right:-10px; }
+        .echo-message-row[data-is-me="false"] .message-favorite-btn { left:-10px; }
+        .message-favorite-btn.is-favorite { opacity:1; pointer-events:auto; color:#d97706; }
+        @media (hover:hover) and (pointer:fine) { .echo-message-actions:hover .message-favorite-btn { opacity:1; pointer-events:auto; transform:scale(1); } }
+        @media (hover:none), (pointer:coarse) { .message-favorite-btn { opacity:1; pointer-events:auto; transform:none; top:5px; } }
+        .pinned-conversation { box-shadow: inset 3px 0 0 var(--gc-primary); }
+        .media-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(145px,1fr)); gap:10px; }
+        .media-tile { min-height:130px; overflow:hidden; border-radius:16px; position:relative; }
+        .media-tile img,.media-tile video { width:100%; height:130px; object-fit:cover; }
+        .search-highlight { outline:3px solid color-mix(in srgb,var(--gc-primary) 55%,transparent); outline-offset:3px; animation:echoHighlight 1.8s ease; }
+        @keyframes echoHighlight { 0%,100%{filter:none} 35%{filter:brightness(1.12)} }
+        @media(max-width:767px){ .content-toolbar-btn{width:32px;height:32px}.content-modal-card{border-radius:18px!important}.media-grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
+
+
+        /* =======================================================
+           READ RECEIPTS 2.0 — BUILD 00029
+           Marcador de leitura por conversa
+           ======================================================= */
+        .echo-read-receipt {
+            transition: color .16s ease, opacity .16s ease, transform .16s ease;
+        }
+        .echo-read-receipt.is-read {
+            color: var(--gc-primary) !important;
+            opacity: 1 !important;
+        }
+        .echo-read-receipt.is-read .material-symbols-outlined {
+            transform: translateY(.2px);
+        }
+
+    </style>
+</head>
+<body class="p-4" id="app-body">
+
+<!-- 1. TELA DE LOGIN -->
+<div id="login-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-md">
+    <div class="glass-window p-8 rounded-2xl w-full max-w-md shadow-2xl flex flex-col gap-4">
+        <div class="flex items-center justify-center gap-2 mb-2">
+            <span class="material-symbols-outlined text-primary text-4xl">forum</span>
+            <h2 class="text-2xl font-bold text-primary">CliniChat</h2>
+        </div>
+
+        <div class="text-center mb-2">
+            <h3 class="text-base font-bold text-on-surface">Acesse sua conta</h3>
+            <p class="text-xs text-outline mt-1">Entre com o usuário e a senha fornecidos pelo administrador.</p>
+        </div>
+
+        <form id="loginForm" onsubmit="handleLoginSubmit(event)" class="flex flex-col gap-3">
+            <div>
+                <label class="block text-xs font-bold text-on-surface-variant mb-1">Usuário</label>
+                <input id="login-username-input" type="text" placeholder="Digite seu usuário" autocomplete="username" required class="w-full px-4 py-2.5 rounded-xl bg-white/70 border border-white/80 focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm lowercase"/>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-on-surface-variant mb-1">Senha</label>
+                <div class="relative">
+                    <input id="login-password-input" type="password" placeholder="Digite sua senha" autocomplete="current-password" required class="w-full px-4 py-2.5 pr-11 rounded-xl bg-white/70 border border-white/80 focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm"/>
+                    <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-outline hover:text-primary" title="Mostrar ou ocultar senha">
+                        <span id="password-visibility-icon" class="material-symbols-outlined text-lg">visibility</span>
+                    </button>
+                </div>
+            </div>
+
+            <button id="login-submit-btn" type="submit" class="gel-button w-full py-3 rounded-xl text-white font-bold text-sm shadow-lg mt-2 flex items-center justify-center gap-2">
+                <span id="login-submit-text">Entrar</span>
+                <span class="material-symbols-outlined text-sm">login</span>
+            </button>
+        </form>
+
+        <p id="authError" class="text-red-600 text-xs text-center hidden font-bold"></p>
+        <p id="authStatus" class="text-primary text-xs text-center hidden font-bold">Verificando sessão...</p>
+    </div>
+</div>
+
+<!-- 2. MODAL DE CONFIGURAÇÕES DO USUÁRIO -->
+<div id="settings-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-md hidden">
+    <div class="glass-window p-6 rounded-2xl w-full max-w-lg shadow-2xl flex flex-col gap-5 max-h-[90vh] overflow-y-auto custom-scrollbar">
+        
+        <div class="flex items-center justify-between border-b border-white/40 pb-3">
+            <div class="flex items-center gap-2 text-primary">
+                <span class="material-symbols-outlined">settings</span>
+                <h2 class="text-lg font-bold">Configurações Pessoais</h2>
+            </div>
+            <button onclick="closeSettingsModal()" class="p-1 hover:bg-black/10 rounded-full transition-colors text-outline">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <!-- Perfil -->
+        <div class="flex items-center gap-4 bg-white/40 p-4 rounded-xl border border-white/60">
+            <div class="relative group">
+                <div class="w-16 h-16 rounded-full overflow-hidden border-2 border-primary/40 shadow-sm bg-primary/10 flex items-center justify-center text-primary">
+                    <img id="settings-avatar-preview" src="" class="w-full h-full object-cover hidden"/>
+                    <span id="settings-avatar-placeholder" class="avatar-initials text-xl">US</span>
+                </div>
+            </div>
+            <div class="flex flex-col gap-2 flex-1 min-w-0">
+                <div>
+                    <span class="text-xs font-bold text-on-surface">Foto de perfil</span>
+                    <p class="text-[11px] text-outline">Use uma imagem ou deixe suas iniciais como avatar.</p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <label class="gel-button text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1 w-fit cursor-pointer shadow-sm">
+                        <span class="material-symbols-outlined text-sm relative z-10">upload</span>
+                        <span class="relative z-10">Alterar foto</span>
+                        <input type="file" id="avatar-file-input" accept="image/jpeg,image/png,image/webp" class="hidden" onchange="uploadAvatarFile(event)"/>
+                    </label>
+                    <button id="remove-avatar-btn" type="button" onclick="removeAvatar()" class="px-3 py-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-700 text-xs font-bold border border-red-200 flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm">delete</span> Remover foto
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Aparência -->
+        <div class="space-y-4">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-outline">Aparência & Interface</h3>
+
+            <div class="bg-white/40 p-3 rounded-xl border border-white/60 space-y-2">
+                <div class="text-xs font-bold text-on-surface">Tema</div>
+                <div class="grid grid-cols-3 gap-2">
+                    <button type="button" data-theme="light" onclick="setThemeMode('light')" class="theme-choice px-3 py-2 rounded-xl bg-white/70 border border-white/80 text-xs font-bold">Claro</button>
+                    <button type="button" data-theme="dark" onclick="setThemeMode('dark')" class="theme-choice px-3 py-2 rounded-xl bg-white/70 border border-white/80 text-xs font-bold">Escuro</button>
+                    <button type="button" data-theme="system" onclick="setThemeMode('system')" class="theme-choice px-3 py-2 rounded-xl bg-white/70 border border-white/80 text-xs font-bold">Sistema</button>
+                </div>
+            </div>
+
+            <div class="bg-white/40 p-3 rounded-xl border border-white/60 space-y-2">
+                <div class="text-xs font-bold text-on-surface">Cor principal</div>
+                <div class="flex flex-wrap gap-3" id="accent-color-options">
+                    <button type="button" class="accent-choice" data-accent="blue" onclick="setAccentColor('blue')" style="background:#1976d2" title="Azul"></button>
+                    <button type="button" class="accent-choice" data-accent="green" onclick="setAccentColor('green')" style="background:#15803d" title="Verde"></button>
+                    <button type="button" class="accent-choice" data-accent="purple" onclick="setAccentColor('purple')" style="background:#7c3aed" title="Roxo"></button>
+                    <button type="button" class="accent-choice" data-accent="orange" onclick="setAccentColor('orange')" style="background:#ea580c" title="Laranja"></button>
+                    <button type="button" class="accent-choice" data-accent="red" onclick="setAccentColor('red')" style="background:#dc2626" title="Vermelho"></button>
+                    <button type="button" class="accent-choice" data-accent="graphite" onclick="setAccentColor('graphite')" style="background:#475569" title="Grafite"></button>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between gap-3 bg-white/40 p-3 rounded-xl border border-white/60">
+                <div class="flex items-center gap-2 min-w-0">
+                    <span class="material-symbols-outlined text-primary">wallpaper</span>
+                    <span class="text-xs font-bold text-on-surface">Fundo do chat</span>
+                </div>
+                <select id="chat-bg-select" onchange="changeChatBackground(this.value)" class="text-xs rounded-lg border-white/80 bg-white/80 font-semibold focus:ring-primary max-w-[58%]">
+                    <option value="chat-bg-cubes">Cubos 3D</option>
+                    <option value="chat-bg-dots">Pontilhado</option>
+                    <option value="chat-bg-grid">Grade</option>
+                    <option value="chat-bg-none">Limpo</option>
+                    <option value="chat-bg-aurora">Aurora</option>
+                    <option value="chat-bg-lines">Linhas</option>
+                    <option value="chat-bg-paper">Papel</option>
+                    <option value="chat-bg-solid-blue">Azul sólido</option>
+                    <option value="chat-bg-solid-gray">Cinza sólido</option>
+                    <option value="chat-bg-solid-green">Verde sólido</option>
+                    <option value="chat-bg-solid-lilac">Lilás sólido</option>
+                </select>
+            </div>
+
+            <div class="bg-white/40 p-3 rounded-xl border border-white/60 space-y-2">
+                <div class="flex items-center gap-2"><span class="material-symbols-outlined text-primary">format_size</span><span class="text-xs font-bold text-on-surface">Tamanho da interface</span></div>
+                <div class="grid grid-cols-3 gap-2">
+                    <button type="button" data-scale="small" onclick="changeUIScale('small')" class="font-choice px-3 py-2 rounded-xl bg-white/70 border border-white/80 text-xs font-black">A−</button>
+                    <button type="button" data-scale="normal" onclick="changeUIScale('normal')" class="font-choice px-3 py-2 rounded-xl bg-white/70 border border-white/80 text-xs font-black">A</button>
+                    <button type="button" data-scale="large" onclick="changeUIScale('large')" class="font-choice px-3 py-2 rounded-xl bg-white/70 border border-white/80 text-sm font-black">A+</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sons -->
+        <div class="space-y-3">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-outline">Sons e Áudios</h3>
+            <div class="bg-white/40 p-3 rounded-xl border border-white/60">
+                <div class="flex items-start gap-2">
+                    <span class="material-symbols-outlined text-primary">notifications_active</span>
+                    <div><div class="text-xs font-bold text-on-surface">Mensagens e Chamar atenção</div><p class="text-[11px] text-outline mt-0.5">Esses sons são obrigatórios para garantir que os avisos sejam recebidos.</p></div>
+                </div>
+            </div>
+            <div class="flex items-center justify-between bg-white/40 p-3 rounded-xl border border-white/60">
+                <div class="flex items-center gap-2"><span class="material-symbols-outlined text-primary">person_add</span><span class="text-xs font-bold text-on-surface">Aviso quando usuário entra online</span></div>
+                <input type="checkbox" id="toggle-online-sound" checked onchange="toggleOnlineSound(this.checked)" class="rounded text-primary focus:ring-primary w-5 h-5 cursor-pointer"/>
+            </div>
+        </div>
+
+
+        <button type="button" onclick="showHistoryRetentionInfo()" class="w-full text-left bg-white/40 hover:bg-white/55 p-3 rounded-xl border border-white/60 flex items-start gap-3 transition-colors">
+            <span class="material-symbols-outlined text-primary">history</span>
+            <div>
+                <div class="text-xs font-bold text-on-surface">Apagar Histórico</div>
+                <p class="text-[11px] text-outline mt-0.5">Mensagens e arquivos serão removidos em até 30 dias</p>
+            </div>
+        </button>
+
+        <button onclick="closeSettingsModal()" class="settings-save-sticky gel-button py-2.5 rounded-xl text-white font-bold text-xs shadow-md mt-2">
+            Salvar e Concluir
+        </button>
+    </div>
+</div>
+
+
+<!-- 3. JANELA PRINCIPAL DO CHAT -->
+<div id="app-window" class="glass-window w-full max-w-[1440px] h-[calc(100vh-2rem)] max-h-[900px] rounded-2xl flex flex-col overflow-hidden hidden">
+    
+    <!-- Header Superior -->
+    <header class="glossy-header flex justify-between items-center w-full px-6 py-2 shadow-sm text-white z-10">
+        <div class="flex items-center gap-3 relative z-20">
+            <button id="mobile-back-chat" type="button" onclick="mobileReturnToConversationList()" title="Voltar para contatos" aria-label="Voltar para contatos">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <span class="material-symbols-outlined drop-shadow-md text-2xl">forum</span>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h1 class="text-base font-bold drop-shadow-md">
+                        <span id="header-chat-title">Sala: geral</span>
+                    </h1>
+                    <span id="private-badge" class="hidden bg-amber-400 text-amber-950 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">Privado</span>
+                </div>
+                <p id="header-sub-info" class="text-[11px] opacity-80">Grupo Público</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-3 relative z-20">
+            <!-- Botão Painel Master (visível se role === 'master' ou 'admin') -->
+
+            <button onclick="openSettingsModal()" title="Configurações" class="flex items-center justify-center w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full transition-all text-white border border-white/30">
+                <span class="material-symbols-outlined text-lg">settings</span>
+            </button>
+
+            <div class="flex items-center gap-3">
+                <div class="flex flex-col items-end">
+                    <div class="flex items-center gap-1.5">
+                        <span id="header-user-badge" class="hidden text-[9px] font-black px-1.5 py-0.2 rounded uppercase"></span>
+                        <span id="header-user-name" class="text-xs font-bold drop-shadow-sm">@usuario</span>
+                    </div>
+                    <span class="text-[10px] text-green-300 font-semibold flex items-center gap-1">
+                        <span class="w-2 h-2 bg-green-400 rounded-full inline-block animate-pulse"></span>
+                        Online
+                    </span>
+                </div>
+                <div class="w-9 h-9 rounded-full border-2 border-white/80 overflow-hidden shadow-sm bg-white/30 flex items-center justify-center text-white">
+                    <img id="header-avatar-img" src="" class="w-full h-full object-cover hidden"/>
+                    <span id="header-avatar-placeholder" class="material-symbols-outlined text-xl">account_circle</span>
+                </div>
+            </div>
+            
+            <button onclick="handleLogoff()" title="Sair da Conta" class="flex items-center gap-1 px-3 py-1 bg-red-500/80 hover:bg-red-600/90 text-white text-xs font-bold rounded-lg backdrop-blur-sm transition-all shadow-sm">
+                <span class="material-symbols-outlined text-sm">logout</span>
+                <span>Sair</span>
+            </button>
+        </div>
+    </header>
+
+    <div id="chat-shell" class="flex flex-1 overflow-hidden">
+        <!-- Sidebar Esquerda -->
+        <aside id="chat-sidebar" class="w-[280px] frosted-sidebar border-r border-white/40 flex flex-col">
+            <div class="p-4 flex items-center gap-3 border-b border-white/30 bg-white/20">
+                <div class="relative">
+                    <div class="w-10 h-10 rounded-xl overflow-hidden border border-white/70 shadow-sm bg-primary/20 flex items-center justify-center text-primary">
+                        <img id="sidebar-avatar-img" src="" class="w-full h-full object-cover hidden"/>
+                        <span id="sidebar-avatar-placeholder" class="material-symbols-outlined text-2xl">person</span>
+                    </div>
+                    <div class="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white"></div>
+                </div>
+                <div class="flex flex-col overflow-hidden">
+                    <span id="sidebar-user-name" class="text-sm font-bold text-on-surface truncate">@usuario</span>
+                    <span class="text-[10px] text-outline font-medium">Sua conta</span>
+                </div>
+            </div>
+
+            <div class="px-3 py-2">
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline text-sm">search</span>
+                    <input id="search-users-input" oninput="filterUserList()" class="w-full pl-8 pr-2 py-1.5 text-xs rounded-xl bg-white/60 border border-white/70 focus:outline-none backdrop-blur-sm" placeholder="Buscar contatos..." type="text"/>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-4">
+                <div id="public-rooms-section">
+                    <h3 class="px-1 text-[10px] font-bold uppercase tracking-wider text-outline/80 mb-1">Salas Públicas</h3>
+                    <div id="btn-main-room" onclick="switchToMainGroup()" class="relative flex items-center justify-between p-2 rounded-xl bg-primary text-white font-bold text-xs shadow-sm cursor-pointer transition-all hover:opacity-90">
+                        <div class="flex items-center gap-2.5 overflow-hidden">
+                            <div class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
+                                <span class="material-symbols-outlined text-base">groups</span>
+                            </div>
+                            <div class="flex flex-col overflow-hidden">
+                                <span id="sidebar-group-name" class="truncate">Sala: geral</span>
+                                <span class="text-[9px] font-normal opacity-80">Conversa Aberta</span>
+                            </div>
+                        </div>
+                        <span id="unread-main-group" class="hidden bg-red-500 text-white text-[10px] font-extrabold px-1.5 py-0.5 rounded-full shadow-md animate-bounce">0</span>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between px-1 mb-1.5">
+                        <h3 class="text-[10px] font-bold uppercase tracking-wider text-outline/80">Contatos</h3>
+                        <span id="online-count-badge" class="bg-primary/20 text-primary text-[10px] font-bold px-1.5 py-0.2 rounded-full">0</span>
+                    </div>
+                    <div id="online-users-list" class="space-y-1"></div>
+                </div>
+            </div>
+
+            <div class="p-3 border-t border-white/30 bg-white/10">
+                <button onclick="handleLogoff()" class="w-full py-2 bg-red-500/10 hover:bg-red-500/20 text-red-700 text-xs font-bold rounded-xl flex items-center justify-center gap-1 transition-colors border border-red-200">
+                    <span class="material-symbols-outlined text-sm">logout</span>
+                    <span>Encerrar Sessão</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Área Central de Mensagens -->
+        <main id="chat-main" class="flex-1 flex flex-col bg-white/40 backdrop-blur-md relative">
+            <div class="bg-white/60 px-4 py-2 flex items-center justify-between border-b border-white/40 shadow-sm">
+                <div class="flex items-center gap-2 min-w-0">
+                    <span id="chat-type-icon" class="material-symbols-outlined text-primary text-base">forum</span>
+                    <h2 id="current-chat-title-header" class="text-xs font-bold text-on-surface truncate">Histórico de Mensagens</h2>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <button type="button" onclick="openConversationSearch()" class="content-toolbar-btn" title="Pesquisar mensagens" aria-label="Pesquisar mensagens"><span class="material-symbols-outlined text-base">search</span></button>
+                    <button type="button" onclick="openMediaGallery()" class="content-toolbar-btn" title="Mídia e arquivos" aria-label="Mídia e arquivos"><span class="material-symbols-outlined text-base">perm_media</span></button>
+                    <button type="button" onclick="openFavoritesPanel()" class="content-toolbar-btn" title="Mensagens favoritas" aria-label="Mensagens favoritas"><span class="material-symbols-outlined text-base">star</span></button>
+                    <button id="pin-conversation-btn" type="button" onclick="toggleCurrentConversationPin()" class="content-toolbar-btn" title="Fixar conversa" aria-label="Fixar conversa"><span class="material-symbols-outlined text-base">keep</span></button>
+                </div>
+            </div>
+
+            <div class="flex-1 p-4 space-y-3 overflow-y-auto custom-scrollbar chat-bg-cubes" id="chat-messages"></div>
+
+            <div id="emoji-popover" class="absolute bottom-20 right-16 bg-white/95 backdrop-blur-md p-3 rounded-2xl border border-white shadow-xl hidden z-30 max-w-[calc(100vw-20px)]">
+                <div class="flex items-center justify-between gap-2 mb-2">
+                    <div class="flex items-center gap-2"><span class="material-symbols-outlined text-primary text-base">emoji_emotions</span><span class="text-xs font-black text-on-surface">Emojis</span></div>
+                    <button type="button" onclick="toggleEmojiPopover(false)" class="w-7 h-7 rounded-lg hover:bg-black/5 flex items-center justify-center"><span class="material-symbols-outlined text-base">close</span></button>
+                </div>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="material-symbols-outlined text-outline text-base">search</span>
+                    <input id="emoji-search" type="search" oninput="filterEmojiPicker(this.value)" placeholder="Buscar emoji..." class="flex-1 px-2.5 py-1.5 text-xs rounded-lg bg-white/70 border border-white/80 focus:ring-primary/20"/>
+                </div>
+                <div id="emoji-category-tabs" class="flex items-center gap-1 overflow-x-auto custom-scrollbar pb-2 mb-1"></div>
+                <div id="echo-emoji-popover" class="custom-scrollbar"></div>
+            </div>
+
+            <div class="p-4 bg-white/70 backdrop-blur-md border-t border-white/50 shadow-md">
+                <div class="flex gap-2 mb-2">
+                    <button id="nudge-button" onclick="sendNudge()" title="Chamar atenção" aria-label="Chamar atenção" class="glossy-pill w-9 h-9 flex items-center justify-center rounded-xl hover:bg-white transition-all text-on-surface-variant shadow-sm">
+                        <span class="material-symbols-outlined text-lg text-amber-600">notifications</span>
+                    </button>
+                    
+                    <label title="Anexar arquivo" aria-label="Anexar arquivo" class="glossy-pill w-9 h-9 flex items-center justify-center rounded-xl hover:bg-white transition-all text-on-surface-variant shadow-sm cursor-pointer">
+                        <span class="material-symbols-outlined text-lg">attach_file</span>
+                        <input type="file" id="file-input" class="hidden" onchange="handleFileUpload(event)"/>
+                    </label>
+
+                    <span id="typing-indicator" class="hidden text-xs text-primary font-medium items-center gap-2 bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
+                        <span class="material-symbols-outlined text-sm">edit</span>
+                        <span><span id="typing-username">Alguém</span> está digitando</span>
+                        <span class="dot-flashing ml-1 mr-1"></span>
+                    </span>
+                </div>
+                
+                <div id="echo-reply-composer" class="echo-reply-bar hidden mb-2 rounded-xl px-3 py-2 items-center justify-between gap-3">
+                    <div class="min-w-0"><div id="echo-reply-title" class="text-[10px] font-black text-primary">Respondendo</div><div id="echo-reply-text" class="text-xs text-on-surface truncate"></div></div>
+                    <button type="button" onclick="cancelReply()" class="w-8 h-8 rounded-lg hover:bg-black/5 flex items-center justify-center"><span class="material-symbols-outlined text-base">close</span></button>
+                </div>
+                <div class="flex items-end gap-2">
+                    <div class="flex-1 relative">
+                        <textarea id="message-input" rows="1" oninput="handleMessageComposerInput(event)" class="w-full px-4 py-2.5 pr-11 bg-white/60 border border-white/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm backdrop-blur-sm" placeholder="Digite uma mensagem..."></textarea>
+                        <div class="absolute right-3 top-1/2 -translate-y-1/2 text-outline/50">
+                            <span onclick="toggleEmojiPopover()" class="material-symbols-outlined cursor-pointer hover:text-primary select-none">sentiment_satisfied</span>
+                        </div>
+                    </div>
+                    <button onclick="sendMessage()" class="gel-button px-5 py-2.5 rounded-xl text-white font-bold text-xs flex items-center gap-1 transition-all shadow-md">
+                        <span class="relative z-10">Enviar</span>
+                        <span class="material-symbols-outlined text-sm relative z-10">send</span>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script>
+    // =======================================================
+    // 1. ÁUDIOS E GERENCIAMENTO DE CONFIGURAÇÕES
+    // =======================================================
+    const AudioManager = (() => {
+        const paths = {
+            message: 'sounds/message.mp3',
+            nudge: 'sounds/nudge.mp3',
+            online: 'sounds/online.mp3'
+        };
+
+        const templates = new Map();
+        const activePlayers = new Set();
+        const pendingSounds = [];
+        let hasUserInteraction = false;
+
+        function createTemplate(type) {
+            const audio = new Audio(new URL(paths[type], document.baseURI).href);
+            audio.preload = 'auto';
+            audio.playsInline = true;
+            audio.volume = 1;
+            audio.load();
+            return audio;
+        }
+
+        Object.keys(paths).forEach((type) => {
+            templates.set(type, createTemplate(type));
+        });
+
+        function markInteraction() {
+            hasUserInteraction = true;
+
+            if (pendingSounds.length > 0) {
+                const pending = pendingSounds.splice(0, pendingSounds.length);
+                for (const type of pending) {
+                    play(type, { allowQueue: false });
+                }
+            }
+        }
+
+        async function play(type, { allowQueue = true } = {}) {
+            const template = templates.get(type);
+            if (!template) return false;
+
+            /*
+             * Cada reprodução usa um clone independente. Assim, uma nova
+             * notificação nunca chama pause() em um play() ainda pendente,
+             * eliminando o AbortError observado nos navegadores Chromium.
+             */
+            const player = template.cloneNode(true);
+            player.preload = 'auto';
+            player.playsInline = true;
+            player.volume = 1;
+            activePlayers.add(player);
+
+            const cleanup = () => activePlayers.delete(player);
+            player.addEventListener('ended', cleanup, { once: true });
+            player.addEventListener('error', cleanup, { once: true });
+
+            try {
+                await player.play();
+                console.debug(`[Áudio] ${type} reproduzido.`);
+                return true;
+            } catch (error) {
+                cleanup();
+                const errorName = error?.name || 'AudioError';
+                console.warn(`[Áudio] Falha ao reproduzir ${paths[type]} (${errorName}).`, error);
+
+                if (allowQueue && errorName === 'NotAllowedError' && !hasUserInteraction) {
+                    if (pendingSounds.length < 5) pendingSounds.push(type);
+                }
+
+                return false;
+            }
+        }
+
+        function warmup() {
+            for (const template of templates.values()) {
+                if (template.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) {
+                    try { template.load(); } catch (_) {}
+                }
+            }
+        }
+
+        document.addEventListener('pointerdown', markInteraction, { passive: true });
+        document.addEventListener('keydown', markInteraction);
+        window.addEventListener('focus', warmup);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') warmup();
+        });
+
+        return { play, warmup };
+    })();
+
+    let userSettings = {
+        soundsEnabled: true, // mensagens e Nudge são sempre obrigatórios
+        onlineSoundEnabled: true,
+        themeMode: 'light',
+        accentColor: 'blue',
+        bgStyle: 'chat-bg-cubes',
+        uiScale: 'normal'
+    };
+
+    function playSound(type) {
+        if (type === 'online' && !userSettings.onlineSoundEnabled) {
+            console.debug('[Áudio] online ignorado: aviso de entrada desativado.');
+            return;
+        }
+        AudioManager.play(type);
+    }
+
+    // =======================================================
+    // 2. SUPABASE & ESTADO GLOBAL
+    // =======================================================
+    const SUPABASE_URL = "https://sgnygzsbgqskcftfgncj.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNnbnlnenNiZ3Fza2NmdGZnbmNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1MDk3NjgsImV4cCI6MjEwMTA4NTc2OH0.oBAjEGtPZCeyjjz4aeSovvM-DKZzxIeIAHIHD79B6go";
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let currentUser = "";
+    let currentUserProfile = null;
+    let currentUserCanAccessGeneral = false;
+    let mainGroup = "geral";
+    let activeChatRoom = "geral";
+    let activeDMTargetUser = null; // Objeto do perfil selecionado
+    let visibleProfilesMap = new Map(); // Perfis que a RLS permite visualizar
+    
+    let onlineUsersMap = new Map(); // Chaveada pelo UUID do perfil
+    let unreadCounts = new Map();
+    let isInitialLoad = true;
+    let typingTimeout = null;
+    let presenceChannel = null;
+    let messageSubscription = null;
+    let profileSubscription = null;
+    let sessionCommandSubscription = null;
+    let messageFallbackTimer = null;
+    let messageReconnectTimer = null;
+    let messageReconnectAttempts = 0;
+    let messagesRealtimeReady = false;
+    let presenceRealtimeReady = false;
+    let realtimeLifecycleBound = false;
+    let lastObservedMessageId = 0;
+    const renderedMessageIds = new Set();
+    const processedIncomingMessageIds = new Set();
+    let forcedLogoutInProgress = false;
+    let echoReplyTarget = null;
+    let reactionSubscription = null;
+
+    // READ RECEIPTS 2.0 — o destinatário mantém um único marcador por conversa.
+    let activeDMRemoteLastReadId = 0;
+    let activeDMRemoteReadAt = null;
+    let activeReadMarkTimer = null;
+    const ECHO_REACTIONS = ['👍','❤️','😂','😮','😢'];
+    function emojiGraphemes(value) {
+        if (typeof Intl !== 'undefined' && Intl.Segmenter) return [...new Intl.Segmenter(undefined,{granularity:'grapheme'}).segment(value)].map(x=>x.segment);
+        return Array.from(value);
+    }
+    const ECHO_EMOJI_CATEGORIES = [
+        { key:'recent', icon:'🕘', label:'Recentes', emojis:[] },
+        { key:'smileys', icon:'😀', label:'Carinhas', emojis:emojiGraphemes('😀😃😄😁😆😅😂🤣🥲🥹😊😇🙂🙃😉😌😍🥰😘😗😙😚😋😛😝😜🤪🤨🧐🤓😎🥸🤩🥳🙂‍↕️😏😒🙂‍↔️😞😔😟😕🙁☹️😣😖😫😩🥺😢😭😮‍💨😤😠😡🤬🤯😳🥵🥶😱😨😰😥😓🤗🤔🫣🤭🫢🫡🤫🫠🤥😶😶‍🌫️😐😑😬🫨🙄😯😦😧😮😲🥱😴🤤😪😵😵‍💫🤐🥴🤢🤮🤧😷🤒🤕🤑🤠😈👿👹👺🤡💩👻💀☠️👽👾🤖🎃😺😸😹😻😼😽🙀😿😾') },
+        { key:'gestures', icon:'👍', label:'Gestos', emojis:emojiGraphemes('👋🤚🖐️✋🖖🫱🫲🫳🫴👌🤌🤏✌️🤞🫰🤟🤘🤙👈👉👆👇☝️🫵👍👎✊👊🤛🤜👏🙌🫶👐🤲🤝🙏✍️💅🤳💪🦾🦿🦵🦶👂🦻👃🧠🫀🫁🦷🦴👀👁️👅👄🫦💋🩸') },
+        { key:'people', icon:'🧑', label:'Pessoas', emojis:emojiGraphemes('👶🧒👦👧🧑👱👨🧔👩🧓👴👵🙍🙎🙅🙆💁🙋🧏🙇🤦🤷👮🕵️💂🥷👷🫅🤴👸👳👲🧕🤵👰🤰🫃🫄🤱👼🎅🤶🦸🦹🧙🧚🧛🧜🧝🧞🧟💆💇🚶🧍🧎🏃💃🕺🕴️👯🧖🧗🤺🏇⛷️🏂🏌️🏄🚣🏊⛹️🏋️🚴🚵🤸🤼🤽🤾🤹🧘🛀🛌👭👫👬💏💑👪🗣️👤👥🫂') },
+        { key:'animals', icon:'🐶', label:'Animais', emojis:emojiGraphemes('🐵🐒🦍🦧🐶🐕🦮🐕‍🦺🐩🐺🦊🦝🐱🐈🐈‍⬛🦁🐯🐅🐆🐴🫎🫏🐎🦄🦓🦌🦬🐮🐂🐃🐄🐷🐖🐗🐽🐏🐑🐐🐪🐫🦙🦒🐘🦣🦏🦛🐭🐁🐀🐹🐰🐇🐿️🦫🦔🦇🐻🐻‍❄️🐨🐼🦥🦦🦨🦘🦡🐾🦃🐔🐓🐣🐤🐥🐦🐧🕊️🦅🦆🦢🦉🦤🪶🦩🦚🦜🪽🐦‍⬛🐦‍🔥🐸🐊🐢🦎🐍🐲🐉🦕🦖🐳🐋🐬🦭🐟🐠🐡🦈🐙🐚🪸🪼🐌🦋🐛🐜🐝🪲🐞🦗🪳🕷️🦂🦟🪰🪱🦠') },
+        { key:'food', icon:'🍕', label:'Comida', emojis:emojiGraphemes('🍏🍎🍐🍊🍋🍋‍🟩🍌🍉🍇🍓🫐🍈🍒🍑🥭🍍🥥🥝🍅🍆🥑🫛🥦🥬🥒🌶️🫑🌽🥕🫒🧄🧅🥔🍠🫚🥐🥯🍞🥖🥨🧀🥚🍳🧈🥞🧇🥓🥩🍗🍖🌭🍔🍟🍕🫓🥪🥙🧆🌮🌯🫔🥗🥘🫕🥫🍝🍜🍲🍛🍣🍱🥟🦪🍤🍙🍚🍘🍥🥠🥮🍢🍡🍧🍨🍦🥧🧁🍰🎂🍮🍭🍬🍫🍿🍩🍪🌰🥜🫘🍯🥛🍼🫖☕🍵🧃🥤🧋🍶🍺🍻🥂🍷🥃🍸🍹🍾🧊🥄🍴🍽️🥣🥡🥢🧂') },
+        { key:'activities', icon:'⚽', label:'Atividades', emojis:emojiGraphemes('⚽🏀🏈⚾🥎🎾🏐🏉🥏🎱🪀🏓🏸🏒🏑🥍🏏🪃🥅⛳🪁🏹🎣🤿🥊🥋🎽🛹🛼🛷⛸️🥌🎿⛷️🏂🪂🏋️🤼🤸⛹️🤺🤾🏌️🏇🧘🏄🏊🤽🚣🧗🚵🚴🏆🥇🥈🥉🏅🎖️🏵️🎗️🎫🎟️🎪🤹🎭🩰🎨🎬🎤🎧🎼🎹🥁🪘🎷🎺🪗🎸🪕🎻🪈🎲♟️🎯🎳🎮🎰🧩') },
+        { key:'travel', icon:'🚗', label:'Viagem', emojis:emojiGraphemes('🚗🚕🚙🚌🚎🏎️🚓🚑🚒🚐🛻🚚🚛🚜🏍️🛵🚲🛴🛹🛼🚨🚔🚍🚘🚖🛞🚡🚠🚟🚃🚋🚞🚝🚄🚅🚈🚂🚆🚇🚊🚉✈️🛫🛬🛩️💺🛰️🚀🛸🚁🛶⛵🚤🛥️🛳️⛴️🚢⚓🛟⛽🚧🚦🚥🗺️🗿🗽🗼🏰🏯🏟️🎡🎢🎠⛲⛱️🏖️🏝️🏜️🌋⛰️🏔️🗻🏕️⛺🛖🏠🏡🏢🏥🏦🏨🏪🏫🏩💒🏛️⛪🕌🕍🛕🕋⛩️🛤️🛣️🌅🌄🌠🎇🎆🌇🌆🏙️🌃🌌🌉🌁') },
+        { key:'objects', icon:'💡', label:'Objetos', emojis:emojiGraphemes('⌚📱📲💻⌨️🖥️🖨️🖱️🖲️🕹️🗜️💽💾💿📀📼📷📸📹🎥📽️🎞️📞☎️📟📠📺📻🎙️🎚️🎛️🧭⏱️⏲️⏰🕰️⌛⏳📡🔋🪫🔌💡🔦🕯️🪔🧯🛢️💸💵💴💶💷🪙💰💳🪪💎⚖️🪜🧰🪛🔧🔨⚒️🛠️⛏️🪚🔩⚙️🪤🧱⛓️⛓️‍💥🧲🔫💣🧨🪓🔪🗡️⚔️🛡️🚬⚰️🪦⚱️🏺🔮📿🧿🪬💈⚗️🔭🔬🕳️🩹🩺🩻🩼💊💉🩸🧬🦠🧫🧪🌡️🧹🪠🧺🧻🚽🚿🛁🧼🪥🪒🧽🪣🧴🛎️🔑🗝️🚪🪑🛋️🛏️🛌🧸🪆🖼️🪞🪟🛍️🛒🎁🎈🎏🎀🪄🪅🎊🎉🪩🧧✉️📩📨📧💌📥📤📦🏷️🪧📪📫📬📭📮📯📜📃📄📑🧾📊📈📉🗒️🗓️📆📅🗑️📇🗃️🗳️🗄️📋📁📂🗂️🗞️📰📓📔📒📕📗📘📙📚📖🔖🧷🔗📎🖇️📐📏🧮📌📍✂️🖊️🖋️✒️🖌️🖍️📝✏️🔍🔎🔏🔐🔒🔓') },
+        { key:'symbols', icon:'❤️', label:'Símbolos', emojis:emojiGraphemes('❤️🩷🧡💛💚💙🩵💜🤎🖤🩶🤍💔❤️‍🔥❤️‍🩹❣️💕💞💓💗💖💘💝💟☮️✝️☪️🕉️☸️✡️🔯🕎☯️☦️🛐⛎♈♉♊♋♌♍♎♏♐♑♒♓🆔⚛️🉑☢️☣️📴📳🈶🈚🈸🈺🈷️✴️🆚💮🉐㊙️㊗️🈴🈵🈹🈲🅰️🅱️🆎🆑🅾️🆘❌⭕🛑⛔📛🚫💯💢♨️🚷🚯🚳🚱🔞📵🚭❗❕❓❔‼️⁉️🔅🔆〽️⚠️🚸🔱⚜️🔰♻️✅🈯💹❇️✳️❎🌐💠Ⓜ️🌀💤🏧🚾♿🅿️🛗🈳🈂️🛂🛃🛄🛅🚹🚺🚼⚧️🚻🚮🎦📶🈁🔣ℹ️🔤🔡🔠🆖🆗🆙🆒🆕🆓0️⃣1️⃣2️⃣3️⃣4️⃣5️⃣6️⃣7️⃣8️⃣9️⃣🔟🔢#️⃣*️⃣⏏️▶️⏸️⏯️⏹️⏺️⏭️⏮️⏩⏪⏫⏬◀️🔼🔽➡️⬅️⬆️⬇️↗️↘️↙️↖️↕️↔️↪️↩️⤴️⤵️🔀🔁🔂🔄🔃🎵🎶➕➖➗✖️🟰♾️💲™️©️®️〰️➰➿✔️☑️🔘🔴🟠🟡🟢🔵🟣🟤⚫⚪🟥🟧🟨🟩🟦🟪🟫⬛⬜◼️◻️◾◽▪️▫️🔶🔷🔸🔹🔺🔻💠🔳🔲') },
+        { key:'flags', icon:'🏳️', label:'Bandeiras', emojis:['🏳️','🏴','🏁','🚩','🏳️‍🌈','🏳️‍⚧️','🏴‍☠️','🇧🇷','🇦🇷','🇺🇾','🇵🇾','🇨🇱','🇵🇪','🇨🇴','🇻🇪','🇧🇴','🇪🇨','🇺🇸','🇨🇦','🇲🇽','🇵🇹','🇪🇸','🇫🇷','🇮🇹','🇩🇪','🇬🇧','🇮🇪','🇳🇱','🇧🇪','🇨🇭','🇦🇹','🇬🇷','🇵🇱','🇺🇦','🇷🇺','🇨🇳','🇯🇵','🇰🇷','🇮🇳','🇦🇺','🇳🇿','🇿🇦','🇪🇬','🇮🇱','🇸🇦','🇦🇪','🇹🇷'] }
+    ];
+    let activeEmojiCategory = 'recent';
+    let recentEmojis = JSON.parse(localStorage.getItem('getchat_recent_emojis') || '[]');
+
+    const NUDGE_COOLDOWN_MS = 30000;
+    const MESSAGE_PAGE_SIZE = 40;
+    let nudgeCooldownUntil = 0;
+    let oldestLoadedMessageId = null;
+    let hasMoreMessages = true;
+    let loadingOlderMessages = false;
+
+    // =======================================================
+    // 3. SESSÃO & AUTENTICAÇÃO COM SUPABASE AUTH
+    // =======================================================
+    const AUTH_EMAIL_DOMAIN = 'getchat.app';
+
+    function normalizeUsername(value) {
+        return value
+            .trim()
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9._-]/g, '');
+    }
+
+    function usernameToInternalEmail(username) {
+        return `${normalizeUsername(username)}@${AUTH_EMAIL_DOMAIN}`;
+    }
+
+    function showLoginScreen() {
+        document.getElementById('login-modal').classList.remove('hidden');
+        const appWindow = document.getElementById('app-window');
+        appWindow.classList.add('hidden');
+        appWindow.classList.remove('mobile-conversation-open');
+    }
+
+    function hideLoginScreen() {
+        document.getElementById('login-modal').classList.add('hidden');
+        const appWindow = document.getElementById('app-window');
+        appWindow.classList.remove('hidden');
+        if (isAuroraMobileLayout()) appWindow.classList.remove('mobile-conversation-open');
+    }
+
+    function setLoginLoading(isLoading) {
+        const button = document.getElementById('login-submit-btn');
+        const text = document.getElementById('login-submit-text');
+        button.disabled = isLoading;
+        button.classList.toggle('opacity-60', isLoading);
+        button.classList.toggle('cursor-not-allowed', isLoading);
+        text.textContent = isLoading ? 'Entrando...' : 'Entrar';
+    }
+
+    function showAuthError(message) {
+        const errorEl = document.getElementById('authError');
+        errorEl.textContent = message;
+        errorEl.classList.remove('hidden');
+    }
+
+    function clearAuthError() {
+        const errorEl = document.getElementById('authError');
+        errorEl.textContent = '';
+        errorEl.classList.add('hidden');
+    }
+
+    function togglePasswordVisibility() {
+        const input = document.getElementById('login-password-input');
+        const icon = document.getElementById('password-visibility-icon');
+        const showPassword = input.type === 'password';
+        input.type = showPassword ? 'text' : 'password';
+        icon.textContent = showPassword ? 'visibility_off' : 'visibility';
+    }
+
+    async function loadVisibleProfiles() {
+        const { data, error } = await _supabase
+            .from('profiles')
+            .select('id, username, nome_exibicao, avatar_url, is_master, is_banned')
+            .eq('is_banned', false)
+            .order('nome_exibicao', { ascending: true });
+
+        if (error) {
+            console.error('Erro ao carregar contatos visíveis:', error);
+            throw new Error('Não foi possível carregar os contatos autorizados.');
+        }
+
+        visibleProfilesMap.clear();
+        (data || []).forEach(profile => visibleProfilesMap.set(profile.id, profile));
+
+        if (currentUserProfile?.id) {
+            visibleProfilesMap.set(currentUserProfile.id, currentUserProfile);
+        }
+    }
+
+    function getProfileById(userId) {
+        if (!userId) return null;
+        if (currentUserProfile?.id === userId) return currentUserProfile;
+        return visibleProfilesMap.get(userId) || null;
+    }
+
+    function getMessageSenderName(msg) {
+        const profile = getProfileById(msg.remetente_id);
+        return profile?.nome_exibicao || profile?.username || 'Usuário';
+    }
+
+    function isMessageInActiveChat(msg) {
+        if (!msg) return false;
+
+        if (activeDMTargetUser) {
+            if (msg.grupo !== null) return false;
+            const participants = new Set([msg.remetente_id, msg.destinatario_id]);
+            return participants.has(currentUserProfile.id)
+                && participants.has(activeDMTargetUser.id);
+        }
+
+        return msg.grupo === mainGroup;
+    }
+
+    async function requireAppAccess(appKey) {
+        const { data, error } = await _supabase
+            .from('my_app_access')
+            .select('can_access')
+            .eq('app_key', appKey)
+            .eq('can_access', true)
+            .maybeSingle();
+
+        if (error) {
+            console.error('[Permissões] Falha ao verificar aplicação:', error);
+            throw new Error('Não foi possível verificar sua permissão de acesso.');
+        }
+
+        if (!data?.can_access) {
+            alert('Sua conta não possui permissão para acessar o CliniChat.');
+            window.location.href = './index.html';
+            throw new Error('Acesso ao CliniChat não autorizado.');
+        }
+    }
+
+    async function loadAuthenticatedProfile(authUser) {
+        const { data: sessionIsActive, error: sessionCheckError } = await _supabase.rpc('current_session_is_active');
+        if (!sessionCheckError && sessionIsActive === false) {
+            await _supabase.auth.signOut({ scope: 'local' }).catch(() => {});
+            throw new Error('Sua sessão foi encerrada pelo administrador.');
+        }
+
+        const { data: profile, error } = await _supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', authUser.id)
+            .single();
+
+        if (error || !profile) {
+            throw new Error('A conta foi autenticada, mas o perfil do CliniChat não foi encontrado.');
+        }
+
+        if (profile.is_banned) {
+            await _supabase.auth.signOut();
+            throw new Error('Sua conta foi bloqueada.');
+        }
+
+        await requireAppAccess('clinichat');
+
+        currentUserProfile = profile;
+        currentUser = profile.nome_exibicao;
+
+        if (profile.is_master === true) {
+            currentUserCanAccessGeneral = true;
+        } else {
+            const { data: groupPermission, error: groupPermissionError } = await _supabase
+                .from('group_permissions')
+                .select('can_access_general')
+                .eq('user_id', profile.id)
+                .maybeSingle();
+
+            if (groupPermissionError) {
+                console.error('Erro ao carregar permissão da Sala Geral:', groupPermissionError);
+                throw new Error('Não foi possível carregar as permissões da conta.');
+            }
+
+            currentUserCanAccessGeneral = groupPermission?.can_access_general === true;
+        }
+
+        await loadVisibleProfiles();
+        mainGroup = 'geral';
+        activeChatRoom = currentUserCanAccessGeneral ? mainGroup : null;
+    }
+
+    async function checkSession() {
+        clearAuthError();
+
+        const { data: { session }, error } = await _supabase.auth.getSession();
+
+        if (error || !session?.user) {
+            showLoginScreen();
+            return;
+        }
+
+        try {
+            await loadAuthenticatedProfile(session.user);
+            hideLoginScreen();
+            startChat();
+        } catch (err) {
+            showLoginScreen();
+            showAuthError(err.message || 'Não foi possível recuperar a sessão.');
+        }
+    }
+
+    async function handleLoginSubmit(event) {
+        event.preventDefault();
+        clearAuthError();
+        setLoginLoading(true);
+
+        const username = normalizeUsername(
+            document.getElementById('login-username-input').value
+        );
+        const password = document.getElementById('login-password-input').value;
+
+        if (!username || !password) {
+            showAuthError('Preencha o usuário e a senha.');
+            setLoginLoading(false);
+            return;
+        }
+
+        try {
+            const { data, error } = await _supabase.auth.signInWithPassword({
+                email: usernameToInternalEmail(username),
+                password
+            });
+
+            if (error) {
+                throw new Error('Usuário ou senha incorretos.');
+            }
+
+            if (!data.user) {
+                throw new Error('Não foi possível iniciar a sessão.');
+            }
+
+            await loadAuthenticatedProfile(data.user);
+            document.getElementById('loginForm').reset();
+            hideLoginScreen();
+            startChat();
+        } catch (err) {
+            showAuthError(err.message || 'Erro ao entrar no CliniChat.');
+        } finally {
+            setLoginLoading(false);
+        }
+    }
+
+    async function handleLogoff() {
+        if (presenceChannel) {
+            await _supabase.removeChannel(presenceChannel);
+            presenceChannel = null;
+        }
+
+        if (messageSubscription) {
+            await _supabase.removeChannel(messageSubscription);
+            messageSubscription = null;
+        }
+
+        if (profileSubscription) {
+            await _supabase.removeChannel(profileSubscription);
+            profileSubscription = null;
+        }
+
+        if (sessionCommandSubscription) {
+            await _supabase.removeChannel(sessionCommandSubscription);
+            sessionCommandSubscription = null;
+        }
+
+        if (messageFallbackTimer) {
+            clearInterval(messageFallbackTimer);
+            messageFallbackTimer = null;
+        }
+
+        if (messageReconnectTimer) {
+            clearTimeout(messageReconnectTimer);
+            messageReconnectTimer = null;
+        }
+
+        messagesRealtimeReady = false;
+        presenceRealtimeReady = false;
+        messageReconnectAttempts = 0;
+
+        await _supabase.auth.signOut();
+        currentUser = '';
+        currentUserProfile = null;
+        onlineUsersMap.clear();
+        location.reload();
+    }
+
+    async function loadUnreadPrivateCounts() {
+        if (!currentUserProfile?.id) return;
+
+        // Limpa apenas os contadores privados; a Sala Geral continua sendo
+        // controlada pelo fluxo de Realtime já existente.
+        Array.from(unreadCounts.keys())
+            .filter(key => String(key).startsWith('dm_'))
+            .forEach(key => unreadCounts.delete(key));
+
+        const { data, error } = await _supabase.rpc('get_unread_private_counts');
+
+        if (error) {
+            console.debug('[Não lidas 2.0] Não foi possível restaurar contadores:', error.message);
+            updateUnreadBadgesUI();
+            return;
+        }
+
+        (data || []).forEach(row => {
+            if (!row.other_user_id || !visibleProfilesMap.has(row.other_user_id)) return;
+            const count = Number(row.unread_count || 0);
+            if (count <= 0) return;
+            const room = getDMRoomName(currentUserProfile.id, row.other_user_id);
+            unreadCounts.set(room, count);
+        });
+
+        updateUnreadBadgesUI();
+    }
+
+    function startChat() {
+        document.getElementById("app-window").classList.remove("hidden");
+
+        document.getElementById("header-user-name").innerText = `@${currentUser}`;
+        document.getElementById("sidebar-user-name").innerText = `@${currentUser}`;
+        document.getElementById("sidebar-group-name").innerText = `Sala: ${mainGroup}`;
+        applyGeneralRoomVisibility();
+
+        updateUserRoleBadge();
+        updateUserAvatarUI(currentUserProfile.avatar_url);
+        loadUserSettings();
+        updateChatHeaderUI();
+        renderOnlineUsersList();
+        loadUnreadPrivateCounts();
+        if (currentUserCanAccessGeneral) {
+            fetchMessages();
+        } else {
+            showNoConversationSelected();
+        }
+        setupRealtimeEngine();
+        setupMessageRealtime();
+        listenToOwnProfileChanges();
+        setupForcedLogoutListener();
+    }
+
+
+    function applyGeneralRoomVisibility() {
+        const section = document.getElementById('public-rooms-section');
+        if (section) section.classList.toggle('hidden', !currentUserCanAccessGeneral);
+        updateUnreadBadgesUI();
+    }
+
+    function showNoConversationSelected() {
+        activeDMTargetUser = null;
+        activeChatRoom = null;
+        const chatContainer = document.getElementById('chat-messages');
+        chatContainer.innerHTML = `
+            <div class="m-auto text-center max-w-sm px-6">
+                <div class="w-14 h-14 mx-auto mb-3 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
+                    <span class="material-symbols-outlined text-3xl">chat</span>
+                </div>
+                <h3 class="text-sm font-bold text-on-surface">Selecione um contato</h3>
+                <p class="text-xs text-outline mt-1">Escolha um contato para iniciar uma conversa.</p>
+            </div>`;
+        updateChatHeaderUI();
+        setComposerEnabled(false);
+    }
+
+    function setComposerEnabled(enabled) {
+        const input = document.getElementById('message-input');
+        const fileInput = document.getElementById('file-input');
+        input.disabled = !enabled;
+        fileInput.disabled = !enabled;
+        input.placeholder = enabled ? 'Digite uma mensagem...' : 'Selecione um contato para conversar';
+        document.querySelectorAll('[onclick="sendMessage()"], [onclick="sendNudge()"], [onclick="toggleEmojiPopover()"]')
+            .forEach(button => {
+                button.disabled = !enabled;
+                button.classList.toggle('opacity-50', !enabled);
+                button.classList.toggle('cursor-not-allowed', !enabled);
+            });
+    }
+
+    function updateUserRoleBadge() {
+        const badge = document.getElementById("header-user-badge");
+        if (currentUserProfile.is_master === true) {
+            badge.innerText = "Master";
+            badge.className = "text-[9px] font-black px-1.5 py-0.5 rounded uppercase bg-amber-400 text-amber-950 shadow-sm";
+            badge.classList.remove("hidden");
+        } else {
+            badge.classList.add("hidden");
+        }
+    }
+
+    function listenToOwnProfileChanges() {
+        if (profileSubscription) _supabase.removeChannel(profileSubscription);
+
+        profileSubscription = _supabase
+            .channel(`profile-updates-${currentUserProfile.id}`)
+            .on('postgres_changes', {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'profiles',
+                filter: `id=eq.${currentUserProfile.id}`
+            }, (payload) => {
+                const updated = payload.new;
+                if (updated.is_banned) {
+                    alert("Sua conta foi bloqueada.");
+                    handleLogoff();
+                    return;
+                }
+                currentUserProfile = updated;
+                updateUserRoleBadge();
+            })
+            .subscribe();
+    }
+
+    async function setupForcedLogoutListener() {
+        if (!currentUserProfile?.id) return;
+        if (sessionCommandSubscription) await _supabase.removeChannel(sessionCommandSubscription);
+
+        sessionCommandSubscription = _supabase
+            .channel(`session-commands-${currentUserProfile.id}`)
+            .on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'session_commands',
+                filter: `target_user_id=eq.${currentUserProfile.id}`
+            }, payload => {
+                if (payload.new?.action === 'logout') performForcedLogout();
+            })
+            .subscribe();
+    }
+
+    async function performForcedLogout() {
+        if (forcedLogoutInProgress) return;
+        forcedLogoutInProgress = true;
+        try {
+            await _supabase.auth.signOut({ scope: 'local' }).catch(() => {});
+        } finally {
+            alert('Sua sessão foi encerrada pelo administrador.');
+            location.reload();
+        }
+    }
+
+    // =======================================================
+    // 4. UPLOAD DE FOTO DE PERFIL LOCAL
+    // =======================================================
+    async function uploadAvatarFile(event) {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        const maxSizeBytes = 5 * 1024 * 1024;
+
+        if (!allowedTypes.includes(file.type)) {
+            alert('Formato inválido. Use JPG, PNG ou WEBP.');
+            event.target.value = '';
+            return;
+        }
+
+        if (file.size > maxSizeBytes) {
+            alert('A foto deve ter no máximo 5 MB.');
+            event.target.value = '';
+            return;
+        }
+
+        const extensionByMime = {
+            'image/jpeg': 'jpg',
+            'image/png': 'png',
+            'image/webp': 'webp'
+        };
+
+        const fileExt = extensionByMime[file.type];
+        const storagePath = `${currentUserProfile.id}/avatar_${Date.now()}.${fileExt}`;
+
+        try {
+            const { error: uploadError } = await _supabase
+                .storage
+                .from('avatars')
+                .upload(storagePath, file, {
+                    upsert: false,
+                    cacheControl: '3600',
+                    contentType: file.type
+                });
+
+            if (uploadError) throw uploadError;
+
+            const { data: publicUrlData } = _supabase
+                .storage
+                .from('avatars')
+                .getPublicUrl(storagePath);
+
+            const publicUrl = publicUrlData.publicUrl;
+
+            const { error: updateError } = await _supabase.rpc('update_my_profile', {
+                p_nome_exibicao: currentUserProfile.nome_exibicao,
+                p_data_nascimento: currentUserProfile.data_nascimento,
+                p_avatar_url: publicUrl
+            });
+
+            if (updateError) {
+                await _supabase.storage.from('avatars').remove([storagePath]);
+                throw updateError;
+            }
+
+            currentUserProfile.avatar_url = publicUrl;
+            updateUserAvatarUI(publicUrl);
+            alert('Foto de perfil atualizada com sucesso!');
+        } catch (err) {
+            console.error('[Avatar] Falha no upload:', err);
+            alert('Erro ao enviar foto: ' + err.message);
+        } finally {
+            event.target.value = '';
+        }
+    }
+
+    function getUserInitials(profile = currentUserProfile) {
+        const raw = (profile?.nome_exibicao || profile?.nome_completo || profile?.username || 'US').trim();
+        const parts = raw.split(/\s+/).filter(Boolean);
+        if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        return raw.slice(0, 2).toUpperCase();
+    }
+
+    function updateUserAvatarUI(url) {
+        const pairs = [
+            ['header-avatar-img','header-avatar-placeholder'],
+            ['sidebar-avatar-img','sidebar-avatar-placeholder'],
+            ['settings-avatar-preview','settings-avatar-placeholder']
+        ];
+        const initials = getUserInitials();
+        pairs.forEach(([imgId, placeholderId]) => {
+            const img = document.getElementById(imgId);
+            const placeholder = document.getElementById(placeholderId);
+            if (!img || !placeholder) return;
+            if (url) {
+                img.src = url;
+                img.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+            } else {
+                img.removeAttribute('src');
+                img.classList.add('hidden');
+                placeholder.textContent = initials;
+                placeholder.classList.remove('material-symbols-outlined');
+                placeholder.classList.add('avatar-initials');
+                placeholder.classList.remove('hidden');
+            }
+        });
+        const removeBtn = document.getElementById('remove-avatar-btn');
+        if (removeBtn) {
+            removeBtn.disabled = !url;
+            removeBtn.classList.toggle('opacity-40', !url);
+            removeBtn.classList.toggle('cursor-not-allowed', !url);
+        }
+    }
+
+    async function removeAvatar() {
+        if (!currentUserProfile?.avatar_url) return;
+        if (!confirm('Remover sua foto de perfil e voltar para as iniciais?')) return;
+        const oldUrl = currentUserProfile.avatar_url;
+        try {
+            const { error } = await _supabase.rpc('update_my_profile', {
+                p_nome_exibicao: currentUserProfile.nome_exibicao,
+                p_data_nascimento: currentUserProfile.data_nascimento,
+                p_avatar_url: null
+            });
+            if (error) throw error;
+            currentUserProfile.avatar_url = null;
+            updateUserAvatarUI(null);
+            try {
+                const marker = '/storage/v1/object/public/avatars/';
+                if (oldUrl.includes(marker)) {
+                    const objectPath = decodeURIComponent(oldUrl.split(marker)[1].split('?')[0]);
+                    await _supabase.storage.from('avatars').remove([objectPath]);
+                }
+            } catch (cleanupError) {
+                console.warn('[Avatar] Foto removida do perfil, mas o arquivo antigo não pôde ser excluído.', cleanupError);
+            }
+        } catch (err) {
+            console.error('[Avatar] Falha ao remover:', err);
+            alert('Erro ao remover foto: ' + (err?.message || 'erro desconhecido'));
+        }
+    }
+
+    const SETTINGS_STORAGE_PREFIX = 'getchat_preferences_';
+    const ACCENT_COLORS = {
+        blue: ['#1976d2','#0d47a1'], green: ['#15803d','#14532d'], purple: ['#7c3aed','#4c1d95'],
+        orange: ['#ea580c','#9a3412'], red: ['#dc2626','#991b1b'], graphite: ['#475569','#1e293b']
+    };
+    const CHAT_BG_CLASSES = ['chat-bg-cubes','chat-bg-dots','chat-bg-grid','chat-bg-none','chat-bg-aurora','chat-bg-lines','chat-bg-paper','chat-bg-solid-blue','chat-bg-solid-gray','chat-bg-solid-green','chat-bg-solid-lilac'];
+
+    function settingsStorageKey() { return SETTINGS_STORAGE_PREFIX + (currentUserProfile?.id || 'guest'); }
+    function saveUserSettings() { try { localStorage.setItem(settingsStorageKey(), JSON.stringify(userSettings)); } catch (_) {} }
+    function loadUserSettings() {
+        try {
+            const raw = localStorage.getItem(settingsStorageKey());
+            if (raw) userSettings = { ...userSettings, ...JSON.parse(raw), soundsEnabled: true };
+        } catch (_) {}
+        applyAllUserSettings();
+    }
+    function applyAllUserSettings() {
+        setThemeMode(userSettings.themeMode || 'light', false);
+        setAccentColor(userSettings.accentColor || 'blue', false);
+        changeChatBackground(userSettings.bgStyle || 'chat-bg-cubes', false);
+        changeUIScale(userSettings.uiScale || 'normal', false);
+        const onlineToggle = document.getElementById('toggle-online-sound');
+        if (onlineToggle) onlineToggle.checked = userSettings.onlineSoundEnabled !== false;
+        syncSettingsControls();
+    }
+    function syncSettingsControls() {
+        document.querySelectorAll('[data-theme]').forEach(el => el.classList.toggle('active', el.dataset.theme === userSettings.themeMode));
+        document.querySelectorAll('[data-accent]').forEach(el => el.classList.toggle('active', el.dataset.accent === userSettings.accentColor));
+        document.querySelectorAll('[data-scale]').forEach(el => el.classList.toggle('active', el.dataset.scale === userSettings.uiScale));
+        const bg = document.getElementById('chat-bg-select'); if (bg) bg.value = userSettings.bgStyle;
+    }
+    function applyResolvedTheme() {
+        const dark = userSettings.themeMode === 'dark' || (userSettings.themeMode === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.classList.toggle('dark', dark);
+        document.body.classList.toggle('dark', dark);
+    }
+    function setThemeMode(mode, persist = true) {
+        if (!['light','dark','system'].includes(mode)) mode = 'light';
+        userSettings.themeMode = mode;
+        applyResolvedTheme();
+        if (persist) saveUserSettings();
+        syncSettingsControls();
+    }
+    function toggleDarkMode(checked) { setThemeMode(checked ? 'dark' : 'light'); }
+    function setAccentColor(name, persist = true) {
+        if (!ACCENT_COLORS[name]) name = 'blue';
+        userSettings.accentColor = name;
+        const [primary, dark] = ACCENT_COLORS[name];
+        document.documentElement.style.setProperty('--gc-primary', primary);
+        document.documentElement.style.setProperty('--gc-primary-dark', dark);
+        document.documentElement.style.setProperty('--gc-primary-soft', primary + '24');
+        if (persist) saveUserSettings();
+        syncSettingsControls();
+    }
+    function changeChatBackground(value, persist = true) {
+        if (!CHAT_BG_CLASSES.includes(value)) value = 'chat-bg-cubes';
+        userSettings.bgStyle = value;
+        const chat = document.getElementById('chat-messages');
+        if (chat) { chat.classList.remove(...CHAT_BG_CLASSES); chat.classList.add(value); }
+        if (persist) saveUserSettings();
+        syncSettingsControls();
+    }
+    function changeUIScale(value, persist = true) {
+        if (!['small','normal','large'].includes(value)) value = 'normal';
+        userSettings.uiScale = value;
+        document.documentElement.classList.remove('gc-scale-small','gc-scale-normal','gc-scale-large');
+        document.documentElement.classList.add('gc-scale-' + value);
+        if (persist) saveUserSettings();
+        syncSettingsControls();
+    }
+    function toggleOnlineSound(enabled) { userSettings.onlineSoundEnabled = !!enabled; saveUserSettings(); }
+    function toggleSoundMute() { userSettings.soundsEnabled = true; }
+
+    const systemThemeMedia = matchMedia('(prefers-color-scheme: dark)');
+    systemThemeMedia.addEventListener?.('change', () => { if (userSettings.themeMode === 'system') applyResolvedTheme(); });
+    // =======================================================
+    // 5. REALTIME ENGINE & PRESENÇA
+    // =======================================================
+    async function setupRealtimeEngine() {
+        presenceRealtimeReady = false;
+
+        if (presenceChannel) {
+            await _supabase.removeChannel(presenceChannel);
+            presenceChannel = null;
+        }
+
+        presenceChannel = _supabase.channel(`global-presence-${mainGroup}`, {
+            config: { presence: { key: currentUserProfile.id } }
+        });
+
+        presenceChannel
+            .on('presence', { event: 'sync' }, () => {
+                const state = presenceChannel.presenceState();
+                const previousCount = onlineUsersMap.size;
+                onlineUsersMap.clear();
+
+                Object.values(state).forEach(entries => {
+                    if (!entries || entries.length === 0) return;
+                    const userObj = entries[0];
+                    const userId = userObj.userId;
+
+                    if (
+                        userId
+                        && userId !== currentUserProfile.id
+                        && visibleProfilesMap.has(userId)
+                    ) {
+                        onlineUsersMap.set(userId, userObj);
+                    }
+                });
+
+                if (onlineUsersMap.size > previousCount && !isInitialLoad) {
+                    playSound('online');
+                }
+
+                renderOnlineUsersList();
+                refreshMasterDashboardIfOpen();
+            })
+            .on('broadcast', { event: 'typing' }, payload => {
+                const typingUserId = payload.payload.userId;
+                const targetProfile = getProfileById(typingUserId);
+
+                if (
+                    typingUserId !== currentUserProfile.id
+                    && payload.payload.room === getActiveRoomKey()
+                    && (payload.payload.room !== mainGroup || currentUserCanAccessGeneral)
+                    && targetProfile
+                ) {
+                    showTypingIndicator(targetProfile.nome_exibicao);
+                }
+            })
+            .subscribe(async status => {
+                presenceRealtimeReady = status === 'SUBSCRIBED';
+                console.info(`[Realtime presença] ${status}`);
+
+                if (status === 'SUBSCRIBED' && presenceChannel) {
+                    try {
+                        await presenceChannel.track({
+                            userId: currentUserProfile.id,
+                            username: currentUserProfile.username,
+                            displayName: currentUserProfile.nome_exibicao,
+                            avatarUrl: currentUserProfile.avatar_url,
+                            onlineAt: new Date().toISOString()
+                        });
+                    } catch (error) {
+                        console.warn('[Realtime presença] Falha ao registrar presença:', error);
+                    }
+                }
+            });
+    }
+
+    function processIncomingMessage(newMsg, source = 'realtime') {
+        if (!newMsg?.id) return;
+        lastObservedMessageId = Math.max(lastObservedMessageId, Number(newMsg.id) || 0);
+
+        if (processedIncomingMessageIds.has(newMsg.id)) return;
+        processedIncomingMessageIds.add(newMsg.id);
+
+        const isFromMe = newMsg.remetente_id === currentUserProfile.id;
+        const isNudge = newMsg.texto === '__NUDGE__';
+
+        /*
+         * Quando a conversa está aberta, renderMessage() cuida tanto do som
+         * correto quanto do efeito visual do chamar atenção.
+         */
+        if (isMessageInActiveChat(newMsg)) {
+            renderMessage(newMsg, source !== 'history');
+            if (!isFromMe && newMsg.grupo === null && activeDMTargetUser?.id === newMsg.remetente_id) {
+                scheduleActivePrivateConversationRead(80);
+            }
+            return;
+        }
+
+        if (isFromMe) return;
+
+        if (newMsg.grupo === mainGroup) {
+            if (!currentUserCanAccessGeneral) return;
+            incrementUnread(mainGroup);
+        } else if (newMsg.grupo === null) {
+            const otherUserId = newMsg.remetente_id;
+            if (visibleProfilesMap.has(otherUserId)) {
+                incrementUnread(getDMRoomName(currentUserProfile.id, otherUserId));
+            }
+        }
+
+        /*
+         * Antes todo evento fora da conversa ativa tocava message.mp3,
+         * inclusive o Nudge. Agora cada evento mantém sua identidade sonora.
+         */
+        playSound(isNudge ? 'nudge' : 'message');
+    }
+
+    async function syncMissedMessages() {
+        if (!currentUserProfile?.id) return;
+
+        const { data, error } = await _supabase
+            .from('mensagens')
+            .select('id, created_at, remetente_id, destinatario_id, grupo, texto, arquivo_url, reply_to_id, visualizada_em')
+            .gt('id', lastObservedMessageId)
+            .order('id', { ascending: true });
+
+        if (error) {
+            console.warn('Fallback de mensagens:', error.message);
+            return;
+        }
+
+        (data || []).forEach(msg => processIncomingMessage(msg, 'fallback'));
+    }
+
+    function scheduleMessageRealtimeReconnect(reason) {
+        if (!currentUserProfile?.id || messageReconnectTimer) return;
+
+        const delays = [2000, 5000, 10000, 20000, 30000];
+        const delay = delays[Math.min(messageReconnectAttempts, delays.length - 1)];
+        messageReconnectAttempts += 1;
+
+        console.warn(`[Realtime mensagens] ${reason}. Reconectando em ${delay / 1000}s...`);
+        messageReconnectTimer = setTimeout(async () => {
+            messageReconnectTimer = null;
+            await setupMessageRealtime({ reconnecting: true });
+        }, delay);
+    }
+
+    function bindRealtimeLifecycleEvents() {
+        if (realtimeLifecycleBound) return;
+        realtimeLifecycleBound = true;
+
+        window.addEventListener('online', () => {
+            if (!messagesRealtimeReady && currentUserProfile?.id) {
+                messageReconnectAttempts = 0;
+                scheduleMessageRealtimeReconnect('Internet restabelecida');
+            }
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && currentUserProfile?.id) {
+                syncMissedMessages();
+                if (!messagesRealtimeReady) {
+                    scheduleMessageRealtimeReconnect('Aba reativada');
+                }
+            }
+        });
+    }
+
+    async function setupMessageRealtime({ reconnecting = false } = {}) {
+        messagesRealtimeReady = false;
+        bindRealtimeLifecycleEvents();
+
+        if (messageReconnectTimer && !reconnecting) {
+            clearTimeout(messageReconnectTimer);
+            messageReconnectTimer = null;
+        }
+
+        if (messageSubscription) {
+            await _supabase.removeChannel(messageSubscription);
+            messageSubscription = null;
+        }
+
+        if (!messageFallbackTimer) {
+            messageFallbackTimer = setInterval(syncMissedMessages, 5000);
+        }
+
+        if (!reconnecting) {
+            const { data: latestRows } = await _supabase
+                .from('mensagens')
+                .select('id')
+                .order('id', { ascending: false })
+                .limit(1);
+
+            if (latestRows?.[0]?.id) {
+                lastObservedMessageId = Math.max(lastObservedMessageId, Number(latestRows[0].id));
+            }
+        }
+
+        messageSubscription = _supabase
+            .channel(`messages-${currentUserProfile.id}`)
+            .on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'mensagens'
+            }, payload => {
+                processIncomingMessage(payload.new, 'realtime');
+            })
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'dm_read_state'
+            }, payload => {
+                handleDMReadStateRealtime(payload);
+            })
+            .subscribe(status => {
+                console.info(`[Realtime mensagens] ${status}`);
+
+                if (status === 'SUBSCRIBED') {
+                    messagesRealtimeReady = true;
+                    messageReconnectAttempts = 0;
+                    if (messageReconnectTimer) {
+                        clearTimeout(messageReconnectTimer);
+                        messageReconnectTimer = null;
+                    }
+                    syncMissedMessages();
+                    return;
+                }
+
+                messagesRealtimeReady = false;
+                if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+                    scheduleMessageRealtimeReconnect(status);
+                }
+            });
+    }
+
+    function getActiveRoomKey() {
+        if (activeDMTargetUser) {
+            return getDMRoomName(currentUserProfile.id, activeDMTargetUser.id);
+        }
+        return currentUserCanAccessGeneral ? mainGroup : null;
+    }
+
+    function incrementUnread(roomName) {
+        unreadCounts.set(roomName, (unreadCounts.get(roomName) || 0) + 1);
+        updateUnreadBadgesUI();
+    }
+
+    function clearUnread(roomName) {
+        unreadCounts.delete(roomName);
+        updateUnreadBadgesUI();
+    }
+
+    function updateUnreadBadgesUI() {
+        const totalUnread = Array.from(unreadCounts.values()).reduce((sum, value) => sum + Number(value || 0), 0);
+        document.title = totalUnread > 0
+            ? `(${totalUnread}) CliniChat — Read Receipts 2.0 Build 00030`
+            : 'CliniChat — Read Receipts 2.0 Build 00030';
+        const badge = document.getElementById('unread-main-group');
+        if (!currentUserCanAccessGeneral) {
+            badge.classList.add('hidden');
+            unreadCounts.delete(mainGroup);
+            renderOnlineUsersList();
+            return;
+        }
+        const count = unreadCounts.get(mainGroup) || 0;
+        if (count > 0) {
+            badge.innerText = count;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+        renderOnlineUsersList();
+    }
+
+    function handleTypingEvent() {
+        if (!presenceRealtimeReady || !presenceChannel) return;
+        const room = getActiveRoomKey();
+        if (!room) return;
+
+        presenceChannel.send({
+            type: 'broadcast',
+            event: 'typing',
+            payload: {
+                userId: currentUserProfile.id,
+                room
+            }
+        }).catch(error => {
+            console.warn('[Realtime presença] Não foi possível enviar o evento de digitação:', error);
+        });
+    }
+
+    function showTypingIndicator(username) {
+        const indicator = document.getElementById('typing-indicator');
+        document.getElementById('typing-username').innerText = username;
+        indicator.classList.remove('hidden'); indicator.classList.add('flex');
+
+        if (typingTimeout) clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => { indicator.classList.add('hidden'); indicator.classList.remove('flex'); }, 2500);
+    }
+
+    // =======================================================
+    // 7. CHAT E RENDERIZAÇÃO
+    // =======================================================
+    function isAuroraMobileLayout() {
+        return window.matchMedia('(max-width: 767px)').matches;
+    }
+
+    function mobileOpenConversation() {
+        if (!isAuroraMobileLayout()) return;
+        const appWindow = document.getElementById('app-window');
+        appWindow?.classList.add('mobile-conversation-open');
+        requestAnimationFrame(() => {
+            document.getElementById('message-input')?.focus({ preventScroll: true });
+        });
+    }
+
+    function mobileReturnToConversationList() {
+        const appWindow = document.getElementById('app-window');
+        appWindow?.classList.remove('mobile-conversation-open');
+        document.getElementById('search-users-input')?.focus({ preventScroll: true });
+    }
+
+    function syncAuroraResponsiveState() {
+        const appWindow = document.getElementById('app-window');
+        if (!appWindow) return;
+
+        if (!isAuroraMobileLayout()) {
+            appWindow.classList.remove('mobile-conversation-open');
+            return;
+        }
+
+        /* No celular, após login ou redimensionamento, a lista é a tela inicial.
+           Uma conversa só é aberta explicitamente pelo usuário. */
+        if (!activeDMTargetUser && !currentUserCanAccessGeneral) {
+            appWindow.classList.remove('mobile-conversation-open');
+        }
+    }
+
+    window.addEventListener('resize', syncAuroraResponsiveState);
+
+    // Uma mensagem só é considerada visualizada quando a conversa privada
+    // está efetivamente aberta e a página está visível.
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && activeDMTargetUser?.id) {
+            loadRemotePrivateReadMarker();
+            scheduleActivePrivateConversationRead(100);
+        }
+    });
+    window.addEventListener('focus', () => {
+        if (activeDMTargetUser?.id) {
+            loadRemotePrivateReadMarker();
+            scheduleActivePrivateConversationRead(100);
+        }
+    });
+
+    function getDMRoomName(userAId, userBId) {
+        return `dm_${[userAId, userBId].sort().join('_')}`;
+    }
+
+    function startPrivateChat(targetUserId) {
+        const targetProfile = visibleProfilesMap.get(targetUserId);
+        if (!targetProfile || targetUserId === currentUserProfile.id) return;
+
+        activeDMTargetUser = targetProfile;
+        activeChatRoom = getDMRoomName(currentUserProfile.id, targetProfile.id);
+        activeDMRemoteLastReadId = 0;
+        activeDMRemoteReadAt = null;
+        clearUnread(activeChatRoom);
+        updateChatHeaderUI();
+        setComposerEnabled(true);
+        fetchMessages();
+        renderOnlineUsersList();
+        mobileOpenConversation();
+    }
+
+    function switchToMainGroup() {
+        if (!currentUserCanAccessGeneral) return;
+        activeDMTargetUser = null;
+        activeDMRemoteLastReadId = 0;
+        activeDMRemoteReadAt = null;
+        activeChatRoom = mainGroup;
+        clearUnread(mainGroup);
+        updateChatHeaderUI();
+        setComposerEnabled(true);
+        fetchMessages();
+        renderOnlineUsersList();
+        mobileOpenConversation();
+    }
+
+    function updateChatHeaderUI() {
+        const isPrivate = activeDMTargetUser !== null;
+        const noConversation = !isPrivate && !currentUserCanAccessGeneral;
+        document.getElementById('private-badge').classList.toggle('hidden', !isPrivate);
+        document.getElementById('header-chat-title').innerText = noConversation
+            ? 'CliniChat'
+            : isPrivate
+                ? `@${activeDMTargetUser.nome_exibicao}`
+                : `Sala: ${mainGroup}`;
+        document.getElementById('header-sub-info').innerText = noConversation
+            ? 'Selecione um contato'
+            : isPrivate
+                ? 'Conversa Privada'
+                : 'Grupo Público';
+        document.getElementById('chat-type-icon').innerText = noConversation ? 'chat' : (isPrivate ? 'lock' : 'forum');
+        updatePinConversationButton();
+    }
+
+    function renderOnlineUsersList() {
+        const container = document.getElementById('online-users-list');
+        const badge = document.getElementById('online-count-badge');
+        const filterText = (document.getElementById('search-users-input')?.value || '').toLowerCase();
+
+        container.innerHTML = '';
+
+        const contacts = Array.from(visibleProfilesMap.values())
+            .filter(profile => profile.id !== currentUserProfile?.id && profile.is_banned !== true)
+            .filter(profile => {
+                const searchableText = `${profile.nome_exibicao || ''} ${profile.username || ''}`.toLowerCase();
+                return !filterText || searchableText.includes(filterText);
+            })
+            .sort((a, b) => {
+                const aPinned = pinnedConversationRooms.has(getDMRoomName(currentUserProfile.id, a.id)) ? 1 : 0;
+                const bPinned = pinnedConversationRooms.has(getDMRoomName(currentUserProfile.id, b.id)) ? 1 : 0;
+                if (aPinned !== bPinned) return bPinned - aPinned;
+                const aOnline = onlineUsersMap.has(a.id) ? 1 : 0;
+                const bOnline = onlineUsersMap.has(b.id) ? 1 : 0;
+                if (aOnline !== bOnline) return bOnline - aOnline;
+                return (a.nome_exibicao || a.username || '').localeCompare(b.nome_exibicao || b.username || '', 'pt-BR');
+            });
+
+        const onlineCount = contacts.filter(profile => onlineUsersMap.has(profile.id)).length;
+        badge.innerText = onlineCount;
+        badge.title = `${onlineCount} contato(s) online`;
+
+        if (!contacts.length) {
+            container.innerHTML = `<p class="text-[11px] text-outline italic px-1 py-2">Nenhum contato autorizado encontrado.</p>`;
+            return;
+        }
+
+        contacts.forEach(profile => {
+            const userId = profile.id;
+            const isOnline = onlineUsersMap.has(userId);
+            const isCurrentDM = activeDMTargetUser?.id === userId;
+            const dmRoom = getDMRoomName(currentUserProfile.id, userId);
+            const unread = unreadCounts.get(dmRoom) || 0;
+            const presenceData = onlineUsersMap.get(userId);
+            const avatarUrl = profile.avatar_url || presenceData?.avatarUrl;
+
+            const item = document.createElement('div');
+            item.onclick = () => startPrivateChat(userId);
+            const isPinnedConversation = pinnedConversationRooms.has(dmRoom);
+            item.className = `flex items-center justify-between p-2 rounded-xl text-xs font-semibold cursor-pointer transition-all ${isPinnedConversation ? 'pinned-conversation ' : ''}${
+                isCurrentDM
+                    ? 'bg-primary/15 border border-primary/30 text-primary font-bold shadow-sm'
+                    : 'hover:bg-white/60 text-on-surface'
+            }`;
+
+            item.innerHTML = `
+                <div class="flex items-center gap-2 overflow-hidden">
+                    <div class="relative flex-shrink-0">
+                        <div class="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold overflow-hidden">
+                            ${avatarUrl
+                                ? `<img src="${escapeHtml(avatarUrl)}" class="w-full h-full object-cover"/>`
+                                : `<span class="avatar-initials text-[10px]">${escapeHtml(getUserInitials(profile))}</span>`}
+                        </div>
+                        <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 ${isOnline ? 'bg-green-500' : 'bg-slate-400'} rounded-full border-2 border-white"></span>
+                    </div>
+                    <div class="min-w-0 flex flex-col">
+                        <span class="truncate">@${escapeHtml(profile.nome_exibicao || profile.username)}</span>
+                        <span class="text-[9px] ${isOnline ? 'text-green-600' : 'text-outline'} font-medium">${isOnline ? 'Online' : 'Offline'}</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1">
+                    ${isPinnedConversation ? `<span class="material-symbols-outlined text-[13px] text-primary" title="Conversa fixada">keep</span>` : ''}
+                    ${unread > 0
+                    ? `<span class="bg-red-500 text-white text-[10px] font-extrabold px-1.5 py-0.5 rounded-full shadow-sm animate-bounce">${unread}</span>`
+                    : `<span class="material-symbols-outlined text-sm opacity-60">chat</span>`}
+                </div>
+            `;
+            container.appendChild(item);
+        });
+    }
+
+    function filterUserList() { renderOnlineUsersList(); }
+
+    const chatContainer = document.getElementById('chat-messages');
+
+    function applyConsecutiveMessageGrouping() {
+        let previousMessageRow = null;
+        document.querySelectorAll('#chat-messages > [data-message-kind]').forEach(row => {
+            if (row.dataset.messageKind !== 'message') {
+                previousMessageRow = null;
+                return;
+            }
+            const sameSender = previousMessageRow
+                && previousMessageRow.dataset.senderId === row.dataset.senderId;
+            row.classList.toggle('echo-consecutive', Boolean(sameSender));
+            previousMessageRow = row;
+        });
+    }
+
+    function isMessageReadByActiveRecipient(messageId) {
+        const id = Number(messageId || 0);
+        return Boolean(activeDMTargetUser?.id && id > 0 && id <= Number(activeDMRemoteLastReadId || 0));
+    }
+
+    function applyReadReceiptState(el, messageId) {
+        if (!el) return;
+        const read = isMessageReadByActiveRecipient(messageId);
+        el.classList.toggle('is-read', read);
+        el.title = read ? 'Visualizada' : 'Enviada';
+        el.innerHTML = `<span class="material-symbols-outlined" style="font-size:12px">${read ? 'done_all' : 'done'}</span>`;
+    }
+
+    function updateReadReceiptForMessage(msg) {
+        if (!msg?.id) return;
+        applyReadReceiptState(document.getElementById(`echo-read-${msg.id}`), msg.id);
+    }
+
+    function refreshVisibleReadReceipts() {
+        document.querySelectorAll('.echo-read-receipt[data-message-id]').forEach(el => {
+            applyReadReceiptState(el, el.dataset.messageId);
+        });
+    }
+
+    async function loadRemotePrivateReadMarker() {
+        activeDMRemoteLastReadId = 0;
+        activeDMRemoteReadAt = null;
+        if (!activeDMTargetUser?.id || !currentUserProfile?.id) return;
+
+        const targetId = activeDMTargetUser.id;
+        const { data, error } = await _supabase
+            .from('dm_read_state')
+            .select('last_read_message_id, read_at')
+            .eq('user_id', targetId)
+            .eq('other_user_id', currentUserProfile.id)
+            .maybeSingle();
+
+        // A conversa pode ter sido trocada enquanto a consulta estava em voo.
+        if (activeDMTargetUser?.id !== targetId) return;
+
+        if (error) {
+            console.debug('[Leitura 2.0] Não foi possível obter marcador remoto:', error.message);
+            return;
+        }
+
+        activeDMRemoteLastReadId = Number(data?.last_read_message_id || 0);
+        activeDMRemoteReadAt = data?.read_at || null;
+        refreshVisibleReadReceipts();
+    }
+
+    function handleDMReadStateRealtime(payload) {
+        const row = payload?.new || payload?.old;
+        if (!row || !currentUserProfile?.id || !activeDMTargetUser?.id) return;
+
+        // Interessa ao remetente apenas o marcador mantido pelo outro usuário
+        // sobre esta conversa.
+        if (row.user_id !== activeDMTargetUser.id || row.other_user_id !== currentUserProfile.id) return;
+
+        activeDMRemoteLastReadId = Number(payload.eventType === 'DELETE' ? 0 : (row.last_read_message_id || 0));
+        activeDMRemoteReadAt = payload.eventType === 'DELETE' ? null : (row.read_at || null);
+        refreshVisibleReadReceipts();
+    }
+
+    function isSingleEmojiMessage(text) {
+        const value = (text || '').trim();
+        if (!value || value.startsWith('[')) return false;
+        try {
+            const segments = typeof Intl !== 'undefined' && Intl.Segmenter
+                ? [...new Intl.Segmenter(undefined, {granularity:'grapheme'}).segment(value)].map(x=>x.segment)
+                : [value];
+            return segments.length === 1 && /\p{Extended_Pictographic}/u.test(segments[0]);
+        } catch (_) {
+            return false;
+        }
+    }
+
+    function renderMessage(msg, isRealtime = false, options = {}) {
+        const { prepend = false, suppressScroll = false } = options;
+        if (msg?.id && renderedMessageIds.has(msg.id)) return;
+        if (msg?.id) renderedMessageIds.add(msg.id);
+
+        const isMe = msg.remetente_id === currentUserProfile.id;
+        const senderName = getMessageSenderName(msg);
+        const senderProfile = getProfileById(msg.remetente_id);
+        const timeFormatted = new Date(msg.created_at || Date.now()).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        if (msg.texto === '__NUDGE__') {
+            const nudgeDiv = document.createElement('div');
+            nudgeDiv.className = 'flex justify-center my-2';
+            nudgeDiv.dataset.messageKind = 'nudge';
+            nudgeDiv.dataset.messageId = String(msg.id || '');
+            nudgeDiv.innerHTML = `<div class="bg-amber-200/90 text-amber-900 px-4 py-1.5 rounded-full shadow border border-amber-300 flex items-center gap-2 text-xs font-bold"><span class="material-symbols-outlined text-base">notifications_active</span><span>${escapeHtml(senderName)} chamou a atenção!</span></div>`;
+            prepend ? chatContainer.prepend(nudgeDiv) : chatContainer.appendChild(nudgeDiv);
+            applyConsecutiveMessageGrouping();
+            if (!suppressScroll && !prepend) scrollToBottom();
+            if (isRealtime && !isMe) triggerNudgeEffect();
+            return;
+        }
+
+        if (isRealtime && !isMe) playSound('message');
+
+        const msgWrapper = document.createElement('div');
+        msgWrapper.className = `echo-message-row flex gap-2 ${isMe ? 'justify-end' : 'justify-start'}`;
+        msgWrapper.dataset.messageKind = 'message';
+        msgWrapper.dataset.senderId = msg.remetente_id || '';
+        msgWrapper.dataset.isMe = isMe ? 'true' : 'false';
+        msgWrapper.dataset.messageId = String(msg.id || '');
+        const avatarUrl = senderProfile?.avatar_url;
+
+        const avatarMarkup = avatarUrl
+            ? `<img src="${escapeHtml(avatarUrl)}" class="w-full h-full object-cover"/>`
+            : `<span class="avatar-initials text-[9px]">${escapeHtml(getUserInitials(senderProfile || { nome_exibicao: senderName }))}</span>`;
+
+        const reactionButtons = ECHO_REACTIONS.map(emoji =>
+            `<button type="button" onclick="toggleReaction(${msg.id}, '${emoji}')" class="w-7 h-7 rounded-full hover:bg-black/5 text-sm">${emoji}</button>`
+        ).join('');
+
+        const senderButton = `<button type="button" ${(!isMe && !activeDMTargetUser) ? `onclick="startPrivateChat('${msg.remetente_id}')" title="Abrir conversa privada com ${escapeHtml(senderName)}"` : 'disabled'} class="echo-sender-name text-[10px] font-bold ${isMe ? 'text-primary' : 'text-outline'} mb-0.5 px-1 ${(!isMe && !activeDMTargetUser) ? 'echo-sender-link' : 'cursor-default'}">${escapeHtml(senderName)}</button>`;
+
+        msgWrapper.innerHTML = `
+            ${!isMe ? `<div class="echo-message-avatar w-7 h-7 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-xs flex-shrink-0 mt-1 overflow-hidden">${avatarMarkup}</div>` : ''}
+            <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[75%] min-w-0">
+                ${senderButton}
+                <div class="echo-message-actions relative ${isMe ? 'items-end' : 'items-start'} flex flex-col">
+                    <div class="${isMe ? 'message-bubble-outgoing rounded-2xl rounded-tr-none' : 'message-bubble-incoming rounded-2xl rounded-tl-none'} echo-message-bubble px-3.5 py-2 text-sm text-on-surface relative group" data-message-id="${msg.id}">
+                        <div id="echo-reply-preview-${msg.id}" class="hidden echo-reply-preview rounded-lg px-2.5 py-1.5 mb-2 text-[11px]"></div>
+                        <div class="pr-12 pb-1 echo-message-content ${isSingleEmojiMessage(msg.texto || '') ? 'echo-single-emoji' : ''}">${formatMessageContent(msg.texto || '')}</div>
+                        <span class="text-[9px] opacity-60 font-medium absolute bottom-1 right-2.5 select-none flex items-center">
+                            ${timeFormatted}
+                            ${isMe && msg.grupo === null ? `<span id="echo-read-${msg.id}" data-message-id="${msg.id}" class="echo-read-receipt ${isMessageReadByActiveRecipient(msg.id) ? 'is-read' : ''}" title="${isMessageReadByActiveRecipient(msg.id) ? 'Visualizada' : 'Enviada'}"><span class="material-symbols-outlined" style="font-size:12px">${isMessageReadByActiveRecipient(msg.id) ? 'done_all' : 'done'}</span></span>` : ''}
+                        </span>
+                        <button type="button" onclick="startReply(${msg.id}, '${escapeHtml(senderName).replace(/'/g,"&#39;")}')" title="Responder" class="echo-reply-action w-7 h-7 rounded-full bg-white/90 dark:bg-slate-800/90 border border-white shadow-md hover:bg-white flex items-center justify-center"><span class="material-symbols-outlined text-sm">reply</span></button>
+                        <button id="favorite-message-${msg.id}" type="button" onclick="event.stopPropagation(); toggleMessageFavorite(${msg.id})" title="Favoritar mensagem" class="message-favorite-btn bg-white/90 dark:bg-slate-800/90 border border-white shadow-md hover:bg-white flex items-center justify-center"><span class="material-symbols-outlined text-sm">star</span></button>
+                    </div>
+                    <div class="echo-reaction-actions flex items-center gap-1 bg-white/90 dark:bg-slate-800/90 border border-white rounded-full px-1 py-0.5 shadow-md">${reactionButtons}</div>
+                </div>
+                <div id="echo-reactions-${msg.id}" class="echo-reactions-applied flex flex-wrap gap-1"></div>
+            </div>
+            ${isMe ? `<div class="echo-message-avatar w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xs flex-shrink-0 mt-1 shadow-sm overflow-hidden">${avatarMarkup}</div>` : ''}
+        `;
+
+        prepend ? chatContainer.prepend(msgWrapper) : chatContainer.appendChild(msgWrapper);
+        setupEchoMessageInteractions(msgWrapper, msg, senderName);
+        if (msg.reply_to_id) loadReplyPreview(msg.reply_to_id, msg.id);
+        loadMessageReactions(msg.id);
+        syncMessageFavoriteButton(msg.id);
+        updateReadReceiptForMessage(msg);
+        applyConsecutiveMessageGrouping();
+        if (!suppressScroll && !prepend) scrollToBottom();
+    }
+
+    function formatMessageContent(texto) {
+        if (texto.startsWith("[IMAGEM]:")) {
+            const imgData = texto.replace("[IMAGEM]:", "");
+            return `<img src="${imgData}" onclick="openImageModal('${imgData}')" class="max-w-[220px] max-h-[180px] rounded-xl object-cover border border-white/60 shadow-sm cursor-pointer hover:scale-105 transition-transform"/>`;
+        }
+        if (texto.startsWith("[VIDEO]:")) {
+            return `<video controls class="max-w-[240px] max-h-[180px] rounded-xl border border-white/60 shadow-sm bg-black"><source src="${texto.replace("[VIDEO]:", "")}"></video>`;
+        }
+        if (texto.startsWith("[AUDIO]:")) {
+            return `<audio controls class="max-w-[240px] h-10 rounded-lg"><source src="${texto.replace("[AUDIO]:", "")}"></audio>`;
+        }
+        if (texto.startsWith("[ARQUIVO]:")) {
+            const parts = texto.replace("[ARQUIVO]:", "").split("|");
+            return `<div class="flex items-center gap-3 p-1.5 bg-white/50 rounded-xl border border-white/60 shadow-sm"><div class="w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center text-primary flex-shrink-0"><span class="material-symbols-outlined text-xl">description</span></div><div class="flex flex-col overflow-hidden max-w-[160px]"><span class="text-xs font-bold text-on-surface truncate">${escapeHtml(parts[0])}</span></div><a href="${parts[1]}" download="${escapeHtml(parts[0])}" target="_blank" class="p-1.5 bg-primary text-white rounded-lg shadow-sm"><span class="material-symbols-outlined text-sm">download</span></a></div>`;
+        }
+        return escapeHtml(texto).replace(/\n/g, "<br>");
+    }
+
+    function handleFileUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const data = e.target.result;
+            if (file.type.startsWith("image/")) sendMessage(`[IMAGEM]:${data}`);
+            else if (file.type.startsWith("video/")) sendMessage(`[VIDEO]:${data}`);
+            else if (file.type.startsWith("audio/")) sendMessage(`[AUDIO]:${data}`);
+            else sendMessage(`[ARQUIVO]:${file.name}|${data}`);
+        };
+        reader.readAsDataURL(file);
+        event.target.value = "";
+    }
+
+    function openImageModal(imgSrc) {
+        document.getElementById("image-modal-img").src = imgSrc;
+        document.getElementById("image-modal").classList.remove("hidden");
+    }
+
+    function closeImageModal() {
+        document.getElementById("image-modal").classList.add("hidden");
+    }
+
+    function triggerNudgeEffect() {
+        playSound('nudge');
+        chatContainer.classList.add('nudge-alert');
+        setTimeout(() => chatContainer.classList.remove('nudge-alert'), 500);
+    }
+
+    function escapeHtml(str) { return str ? str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : ''; }
+    function scrollToBottom() { chatContainer.scrollTop = chatContainer.scrollHeight; }
+    function toggleEmojiPopover(force) {
+        const pop = document.getElementById('emoji-popover');
+        const shouldOpen = typeof force === 'boolean' ? force : pop.classList.contains('hidden');
+        pop.classList.toggle('hidden', !shouldOpen);
+        if (shouldOpen) {
+            renderEmojiCategories();
+            renderEmojiPicker();
+            setTimeout(() => document.getElementById('emoji-search')?.focus({preventScroll:true}), 30);
+        }
+    }
+    function renderEmojiCategories() {
+        const tabs = document.getElementById('emoji-category-tabs');
+        if (!tabs) return;
+        tabs.innerHTML = ECHO_EMOJI_CATEGORIES.map(cat => `<button type="button" class="echo-emoji-category ${activeEmojiCategory===cat.key?'active':''} flex-shrink-0 w-8 h-8 rounded-lg" title="${cat.label}" onclick="selectEmojiCategory('${cat.key}')">${cat.icon}</button>`).join('');
+    }
+    function selectEmojiCategory(key) {
+        activeEmojiCategory = key;
+        document.getElementById('emoji-search').value = '';
+        renderEmojiCategories();
+        renderEmojiPicker();
+    }
+    function getEmojiListForCategory(cat) {
+        return cat.key === 'recent' ? recentEmojis : cat.emojis;
+    }
+    function renderEmojiPicker(filter='') {
+        const box = document.getElementById('echo-emoji-popover');
+        if (!box) return;
+        const term = (filter || '').trim();
+        let emojis;
+        if (term) {
+            emojis = ECHO_EMOJI_CATEGORIES.filter(c=>c.key!=='recent').flatMap(c=>c.emojis);
+        } else {
+            const cat = ECHO_EMOJI_CATEGORIES.find(c=>c.key===activeEmojiCategory) || ECHO_EMOJI_CATEGORIES[1];
+            emojis = getEmojiListForCategory(cat);
+        }
+        // Busca textual simples: permite colar/digitar o próprio emoji no campo de busca.
+        if (term && /\p{Extended_Pictographic}/u.test(term)) emojis = emojis.filter(e=>e.includes(term));
+        emojis = [...new Set(emojis)];
+        box.innerHTML = emojis.length
+            ? emojis.map(e=>`<button type="button" onclick="insertEmoji('${e.replace(/'/g,"\\'")}')" class="echo-emoji-btn" title="${e}">${e}</button>`).join('')
+            : '<div class="col-span-full text-xs text-outline text-center py-6">Nenhum emoji encontrado.</div>';
+    }
+    function filterEmojiPicker(value) { renderEmojiPicker(value); }
+    function insertEmoji(emoji) {
+        const input = document.getElementById('message-input');
+        const start = input.selectionStart ?? input.value.length;
+        const end = input.selectionEnd ?? input.value.length;
+        input.value = input.value.slice(0,start) + emoji + input.value.slice(end);
+        input.selectionStart = input.selectionEnd = start + emoji.length;
+        recentEmojis = [emoji, ...recentEmojis.filter(e=>e!==emoji)].slice(0,40);
+        localStorage.setItem('getchat_recent_emojis', JSON.stringify(recentEmojis));
+        autoResizeMessageInput();
+        input.focus();
+    }
+
+
+    function closeAllMessageActions(except = null) {
+        document.querySelectorAll('.echo-message-actions.is-open').forEach(el => {
+            if (el !== except) el.classList.remove('is-open');
+        });
+    }
+
+    function setupEchoMessageInteractions(wrapper, msg, senderName) {
+        const bubble = wrapper.querySelector('.echo-message-bubble');
+        const actions = wrapper.querySelector('.echo-message-actions');
+        if (!bubble || !actions || !window.matchMedia('(hover:none), (pointer:coarse)').matches) return;
+
+        let pressTimer = null;
+        let startX = 0;
+        let startY = 0;
+        let currentX = 0;
+        let swiping = false;
+
+        const clearPress = () => {
+            if (pressTimer) clearTimeout(pressTimer);
+            pressTimer = null;
+        };
+
+        bubble.addEventListener('pointerdown', event => {
+            if (event.target.closest('button, a, video, audio')) return;
+            startX = currentX = event.clientX;
+            startY = event.clientY;
+            swiping = false;
+            clearPress();
+            pressTimer = setTimeout(() => {
+                closeAllMessageActions(actions);
+                actions.classList.add('is-open');
+                if (navigator.vibrate) navigator.vibrate(20);
+            }, 480);
+        });
+
+        bubble.addEventListener('pointermove', event => {
+            if (!startX) return;
+            currentX = event.clientX;
+            const dx = currentX - startX;
+            const dy = event.clientY - startY;
+            if (Math.abs(dx) > 8 || Math.abs(dy) > 8) clearPress();
+            if (dx < -10 && Math.abs(dx) > Math.abs(dy)) {
+                swiping = true;
+                bubble.classList.add('echo-swipe-active');
+                bubble.style.transform = `translateX(${Math.max(dx, -82)}px)`;
+            }
+        });
+
+        const finish = () => {
+            clearPress();
+            const dx = currentX - startX;
+            bubble.classList.remove('echo-swipe-active');
+            bubble.style.transform = '';
+            if (swiping && dx <= -58) startReply(msg.id, senderName);
+            startX = startY = currentX = 0;
+            swiping = false;
+        };
+        bubble.addEventListener('pointerup', finish);
+        bubble.addEventListener('pointercancel', finish);
+    }
+
+    document.addEventListener('pointerdown', event => {
+        if (!event.target.closest('.echo-message-bubble')) closeAllMessageActions();
+    });
+
+    async function handleComposerPaste(event) {
+        const items = Array.from(event.clipboardData?.items || []);
+        const files = items.filter(item => item.kind === 'file').map(item => item.getAsFile()).filter(Boolean);
+        if (!files.length) return; // textos continuam com o comportamento normal do navegador
+        event.preventDefault();
+        for (const file of files) await sendClipboardFile(file);
+    }
+
+    function sendClipboardFile(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = async event => {
+                try {
+                    const data = event.target.result;
+                    if (file.type.startsWith('image/')) await sendMessage(`[IMAGEM]:${data}`);
+                    else if (file.type.startsWith('video/')) await sendMessage(`[VIDEO]:${data}`);
+                    else if (file.type.startsWith('audio/')) await sendMessage(`[AUDIO]:${data}`);
+                    else await sendMessage(`[ARQUIVO]:${file.name || 'arquivo'}|${data}`);
+                    resolve();
+                } catch (error) { reject(error); }
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function handleMessageComposerInput() {
+        handleTypingEvent();
+        autoResizeMessageInput();
+    }
+
+    function autoResizeMessageInput() {
+        const input = document.getElementById('message-input');
+        if (!input) return;
+        input.style.height = 'auto';
+        input.style.height = `${Math.min(input.scrollHeight, 132)}px`;
+    }
+
+    function startReply(messageId, senderName) {
+        const bubble = document.querySelector(`[data-message-id="${messageId}"]`);
+        const text = bubble?.querySelector('.echo-message-content')?.innerText?.trim() || 'Mensagem';
+        echoReplyTarget = { id: Number(messageId), senderName, text: text.slice(0, 180) };
+        document.getElementById('echo-reply-title').textContent = `Respondendo a ${senderName}`;
+        document.getElementById('echo-reply-text').textContent = echoReplyTarget.text;
+        const bar = document.getElementById('echo-reply-composer');
+        bar.classList.remove('hidden'); bar.classList.add('flex');
+        document.getElementById('message-input').focus();
+    }
+
+    function cancelReply() {
+        echoReplyTarget = null;
+        const bar = document.getElementById('echo-reply-composer');
+        if (bar) { bar.classList.add('hidden'); bar.classList.remove('flex'); }
+    }
+
+    async function loadReplyPreview(replyId, messageId) {
+        const el = document.getElementById(`echo-reply-preview-${messageId}`);
+        if (!el) return;
+        const { data } = await _supabase.from('mensagens').select('id, remetente_id, texto').eq('id', replyId).maybeSingle();
+        if (!data) { el.textContent = 'Mensagem original indisponível'; el.classList.remove('hidden'); return; }
+        const name = getMessageSenderName(data);
+        const clean = (data.texto || '').replace(/^\[(IMAGEM|VIDEO|AUDIO|ARQUIVO)\]:.*/s, '[Anexo]');
+        el.innerHTML = `<div class="font-black text-primary truncate">${escapeHtml(name)}</div><div class="truncate opacity-80">${escapeHtml(clean)}</div>`;
+        el.classList.remove('hidden');
+    }
+
+    async function toggleReaction(messageId, emoji) {
+        const { error } = await _supabase.rpc('toggle_message_reaction', { p_message_id: Number(messageId), p_emoji: emoji });
+        if (error) { console.error('Erro ao reagir:', error); alert(`Não foi possível reagir: ${error.message}`); return; }
+        loadMessageReactions(messageId);
+    }
+
+    async function loadMessageReactions(messageId) {
+        const container = document.getElementById(`echo-reactions-${messageId}`);
+        if (!container) return;
+        const { data, error } = await _supabase.rpc('get_message_reactions', { p_message_id: Number(messageId) });
+        if (error) { console.debug('Reações indisponíveis:', error.message); return; }
+        container.innerHTML = (data || []).map(r => `<button type="button" onclick="toggleReaction(${messageId}, '${r.emoji}')" class="echo-reaction-pill ${r.reacted_by_me ? 'mine' : ''} px-2 py-0.5 rounded-full text-[11px] font-bold">${r.emoji} ${r.reaction_count}</button>`).join('');
+    }
+
+    async function setupReactionRealtime() {
+        if (reactionSubscription) await _supabase.removeChannel(reactionSubscription);
+        reactionSubscription = _supabase.channel(`reactions-${currentUserProfile.id}`)
+            .on('postgres_changes', { event:'*', schema:'public', table:'message_reactions' }, payload => {
+                const id = payload.new?.message_id || payload.old?.message_id;
+                if (id) loadMessageReactions(id);
+            }).subscribe();
+    }
+
+    function showHistoryRetentionInfo() {
+        alert('Mensagens e arquivos serão removidos em até 30 dias');
+    }
+
+
+    function updateNudgeButtonState() {
+        const btn = document.getElementById('nudge-button');
+        if (!btn) return;
+        const remaining = nudgeCooldownUntil - Date.now();
+        btn.disabled = remaining > 0;
+        btn.title = remaining > 0 ? 'Aguarde um momento para chamar atenção novamente.' : 'Chamar atenção';
+        if (remaining > 0) setTimeout(updateNudgeButtonState, Math.min(remaining + 50, 1000));
+    }
+
+    function buildActiveMessagesQuery() {
+        let query = _supabase
+            .from('mensagens')
+            .select('id, created_at, remetente_id, destinatario_id, grupo, texto, arquivo_url, reply_to_id, visualizada_em');
+
+        if (activeDMTargetUser) {
+            const currentId = currentUserProfile.id;
+            const targetId = activeDMTargetUser.id;
+            query = query
+                .is('grupo', null)
+                .or(
+                    `and(remetente_id.eq.${currentId},destinatario_id.eq.${targetId}),and(remetente_id.eq.${targetId},destinatario_id.eq.${currentId})`
+                );
+        } else if (currentUserCanAccessGeneral) {
+            query = query.eq('grupo', mainGroup);
+        }
+        return query;
+    }
+
+    async function markActivePrivateConversationRead() {
+        if (!activeDMTargetUser?.id || document.hidden) return;
+
+        const targetId = activeDMTargetUser.id;
+        const { data, error } = await _supabase.rpc('mark_private_conversation_read', {
+            p_other_user: targetId
+        });
+
+        if (error) {
+            console.debug('[Leitura 2.0] Não foi possível atualizar marcador:', error.message);
+            return;
+        }
+
+        // A própria conversa pode ter mudado durante a chamada. O retorno é
+        // útil principalmente para manter o contador local coerente.
+        if (activeDMTargetUser?.id === targetId) {
+            clearUnread(getDMRoomName(currentUserProfile.id, targetId));
+        }
+    }
+
+    function scheduleActivePrivateConversationRead(delay = 120) {
+        if (activeReadMarkTimer) clearTimeout(activeReadMarkTimer);
+        if (!activeDMTargetUser?.id || document.hidden) return;
+        activeReadMarkTimer = setTimeout(() => {
+            activeReadMarkTimer = null;
+            markActivePrivateConversationRead();
+        }, delay);
+    }
+
+    function showHistoryLoader(textValue) {
+        let loader = document.getElementById('echo-history-loader');
+        if (!loader) {
+            loader = document.createElement('div');
+            loader.id = 'echo-history-loader';
+            loader.className = 'echo-history-loader';
+            chatContainer.prepend(loader);
+        }
+        loader.textContent = textValue;
+        return loader;
+    }
+
+    function hideHistoryLoader() {
+        document.getElementById('echo-history-loader')?.remove();
+    }
+
+    async function fetchMessages() {
+        isInitialLoad = true;
+        chatContainer.innerHTML = '';
+        renderedMessageIds.clear();
+        oldestLoadedMessageId = null;
+        hasMoreMessages = true;
+        loadingOlderMessages = false;
+
+        if (!activeDMTargetUser && !currentUserCanAccessGeneral) {
+            showNoConversationSelected();
+            isInitialLoad = false;
+            return;
+        }
+
+        const { data, error } = await buildActiveMessagesQuery()
+            .order('id', { ascending: false })
+            .limit(MESSAGE_PAGE_SIZE);
+
+        if (error) {
+            console.error('Erro ao carregar mensagens:', error);
+            chatContainer.innerHTML = `<div class="m-auto text-center text-sm text-red-600 bg-red-50/80 border border-red-200 rounded-xl p-4">Não foi possível carregar as mensagens.<br><span class="text-xs">${escapeHtml(error.message)}</span></div>`;
+            isInitialLoad = false;
+            return;
+        }
+
+        const rows = data || [];
+
+        // Antes de desenhar as mensagens enviadas por mim, busca até onde o
+        // destinatário já leu esta conversa.
+        if (activeDMTargetUser) await loadRemotePrivateReadMarker();
+
+        hasMoreMessages = rows.length === MESSAGE_PAGE_SIZE;
+        oldestLoadedMessageId = rows.length ? Math.min(...rows.map(msg => Number(msg.id))) : null;
+
+        rows.slice().reverse().forEach(msg => {
+            lastObservedMessageId = Math.max(lastObservedMessageId, Number(msg.id) || 0);
+            processedIncomingMessageIds.add(msg.id);
+            renderMessage(msg, false, { suppressScroll: true });
+        });
+
+        applyConsecutiveMessageGrouping();
+        scrollToBottom();
+        isInitialLoad = false;
+        if (activeDMTargetUser) scheduleActivePrivateConversationRead(60);
+    }
+
+    async function loadOlderMessages() {
+        if (loadingOlderMessages || !hasMoreMessages || !oldestLoadedMessageId) return;
+        if (!activeDMTargetUser && !currentUserCanAccessGeneral) return;
+
+        loadingOlderMessages = true;
+        const oldScrollHeight = chatContainer.scrollHeight;
+        showHistoryLoader('Carregando mensagens anteriores...');
+
+        try {
+            const { data, error } = await buildActiveMessagesQuery()
+                .lt('id', oldestLoadedMessageId)
+                .order('id', { ascending: false })
+                .limit(MESSAGE_PAGE_SIZE);
+
+            if (error) throw error;
+            hideHistoryLoader();
+
+            const rows = data || [];
+            hasMoreMessages = rows.length === MESSAGE_PAGE_SIZE;
+            if (rows.length) {
+                oldestLoadedMessageId = Math.min(...rows.map(msg => Number(msg.id)));
+                /* A consulta vem do mais novo para o mais antigo; prepend nesta ordem mantém a cronologia. */
+                rows.forEach(msg => {
+                    processedIncomingMessageIds.add(msg.id);
+                    renderMessage(msg, false, { prepend: true, suppressScroll: true });
+                });
+                applyConsecutiveMessageGrouping();
+                const newScrollHeight = chatContainer.scrollHeight;
+                chatContainer.scrollTop += (newScrollHeight - oldScrollHeight);
+            }
+
+            if (!hasMoreMessages) {
+                const end = showHistoryLoader('Início da conversa');
+                setTimeout(() => end?.remove(), 1400);
+            }
+        } catch (error) {
+            hideHistoryLoader();
+            console.warn('Erro ao carregar mensagens anteriores:', error);
+        } finally {
+            loadingOlderMessages = false;
+        }
+    }
+
+    async function sendMessage(textToSend = null) {
+        const input = document.getElementById('message-input');
+        const texto = textToSend || input.value.trim();
+        if (!texto) return;
+        if (!activeDMTargetUser && !currentUserCanAccessGeneral) return;
+
+        const payload = activeDMTargetUser
+            ? {
+                remetente_id: currentUserProfile.id,
+                destinatario_id: activeDMTargetUser.id,
+                grupo: null,
+                texto,
+                reply_to_id: echoReplyTarget?.id || null
+            }
+            : {
+                remetente_id: currentUserProfile.id,
+                destinatario_id: null,
+                grupo: mainGroup,
+                texto,
+                reply_to_id: echoReplyTarget?.id || null
+            };
+
+        const { data: insertedMessage, error } = await _supabase
+            .from('mensagens')
+            .insert(payload)
+            .select('id, created_at, remetente_id, destinatario_id, grupo, texto, arquivo_url, reply_to_id, visualizada_em')
+            .single();
+
+        if (error) {
+            console.error('Erro ao enviar mensagem:', error);
+            alert(`Não foi possível enviar a mensagem: ${error.message}`);
+            return;
+        }
+
+        if (insertedMessage) {
+            lastObservedMessageId = Math.max(lastObservedMessageId, Number(insertedMessage.id) || 0);
+            processedIncomingMessageIds.add(insertedMessage.id);
+            renderMessage(insertedMessage, false);
+        }
+
+        if (!textToSend) { input.value = ''; autoResizeMessageInput(); cancelReply(); }
+    }
+
+    async function sendNudge() {
+        if (Date.now() < nudgeCooldownUntil) return;
+        if (!activeDMTargetUser && !currentUserCanAccessGeneral) return;
+        const payload = activeDMTargetUser
+            ? {
+                remetente_id: currentUserProfile.id,
+                destinatario_id: activeDMTargetUser.id,
+                grupo: null,
+                texto: '__NUDGE__'
+            }
+            : {
+                remetente_id: currentUserProfile.id,
+                destinatario_id: null,
+                grupo: mainGroup,
+                texto: '__NUDGE__'
+            };
+
+        const { data: insertedNudge, error } = await _supabase
+            .from('mensagens')
+            .insert(payload)
+            .select('id, created_at, remetente_id, destinatario_id, grupo, texto, arquivo_url, reply_to_id, visualizada_em')
+            .single();
+
+        if (error) {
+            console.error('Erro ao enviar chamar atenção:', error);
+            alert(`Não foi possível chamar atenção: ${error.message}`);
+            return;
+        }
+
+        nudgeCooldownUntil = Date.now() + NUDGE_COOLDOWN_MS;
+        updateNudgeButtonState();
+
+        if (insertedNudge) {
+            lastObservedMessageId = Math.max(lastObservedMessageId, Number(insertedNudge.id) || 0);
+            processedIncomingMessageIds.add(insertedNudge.id);
+            renderMessage(insertedNudge, false);
+        }
+    }
+
+
+    // =======================================================
+    // BUILD 00028 — NAVEGAÇÃO DE CONTEÚDO
+    // Pesquisa, galeria, favoritos e conversas fixadas
+    // =======================================================
+    const favoriteMessageIds = new Set();
+    const pinnedConversationRooms = new Set();
+
+    function getCurrentConversationRoomKey() {
+        if (activeDMTargetUser) return getDMRoomName(currentUserProfile.id, activeDMTargetUser.id);
+        if (currentUserCanAccessGeneral) return `group:${mainGroup}`;
+        return null;
+    }
+
+    function getCurrentConversationLabel() {
+        if (activeDMTargetUser) return `@${activeDMTargetUser.nome_exibicao || activeDMTargetUser.username}`;
+        return currentUserCanAccessGeneral ? `Sala: ${mainGroup}` : 'Conversa';
+    }
+
+    async function loadContentNavigationState() {
+        if (!currentUserProfile?.id) return;
+        try {
+            const [{ data:favs }, { data:pins }] = await Promise.all([
+                _supabase.from('message_favorites').select('message_id').eq('user_id', currentUserProfile.id),
+                _supabase.from('conversation_pins').select('room_key').eq('user_id', currentUserProfile.id)
+            ]);
+            favoriteMessageIds.clear(); (favs || []).forEach(x => favoriteMessageIds.add(Number(x.message_id)));
+            pinnedConversationRooms.clear(); (pins || []).forEach(x => pinnedConversationRooms.add(x.room_key));
+            document.querySelectorAll('[id^="favorite-message-"]').forEach(btn => {
+                const id = Number(btn.id.replace('favorite-message-','')); updateFavoriteButtonVisual(id);
+            });
+            updatePinConversationButton();
+            renderOnlineUsersList();
+        } catch (e) { console.debug('[Build 00030] Preferências de conteúdo indisponíveis:', e); }
+    }
+
+    function updateFavoriteButtonVisual(messageId) {
+        const btn = document.getElementById(`favorite-message-${messageId}`);
+        if (!btn) return;
+        const fav = favoriteMessageIds.has(Number(messageId));
+        btn.classList.toggle('is-favorite', fav);
+        btn.title = fav ? 'Remover dos favoritos' : 'Favoritar mensagem';
+        const icon = btn.querySelector('.material-symbols-outlined');
+        if (icon) icon.style.fontVariationSettings = fav ? "'FILL' 1" : "'FILL' 0";
+    }
+
+    function syncMessageFavoriteButton(messageId) { updateFavoriteButtonVisual(messageId); }
+
+    async function toggleMessageFavorite(messageId) {
+        const { data, error } = await _supabase.rpc('toggle_message_favorite', { p_message_id:Number(messageId) });
+        if (error) { alert(`Não foi possível alterar favorito: ${error.message}`); return; }
+        const isFavorite = data === true;
+        isFavorite ? favoriteMessageIds.add(Number(messageId)) : favoriteMessageIds.delete(Number(messageId));
+        updateFavoriteButtonVisual(messageId);
+    }
+
+    function updatePinConversationButton() {
+        const btn = document.getElementById('pin-conversation-btn'); if (!btn) return;
+        const room = getCurrentConversationRoomKey();
+        btn.disabled = !room;
+        const pinned = !!room && pinnedConversationRooms.has(room);
+        btn.title = pinned ? 'Desafixar conversa' : 'Fixar conversa';
+        btn.classList.toggle('bg-primary/20', pinned);
+        const icon=btn.querySelector('.material-symbols-outlined'); if(icon) icon.style.fontVariationSettings = pinned ? "'FILL' 1" : "'FILL' 0";
+    }
+
+    async function toggleCurrentConversationPin() {
+        const room = getCurrentConversationRoomKey(); if (!room) return;
+        const label = getCurrentConversationLabel();
+        const { data, error } = await _supabase.rpc('toggle_conversation_pin', { p_room_key:room, p_label:label });
+        if (error) { alert(`Não foi possível fixar a conversa: ${error.message}`); return; }
+        data === true ? pinnedConversationRooms.add(room) : pinnedConversationRooms.delete(room);
+        updatePinConversationButton(); renderOnlineUsersList();
+    }
+
+    function openContentBrowser(title, subtitle) {
+        document.getElementById('content-browser-title').textContent = title;
+        document.getElementById('content-browser-subtitle').textContent = subtitle || getCurrentConversationLabel();
+        const modal=document.getElementById('content-browser-modal'); modal.classList.remove('hidden'); modal.classList.add('flex');
+    }
+    function closeContentBrowser(){ const m=document.getElementById('content-browser-modal'); m.classList.add('hidden'); m.classList.remove('flex'); }
+
+    function buildContentQuery() { return buildActiveMessagesQuery(); }
+
+    async function openConversationSearch() {
+        if (!getCurrentConversationRoomKey()) return;
+        openContentBrowser('Pesquisar mensagens', getCurrentConversationLabel());
+        const controls=document.getElementById('content-browser-controls');
+        controls.innerHTML=`<div class="flex gap-2"><div class="flex-1 flex items-center gap-2 bg-white/70 dark:bg-slate-800/70 rounded-xl px-3 border border-white/80"><span class="material-symbols-outlined text-outline text-base">search</span><input id="conversation-search-input" type="search" placeholder="Digite uma palavra ou frase..." class="w-full bg-transparent border-none focus:ring-0 text-sm" onkeydown="if(event.key==='Enter') runConversationSearch()"></div><button onclick="runConversationSearch()" class="gel-button px-4 py-2.5 rounded-xl text-white text-xs font-bold"><span class="relative z-10">Pesquisar</span></button></div>`;
+        document.getElementById('content-browser-results').innerHTML='<p class="text-xs text-outline text-center py-10">Pesquise no histórico completo desta conversa.</p>';
+        setTimeout(()=>document.getElementById('conversation-search-input')?.focus(),40);
+    }
+
+    async function runConversationSearch() {
+        const q=(document.getElementById('conversation-search-input')?.value||'').trim(); if(q.length<2) return;
+        const box=document.getElementById('content-browser-results'); box.innerHTML='<p class="text-xs text-outline text-center py-8">Pesquisando...</p>';
+        let query=buildContentQuery().ilike('texto', `%${q.replace(/[%_]/g,'')}%`).order('id',{ascending:false}).limit(100);
+        const {data,error}=await query;
+        if(error){ box.innerHTML=`<p class="text-xs text-red-600">${escapeHtml(error.message)}</p>`; return; }
+        const rows=(data||[]).filter(m=>!String(m.texto||'').startsWith('__NUDGE__'));
+        if(!rows.length){ box.innerHTML='<p class="text-xs text-outline text-center py-10">Nenhuma mensagem encontrada.</p>'; return; }
+        box.innerHTML=`<div class="space-y-2">${rows.map(m=>{const name=escapeHtml(getMessageSenderName(m)); const plain=escapeHtml(String(m.texto||'').replace(/^\[(IMAGEM|VIDEO|AUDIO|ARQUIVO)\]:.*/s,'[Anexo]')); const time=new Date(m.created_at).toLocaleString('pt-BR'); return `<button type="button" onclick="jumpToMessageFromBrowser(${m.id})" class="content-result w-full text-left rounded-2xl p-3 hover:border-primary/40"><div class="flex justify-between gap-3"><span class="text-[11px] font-black text-primary">${name}</span><span class="text-[9px] text-outline">${time}</span></div><div class="text-xs text-on-surface mt-1 line-clamp-3">${plain}</div></button>`}).join('')}</div>`;
+    }
+
+    async function jumpToMessageFromBrowser(messageId) {
+        closeContentBrowser();
+        let target=document.querySelector(`[data-message-id="${messageId}"]`);
+        if(!target){ await loadMessageContext(messageId); target=document.querySelector(`[data-message-id="${messageId}"]`); }
+        if(target){ target.scrollIntoView({behavior:'smooth',block:'center'}); target.classList.add('search-highlight'); setTimeout(()=>target.classList.remove('search-highlight'),1900); }
+    }
+
+    async function loadMessageContext(messageId) {
+        const {data,error}=await buildContentQuery().lte('id',Number(messageId)+20).gte('id',Math.max(0,Number(messageId)-20)).order('id',{ascending:true}).limit(50);
+        if(error||!data?.length) return;
+        chatContainer.innerHTML=''; renderedMessageIds.clear();
+        data.forEach(m=>renderMessage(m,false,{suppressScroll:true})); applyConsecutiveMessageGrouping();
+        oldestLoadedMessageId=Math.min(...data.map(m=>Number(m.id))); hasMoreMessages=true;
+    }
+
+    async function openMediaGallery() {
+        if (!getCurrentConversationRoomKey()) return;
+        openContentBrowser('Mídia e arquivos', getCurrentConversationLabel());
+        document.getElementById('content-browser-controls').innerHTML=`<div class="flex flex-wrap gap-2"><button class="px-3 py-2 rounded-xl bg-primary/10 text-primary text-xs font-bold" onclick="loadMediaGallery('all')">Todos</button><button class="px-3 py-2 rounded-xl bg-white/60 text-xs font-bold" onclick="loadMediaGallery('image')">Imagens</button><button class="px-3 py-2 rounded-xl bg-white/60 text-xs font-bold" onclick="loadMediaGallery('video')">Vídeos</button><button class="px-3 py-2 rounded-xl bg-white/60 text-xs font-bold" onclick="loadMediaGallery('audio')">Áudios</button><button class="px-3 py-2 rounded-xl bg-white/60 text-xs font-bold" onclick="loadMediaGallery('file')">Arquivos</button></div>`;
+        await loadMediaGallery('all');
+    }
+
+    function mediaKind(text=''){ if(text.startsWith('[IMAGEM]:'))return'image'; if(text.startsWith('[VIDEO]:'))return'video'; if(text.startsWith('[AUDIO]:'))return'audio'; if(text.startsWith('[ARQUIVO]:'))return'file'; return null; }
+    async function loadMediaGallery(filter='all') {
+        const box=document.getElementById('content-browser-results'); box.innerHTML='<p class="text-xs text-outline text-center py-8">Carregando mídia...</p>';
+        const {data,error}=await buildContentQuery().or('texto.like.[IMAGEM]:%,texto.like.[VIDEO]:%,texto.like.[AUDIO]:%,texto.like.[ARQUIVO]:%').order('id',{ascending:false}).limit(200);
+        if(error){box.innerHTML=`<p class="text-xs text-red-600">${escapeHtml(error.message)}</p>`;return;}
+        const rows=(data||[]).filter(m=>filter==='all'||mediaKind(m.texto)===filter);
+        if(!rows.length){box.innerHTML='<p class="text-xs text-outline text-center py-10">Nenhum item nesta categoria.</p>';return;}
+        box.innerHTML=`<div class="media-grid">${rows.map(m=>renderMediaTile(m)).join('')}</div>`;
+    }
+    function renderMediaTile(m){ const kind=mediaKind(m.texto); const name=escapeHtml(getMessageSenderName(m)); const when=new Date(m.created_at).toLocaleDateString('pt-BR'); if(kind==='image'){const data=m.texto.slice(9);return `<button onclick="openImageModal('${data}')" class="content-result media-tile text-left"><img src="${data}"><div class="p-2 text-[10px]"><b>${name}</b> · ${when}</div></button>`;} if(kind==='video'){const data=m.texto.slice(8);return `<div class="content-result media-tile"><video controls preload="metadata" src="${data}"></video><div class="p-2 text-[10px]"><b>${name}</b> · ${when}</div></div>`;} if(kind==='audio'){const data=m.texto.slice(8);return `<div class="content-result media-tile p-3 flex flex-col justify-center"><span class="material-symbols-outlined text-3xl text-primary">audio_file</span><audio controls class="w-full mt-2" src="${data}"></audio><div class="mt-2 text-[10px]"><b>${name}</b> · ${when}</div></div>`;} const raw=m.texto.slice(10); const split=raw.indexOf('|'); const fn=escapeHtml(split>=0?raw.slice(0,split):'Arquivo'); const data=split>=0?raw.slice(split+1):''; return `<a href="${data}" download="${fn}" class="content-result media-tile p-3 flex flex-col justify-center"><span class="material-symbols-outlined text-4xl text-primary">description</span><div class="text-xs font-bold mt-2 truncate">${fn}</div><div class="text-[10px] text-outline mt-1">${name} · ${when}</div></a>`; }
+
+    async function openFavoritesPanel() {
+        openContentBrowser('Mensagens favoritas', 'Seus favoritos em todas as conversas');
+        document.getElementById('content-browser-controls').innerHTML='<p class="text-xs text-outline">Somente você vê esta lista.</p>';
+        const box=document.getElementById('content-browser-results'); box.innerHTML='<p class="text-xs text-outline text-center py-8">Carregando favoritos...</p>';
+        const {data,error}=await _supabase.rpc('get_my_favorite_messages');
+        if(error){box.innerHTML=`<p class="text-xs text-red-600">${escapeHtml(error.message)}</p>`;return;}
+        if(!(data||[]).length){box.innerHTML='<p class="text-xs text-outline text-center py-10">Você ainda não favoritou nenhuma mensagem.</p>';return;}
+        box.innerHTML=`<div class="space-y-2">${data.map(m=>`<div class="content-result rounded-2xl p-3"><div class="flex justify-between gap-3"><span class="text-[11px] font-black text-primary">${escapeHtml(m.sender_name||'Usuário')}</span><button onclick="removeFavoriteFromPanel(${m.message_id})" class="text-amber-600" title="Remover favorito"><span class="material-symbols-outlined text-base" style="font-variation-settings:'FILL' 1">star</span></button></div><div class="text-xs text-on-surface mt-1 line-clamp-4">${escapeHtml(String(m.message_text||'').replace(/^\[(IMAGEM|VIDEO|AUDIO|ARQUIVO)\]:.*/s,'[Anexo]'))}</div><div class="text-[9px] text-outline mt-2">${new Date(m.created_at).toLocaleString('pt-BR')}</div></div>`).join('')}</div>`;
+    }
+    async function removeFavoriteFromPanel(messageId){ await toggleMessageFavorite(messageId); await openFavoritesPanel(); }
+
+    // Carrega preferências assim que a sessão termina de inicializar.
+    const originalHideLoginScreen = hideLoginScreen;
+    hideLoginScreen = function(){ originalHideLoginScreen(); setTimeout(loadContentNavigationState, 50); };
+
+
+    document.getElementById("message-input").addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+    chatContainer.addEventListener('scroll', () => {
+        if (chatContainer.scrollTop < 70) loadOlderMessages();
+    }, { passive: true });
+
+    document.getElementById("message-input").addEventListener("paste", handleComposerPaste);
+
+    _supabase.auth.onAuthStateChange((event) => {
+        if (event === 'SIGNED_OUT') showLoginScreen();
+    });
+
+    window.addEventListener('DOMContentLoaded', checkSession);
+</script>
+</body>
+</html>
