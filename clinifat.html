@@ -266,7 +266,7 @@
   <header class="flex justify-between items-center px-6 py-4 w-full bg-surface-container-low border-b border-outline-variant sticky top-0 z-50">
     <div class="flex items-center gap-4 cursor-pointer" onclick="navegar('tela-inicio')">
       <span class="text-xl font-bold text-primary font-headline-md">CliniFat</span>
-      <span class="text-xs px-2 py-1 bg-surface-container-highest rounded text-on-surface-variant font-label-sm hidden sm:inline-block">CliniTool • v10.7</span>
+      <span class="text-xs px-2 py-1 bg-surface-container-highest rounded text-on-surface-variant font-label-sm hidden sm:inline-block">CliniTool • v10.7.1</span>
     </div>
 
     <!-- Controles de Colunas (Tela Contador) -->
@@ -798,6 +798,21 @@
     let nomeArquivoPdfSemExtensao = "";
 
     let colunasAtuais = parseInt(localStorage.getItem('pref_colunas')) || 10;
+
+    // Preferência visual do contador: quantidade de colunas
+    function aplicarColunas(qtd) {
+      colunasAtuais = Math.min(Math.max(Number(qtd) || 10, 2), 15);
+      document.documentElement.style.setProperty('--qtd-colunas', colunasAtuais);
+
+      const lbl = document.getElementById('lbl-colunas');
+      if (lbl) lbl.innerText = colunasAtuais;
+
+      localStorage.setItem('pref_colunas', colunasAtuais);
+    }
+
+    function alterarColunas(delta) {
+      aplicarColunas(colunasAtuais + delta);
+    }
 
     function normalizeUsername(value) {
       return String(value || '').trim().toLowerCase().normalize('NFD')
