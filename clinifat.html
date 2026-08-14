@@ -352,7 +352,7 @@
   <header class="flex justify-between items-center px-6 py-4 w-full bg-surface-container-low border-b border-outline-variant sticky top-0 z-50">
     <div class="flex items-center gap-4 cursor-pointer" onclick="navegar('tela-inicio')">
       <span class="text-xl font-bold text-primary font-headline-md">CliniFat</span>
-      <span class="text-xs px-2 py-1 bg-surface-container-highest rounded text-on-surface-variant font-label-sm hidden sm:inline-block">CliniTool • v11.2</span>
+      <span class="text-xs px-2 py-1 bg-surface-container-highest rounded text-on-surface-variant font-label-sm hidden sm:inline-block">CliniTool • v12.0</span>
     </div>
 
     <!-- Controles de Colunas (Tela Contador) -->
@@ -587,130 +587,63 @@
           </div>
         </details>
 
-        <!-- CALIBRAÇÃO DE GUIAS -->
+        <!-- GUIDECHECK V2 — CONFIGURAÇÃO -->
         <details class="bg-surface-container rounded-2xl border border-outline-variant overflow-hidden">
           <summary class="cursor-pointer select-none p-5 bg-surface-container-high hover:bg-surface-container-highest flex items-center justify-between gap-3">
-            <div>
-              <h3 class="text-lg font-bold text-primary">Calibração de Guias</h3>
-              <p class="text-xs text-on-surface-variant mt-1">Ensine ao GuideCheck onde cada campo fica no layout do convênio.</p>
-            </div>
+            <div><h3 class="text-lg font-bold text-primary">GuideCheck — Configuração</h3>
+            <p class="text-xs text-on-surface-variant mt-1">Crie convênios, especialidades e campos sem alterar o código.</p></div>
             <span class="material-symbols-outlined text-outline">expand_more</span>
           </summary>
+          <div class="p-6 flex flex-col gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div class="border border-outline-variant rounded-xl p-4 bg-surface-container-high">
+                <h4 class="font-bold text-secondary mb-3">Convênios</h4>
+                <div class="flex gap-2 mb-3"><input id="gcv-nome" class="sa-input" placeholder="Novo convênio"><button onclick="gcvCriarConvenio()" class="h-11 px-4 rounded-xl bg-secondary text-on-secondary font-bold">Adicionar</button></div>
+                <div id="gcv-convenios-list" class="cf-list"></div>
+              </div>
+              <div class="border border-outline-variant rounded-xl p-4 bg-surface-container-high">
+                <h4 class="font-bold text-primary mb-3">Especialidades</h4>
+                <select id="gcv-esp-convenio" class="sa-input mb-2"></select>
+                <div class="flex gap-2 mb-3"><input id="gcv-esp-nome" class="sa-input" placeholder="Nova especialidade"><button onclick="gcvCriarEspecialidade()" class="h-11 px-4 rounded-xl bg-primary-container text-on-primary-container font-bold">Adicionar</button></div>
+                <div id="gcv-especialidades-list" class="cf-list"></div>
+              </div>
+            </div>
+            <div class="border border-outline-variant rounded-xl p-4 bg-surface-container-high">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4"><select id="gcv-campo-convenio" class="sa-input" onchange="gcvAtualizarEspecialidadesCampos()"></select><select id="gcv-campo-especialidade" class="sa-input" onchange="gcvCarregarCampos()"></select></div>
+              <div class="grid grid-cols-1 md:grid-cols-12 gap-2 mb-4">
+                <input id="gcv-campo-numero" class="sa-input md:col-span-1" inputmode="numeric" placeholder="Nº">
+                <input id="gcv-campo-nome" class="sa-input md:col-span-3" placeholder="Nome do campo">
+                <select id="gcv-campo-tipo" class="sa-input md:col-span-2"><option value="fixo">Valor fixo</option><option value="profissional">Profissional</option><option value="texto">Texto / referência</option><option value="manual">Manual</option></select>
+                <input id="gcv-campo-valor" class="sa-input md:col-span-3" placeholder="Valor esperado">
+                <input id="gcv-campo-obs" class="sa-input md:col-span-2" placeholder="Observação">
+                <button onclick="gcvSalvarCampo()" class="h-11 rounded-xl bg-tertiary-container text-on-tertiary-container font-bold"><span class="material-symbols-outlined">save</span></button>
+              </div>
+              <div id="gcv-campos-list" class="cf-list"></div>
+            </div>
+          </div>
+        </details>
 
+        <details class="bg-surface-container rounded-2xl border border-outline-variant overflow-hidden">
+          <summary class="cursor-pointer select-none p-5 bg-surface-container-high hover:bg-surface-container-highest flex items-center justify-between gap-3">
+            <div><h3 class="text-lg font-bold text-primary">Calibração de Guias</h3><p class="text-xs text-on-surface-variant mt-1">Convênio → Especialidade → Campo → área da guia.</p></div>
+            <span class="material-symbols-outlined text-outline">expand_more</span>
+          </summary>
           <div class="p-6 flex flex-col gap-5">
             <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
-              <div class="md:col-span-4">
-                <label class="sa-label">Perfil</label>
-                <select id="cal-profile-select" class="sa-input" onchange="calibracaoSelecionarPerfil()">
-                  <option value="">Selecione...</option>
-                </select>
-              </div>
-
-              <div class="md:col-span-4">
-                <label class="sa-label">Layout</label>
-                <select id="cal-layout-select" class="sa-input" onchange="calibracaoSelecionarLayout()">
-                  <option value="">Selecione...</option>
-                </select>
-              </div>
-
-              <div class="md:col-span-3">
-                <label class="sa-label">Novo layout</label>
-                <input id="cal-layout-name" class="sa-input" placeholder="Ex.: SulAmérica Padrão 2026">
-              </div>
-
-              <div class="md:col-span-1 flex items-end">
-                <button onclick="criarLayoutCalibracao()" class="w-full h-11 rounded-xl bg-secondary text-on-secondary font-bold" title="Criar layout">
-                  <span class="material-symbols-outlined">add</span>
-                </button>
-              </div>
+              <div class="md:col-span-4"><label class="sa-label">Convênio</label><select id="cal2-convenio" class="sa-input" onchange="cal2SelecionarConvenio()"></select></div>
+              <div class="md:col-span-4"><label class="sa-label">Especialidade</label><select id="cal2-especialidade" class="sa-input" onchange="cal2SelecionarEspecialidade()"></select></div>
+              <div class="md:col-span-4 flex items-end"><label class="w-full px-5 h-11 bg-primary-container text-on-primary-container rounded-xl font-bold cursor-pointer flex items-center justify-center gap-2"><span class="material-symbols-outlined text-sm">upload_file</span>Guia modelo<input type="file" id="cal2-pdf-input" accept="application/pdf" class="hidden" onchange="cal2CarregarPDF(event)"></label></div>
             </div>
-
-            <div id="cal-layout-actions" class="hidden flex flex-wrap gap-3">
-              <label class="px-5 py-2.5 bg-primary-container text-on-primary-container rounded-xl font-bold cursor-pointer flex items-center gap-2">
-                <span class="material-symbols-outlined text-sm">upload_file</span>
-                Guia modelo
-                <input type="file" id="cal-pdf-input" accept="application/pdf" class="hidden" onchange="carregarPDFCalibracao(event)">
-              </label>
-              <button onclick="excluirLayoutCalibracao()" class="px-4 py-2.5 border border-error text-error rounded-xl font-bold">
-                Excluir layout
-              </button>
-              <span id="cal-status" class="text-xs font-label-sm text-on-surface-variant flex items-center"></span>
-            </div>
-
-            <div id="cal-editor" class="hidden grid grid-cols-1 xl:grid-cols-12 gap-5">
-              <aside class="xl:col-span-3 bg-surface-container-high border border-outline-variant rounded-2xl overflow-hidden">
-                <div class="p-4 border-b border-outline-variant">
-                  <div class="font-bold">Campos do perfil</div>
-                  <div class="text-[10px] text-on-surface-variant font-label-sm mt-1">Clique no campo e desenhe sua área na guia.</div>
-                </div>
-                <div id="cal-fields-list" class="p-2 flex flex-col gap-2 max-h-[680px] overflow-y-auto"></div>
-              </aside>
-
+            <div id="cal2-editor" class="hidden grid grid-cols-1 xl:grid-cols-12 gap-5">
+              <aside class="xl:col-span-3 bg-surface-container-high border border-outline-variant rounded-2xl overflow-hidden"><div class="p-4 border-b border-outline-variant"><div class="font-bold">Campos</div><div class="text-[10px] text-on-surface-variant mt-1">Selecione e desenhe a área.</div></div><div id="cal2-fields-list" class="p-2 flex flex-col gap-2 max-h-[680px] overflow-y-auto"></div></aside>
               <section class="xl:col-span-7 bg-surface-container-lowest border border-outline-variant rounded-2xl overflow-hidden">
-                <div class="p-4 border-b border-outline-variant flex items-center justify-between gap-3">
-                  <div>
-                    <div class="font-bold">Guia modelo</div>
-                    <div id="cal-page-info" class="text-[10px] text-on-surface-variant font-label-sm">Nenhum PDF carregado</div>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <button onclick="navegarPaginaCalibracao(-1)" class="h-9 px-3 rounded-lg bg-surface-container-high border border-outline-variant">‹</button>
-                    <button onclick="navegarPaginaCalibracao(1)" class="h-9 px-3 rounded-lg bg-surface-container-high border border-outline-variant">›</button>
-                  </div>
-                </div>
-
-                <div class="p-4 overflow-auto min-h-[680px] flex justify-center items-start">
-                  <div id="cal-stage" class="gc-calibration-stage">
-                    <canvas id="cal-canvas"></canvas>
-                    <div id="cal-overlay" class="gc-calibration-overlay"></div>
-                  </div>
-                </div>
+                <div class="p-4 border-b border-outline-variant flex items-center justify-between"><div><div class="font-bold">Guia modelo</div><div id="cal2-page-info" class="text-[10px] text-on-surface-variant">Nenhum PDF carregado</div></div><div class="flex gap-2"><button onclick="cal2NavegarPagina(-1)" class="h-9 px-3 rounded-lg bg-surface-container-high border border-outline-variant">‹</button><button onclick="cal2NavegarPagina(1)" class="h-9 px-3 rounded-lg bg-surface-container-high border border-outline-variant">›</button></div></div>
+                <div class="p-4 overflow-auto min-h-[680px] flex justify-center items-start"><div id="cal2-stage" class="gc-calibration-stage"><canvas id="cal2-canvas"></canvas><div id="cal2-overlay" class="gc-calibration-overlay"></div></div></div>
               </section>
-
-              <aside class="xl:col-span-2 bg-surface-container-high border border-outline-variant rounded-2xl overflow-hidden">
-                <div class="p-4 border-b border-outline-variant">
-                  <div class="font-bold">Área selecionada</div>
-                </div>
-                <div class="p-4 flex flex-col gap-4">
-                  <div class="p-3 rounded-xl bg-surface-container border border-outline-variant">
-                    <div class="text-[10px] uppercase text-outline font-label-sm">Campo</div>
-                    <div id="cal-selected-field-label" class="text-sm font-bold mt-1">Selecione um campo</div>
-                  </div>
-
-                  <div id="cal-draft-info" class="text-xs text-on-surface-variant">
-                    Desenhe um retângulo sobre o valor do campo na guia.
-                  </div>
-
-                  <button id="cal-save-zone-btn" onclick="salvarZonaCalibracao()" disabled class="h-11 rounded-xl bg-secondary text-on-secondary font-bold disabled:opacity-40">
-                    Salvar área
-                  </button>
-
-                  <button id="cal-delete-zone-btn" onclick="excluirZonaCalibracao()" disabled class="h-11 rounded-xl border border-error text-error font-bold disabled:opacity-40">
-                    Remover área
-                  </button>
-                </div>
-              </aside>
+              <aside class="xl:col-span-2 bg-surface-container-high border border-outline-variant rounded-2xl overflow-hidden"><div class="p-4 border-b border-outline-variant"><div class="font-bold">Área</div></div><div class="p-4 flex flex-col gap-4"><div class="p-3 rounded-xl bg-surface-container border border-outline-variant"><div class="text-[10px] uppercase text-outline">Campo</div><div id="cal2-selected-label" class="text-sm font-bold mt-1">Selecione um campo</div></div><button id="cal2-save-btn" onclick="cal2SalvarZona()" disabled class="h-11 rounded-xl bg-secondary text-on-secondary font-bold disabled:opacity-40">Salvar área</button><button id="cal2-delete-btn" onclick="cal2ExcluirZona()" disabled class="h-11 rounded-xl border border-error text-error font-bold disabled:opacity-40">Remover área</button></div></aside>
             </div>
           </div>
         </details>
-
-        <!-- REGRAS DO GUIDECHECK -->
-        <details class="bg-surface-container rounded-2xl border border-outline-variant overflow-hidden">
-          <summary class="cursor-pointer select-none p-5 bg-surface-container-high hover:bg-surface-container-highest flex items-center justify-between gap-3">
-            <div>
-              <h3 class="text-lg font-bold text-secondary">GuideCheck — Regras</h3>
-              <p class="text-xs text-on-surface-variant mt-1">Campos fixos e referências utilizadas na conferência.</p>
-            </div>
-            <span class="material-symbols-outlined text-outline">expand_more</span>
-          </summary>
-
-          <div class="p-6">
-            <div class="mb-4">
-              <span class="px-3 py-1.5 rounded-lg border border-outline-variant bg-surface-container-high text-xs font-label-sm text-primary">SulAmérica • Consulta</span>
-            </div>
-            <div id="cfg-guidecheck-fields" class="cf-list"></div>
-          </div>
-        </details>
-
       </div>
     </div>
 
@@ -747,38 +680,13 @@
 
         <!-- Passo 1 -->
         <section id="gc-configuracao" class="bg-surface-container p-6 rounded-2xl border border-outline-variant flex flex-col gap-5">
-          <div>
-            <h3 class="text-lg font-bold text-secondary font-headline-md">1. Selecione o tipo de guia</h3>
-            <p class="text-xs text-on-surface-variant mt-1">Cada combinação poderá ter regras e zonas de OCR próprias.</p>
+          <div><h3 class="text-lg font-bold text-secondary">1. Selecione convênio e especialidade</h3><p class="text-xs text-on-surface-variant mt-1">O GuideCheck carregará campos, regras e calibração cadastrados.</p></div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-3xl">
+            <div><label class="sa-label">Convênio</label><select id="gc2-convenio" class="sa-input" onchange="gc2SelecionarConvenio()"></select></div>
+            <div><label class="sa-label">Especialidade</label><select id="gc2-especialidade" class="sa-input" onchange="gc2SelecionarEspecialidade()"></select></div>
           </div>
-
-          <div>
-            <label class="sa-label">Convênio</label>
-            <div id="gc-grid-convenios" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"></div>
-          </div>
-
-          <div id="gc-modalidade-box" class="hidden">
-            <label class="sa-label">Modalidade</label>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl">
-              <button onclick="selecionarGuideCheckModalidade('consulta')" id="gc-btn-consulta" class="cf-module-card min-h-[145px]" style="--cf-accent:#a9c7ff;--cf-glow:rgba(77,150,255,.14)">
-                <span class="cf-module-icon"><span class="material-symbols-outlined">medical_services</span></span>
-                <span class="cf-module-title">Consulta</span>
-                <span class="cf-module-desc">Guias de atendimento médico.</span>
-              </button>
-              <button onclick="selecionarGuideCheckModalidade('sadt')" id="gc-btn-sadt" class="cf-module-card min-h-[145px]" style="--cf-accent:#ffb873;--cf-glow:rgba(255,184,115,.14)">
-                <span class="cf-module-icon"><span class="material-symbols-outlined">psychology</span></span>
-                <span class="cf-module-title">SADT</span>
-                <span class="cf-module-desc">Guias de procedimentos e terapias.</span>
-              </button>
-            </div>
-          </div>
-
-          <div id="gc-selecao-resumo" class="hidden p-4 rounded-xl border border-secondary bg-secondary/10 text-sm">
-            <span class="text-secondary font-bold">Perfil selecionado:</span>
-            <span id="gc-selecao-texto" class="font-bold text-on-surface"></span>
-          </div>
+          <div id="gc-selecao-resumo" class="hidden p-4 rounded-xl border border-secondary bg-secondary/10 text-sm"><span class="text-secondary font-bold">Configuração:</span> <span id="gc-selecao-texto" class="font-bold"></span></div>
         </section>
-
         <!-- Passo 2 -->
         <section id="gc-upload-section" class="hidden bg-surface-container p-6 rounded-2xl border border-outline-variant">
           <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
@@ -1170,6 +1078,65 @@
   <div id="comprovante-print"></div>
 
   <script>
+
+    // ===== GuideCheck v2 =====
+    let gcvConvenios=[],gcvEspecialidades=[],gcvCampos=[],gcvEditandoCampoId=null;
+    function gcOpts(a,p='Selecione...'){return `<option value="">${p}</option>`+a.map(x=>`<option value="${x.id}">${escapeHtmlCF(x.nome)}</option>`).join('')}
+    async function gcvCarregarBase(){
+      const [c,e]=await Promise.all([_supabase.from('guidecheck_convenios').select('*').eq('ativo',true).order('ordem').order('nome'),_supabase.from('guidecheck_especialidades').select('*').eq('ativo',true).order('ordem').order('nome')]);
+      if(c.error)throw c.error;if(e.error)throw e.error;gcvConvenios=c.data||[];gcvEspecialidades=e.data||[];
+      const cl=document.getElementById('gcv-convenios-list'),el=document.getElementById('gcv-especialidades-list');
+      if(cl)cl.innerHTML=gcvConvenios.map(x=>`<div class="cf-list-row"><div class="flex-1 font-bold text-sm">${escapeHtmlCF(x.nome)}</div>${isClinifatMaster?`<button onclick="gcvExcluirConvenio(${x.id},'${escapeJsCF(x.nome)}')" class="p-2 text-error"><span class="material-symbols-outlined text-sm">delete</span></button>`:''}</div>`).join('');
+      if(el)el.innerHTML=gcvEspecialidades.map(x=>`<div class="cf-list-row"><div class="flex-1"><div class="font-bold text-sm">${escapeHtmlCF(x.nome)}</div><div class="text-[10px] text-outline">${escapeHtmlCF(gcvConvenios.find(c=>c.id===x.convenio_id)?.nome||'')}</div></div>${isClinifatMaster?`<button onclick="gcvExcluirEspecialidade(${x.id},'${escapeJsCF(x.nome)}')" class="p-2 text-error"><span class="material-symbols-outlined text-sm">delete</span></button>`:''}</div>`).join('');
+      ['gcv-esp-convenio','gcv-campo-convenio','cal2-convenio','gc2-convenio'].forEach(id=>{const q=document.getElementById(id);if(q)q.innerHTML=gcOpts(gcvConvenios)});
+      gcvAtualizarEspecialidadesCampos();cal2RenderSeletores();gc2RenderSeletores();
+    }
+    async function gcvCriarConvenio(){const i=document.getElementById('gcv-nome'),nome=i.value.trim();if(!nome)return;const{error}=await _supabase.from('guidecheck_convenios').insert({nome});if(error)return alert(error.message);i.value='';await gcvCarregarBase()}
+    async function gcvExcluirConvenio(id,n){if(!confirm(`Excluir "${n}" e toda sua configuração?`))return;const{error}=await _supabase.from('guidecheck_convenios').delete().eq('id',id);if(error)return alert(error.message);await gcvCarregarBase()}
+    async function gcvCriarEspecialidade(){const convenio_id=Number(document.getElementById('gcv-esp-convenio').value),i=document.getElementById('gcv-esp-nome'),nome=i.value.trim();if(!convenio_id||!nome)return;const{error}=await _supabase.from('guidecheck_especialidades').insert({convenio_id,nome});if(error)return alert(error.message);i.value='';await gcvCarregarBase()}
+    async function gcvExcluirEspecialidade(id,n){if(!confirm(`Excluir "${n}" e seus campos?`))return;const{error}=await _supabase.from('guidecheck_especialidades').delete().eq('id',id);if(error)return alert(error.message);await gcvCarregarBase()}
+    function gcvAtualizarEspecialidadesCampos(){const cid=Number(document.getElementById('gcv-campo-convenio')?.value)||0,e=document.getElementById('gcv-campo-especialidade');if(e)e.innerHTML=gcOpts(gcvEspecialidades.filter(x=>!cid||x.convenio_id===cid));gcvCarregarCampos()}
+    async function gcvCarregarCampos(){const eid=Number(document.getElementById('gcv-campo-especialidade')?.value)||0,b=document.getElementById('gcv-campos-list');if(!b)return;if(!eid){b.innerHTML='<div class="cf-list-empty">Selecione uma especialidade.</div>';return}const{data,error}=await _supabase.from('guidecheck_campos').select('*').eq('especialidade_id',eid).eq('ativo',true).order('ordem').order('numero_campo');if(error)return alert(error.message);gcvCampos=data||[];b.innerHTML=gcvCampos.map(f=>`<div class="cf-list-row"><div class="w-9 h-9 border border-outline-variant rounded-lg flex items-center justify-center font-bold text-primary">${f.numero_campo??'—'}</div><div class="flex-1"><div class="font-bold text-sm">${escapeHtmlCF(f.nome_campo)}</div><div class="text-[10px] text-outline">${escapeHtmlCF(f.tipo_regra)}${f.valor_esperado?' • '+escapeHtmlCF(f.valor_esperado):''}</div></div><button onclick="gcvEditarCampo(${f.id})" class="p-2 text-primary"><span class="material-symbols-outlined text-sm">edit</span></button><button onclick="gcvExcluirCampo(${f.id})" class="p-2 text-error"><span class="material-symbols-outlined text-sm">delete</span></button></div>`).join('')}
+    function gcvEditarCampo(id){const f=gcvCampos.find(x=>x.id===id);if(!f)return;gcvEditandoCampoId=id;document.getElementById('gcv-campo-numero').value=f.numero_campo??'';document.getElementById('gcv-campo-nome').value=f.nome_campo||'';document.getElementById('gcv-campo-tipo').value=f.tipo_regra;document.getElementById('gcv-campo-valor').value=f.valor_esperado||'';document.getElementById('gcv-campo-obs').value=f.observacao||''}
+    async function gcvSalvarCampo(){const especialidade_id=Number(document.getElementById('gcv-campo-especialidade').value);if(!especialidade_id)return alert('Selecione a especialidade.');const n=document.getElementById('gcv-campo-numero').value.trim(),p={especialidade_id,numero_campo:n?Number(n):null,nome_campo:document.getElementById('gcv-campo-nome').value.trim(),tipo_regra:document.getElementById('gcv-campo-tipo').value,valor_esperado:document.getElementById('gcv-campo-valor').value.trim()||null,observacao:document.getElementById('gcv-campo-obs').value.trim()||null};if(!p.nome_campo)return;const q=gcvEditandoCampoId?_supabase.from('guidecheck_campos').update(p).eq('id',gcvEditandoCampoId):_supabase.from('guidecheck_campos').insert(p);const{error}=await q;if(error)return alert(error.message);gcvEditandoCampoId=null;['gcv-campo-numero','gcv-campo-nome','gcv-campo-valor','gcv-campo-obs'].forEach(id=>document.getElementById(id).value='');await gcvCarregarCampos();await cal2SelecionarEspecialidade()}
+    async function gcvExcluirCampo(id){if(!confirm('Excluir campo e calibração?'))return;const{error}=await _supabase.from('guidecheck_campos').delete().eq('id',id);if(error)return alert(error.message);await gcvCarregarCampos();await cal2SelecionarEspecialidade()}
+
+    let cal2ConvenioId=0,cal2EspecialidadeId=0,cal2Campos=[],cal2Zonas=[],cal2CampoId=0,cal2Pdf=null,cal2Page=1,cal2Draft=null,cal2Drawing=false,cal2SX=0,cal2SY=0;
+    function cal2RenderSeletores(){const c=document.getElementById('cal2-convenio');if(c)c.innerHTML=gcOpts(gcvConvenios)}
+    function cal2SelecionarConvenio(){cal2ConvenioId=Number(document.getElementById('cal2-convenio').value)||0;document.getElementById('cal2-especialidade').innerHTML=gcOpts(gcvEspecialidades.filter(x=>x.convenio_id===cal2ConvenioId));document.getElementById('cal2-editor').classList.add('hidden')}
+    async function cal2SelecionarEspecialidade(){cal2EspecialidadeId=Number(document.getElementById('cal2-especialidade')?.value)||0;if(!cal2EspecialidadeId)return;const[f,z]=await Promise.all([_supabase.from('guidecheck_campos').select('*').eq('especialidade_id',cal2EspecialidadeId).eq('ativo',true).order('ordem').order('numero_campo'),_supabase.from('guidecheck_calibracoes').select('*,guidecheck_campos!inner(especialidade_id)').eq('guidecheck_campos.especialidade_id',cal2EspecialidadeId).eq('ativo',true)]);if(f.error||z.error)return alert((f.error||z.error).message);cal2Campos=f.data||[];cal2Zonas=z.data||[];cal2CampoId=0;cal2RenderCampos();if(cal2Pdf)document.getElementById('cal2-editor').classList.remove('hidden')}
+    function cal2RenderCampos(){const b=document.getElementById('cal2-fields-list');if(!b)return;b.innerHTML=cal2Campos.map(f=>{const zon=cal2Zonas.some(z=>z.campo_id===f.id),sel=cal2CampoId===f.id;return `<button onclick="cal2SelecionarCampo(${f.id})" class="w-full p-3 rounded-xl border text-left flex gap-3 ${sel?'border-primary bg-primary/10':zon?'border-secondary bg-secondary/10':'border-outline-variant bg-surface-container'}"><div class="w-9 h-9 border border-outline-variant rounded-lg flex items-center justify-center font-bold">${f.numero_campo??'—'}</div><div class="flex-1"><div class="font-bold text-xs">${escapeHtmlCF(f.nome_campo)}</div><div class="text-[10px] ${zon?'text-secondary':'text-outline'}">${zon?'Calibrado':'Não calibrado'}</div></div></button>`}).join('')}
+    function cal2SelecionarCampo(id){cal2CampoId=id;cal2Draft=null;const f=cal2Campos.find(x=>x.id===id);document.getElementById('cal2-selected-label').textContent=f?`${f.numero_campo??'—'} — ${f.nome_campo}`:'Campo';cal2RenderCampos();cal2Desenhar();cal2Btns()}
+    async function cal2CarregarPDF(e){const file=e.target.files?.[0];if(!file||!cal2EspecialidadeId)return alert('Selecione convênio e especialidade.');cal2Pdf=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;cal2Page=1;document.getElementById('cal2-editor').classList.remove('hidden');await cal2RenderPage()}
+    async function cal2NavegarPagina(d){if(!cal2Pdf)return;const n=cal2Page+d;if(n<1||n>cal2Pdf.numPages)return;cal2Page=n;cal2Draft=null;await cal2RenderPage()}
+    async function cal2RenderPage(){const p=await cal2Pdf.getPage(cal2Page),c=document.getElementById('cal2-canvas'),s=document.getElementById('cal2-stage'),base=p.getViewport({scale:1}),w=Math.min(900,Math.max(520,s.parentElement.clientWidth-40)),vp=p.getViewport({scale:w/base.width});c.width=vp.width;c.height=vp.height;const o=document.getElementById('cal2-overlay');o.style.width=`${vp.width}px`;o.style.height=`${vp.height}px`;await p.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;document.getElementById('cal2-page-info').textContent=`Página ${cal2Page} / ${cal2Pdf.numPages}`;cal2Desenhar()}
+    function cal2Desenhar(){const o=document.getElementById('cal2-overlay');if(!o)return;o.innerHTML='';cal2Zonas.filter(z=>z.pagina===cal2Page).forEach(z=>{const f=cal2Campos.find(x=>x.id===z.campo_id),d=document.createElement('div');d.className='gc-zone'+(z.campo_id===cal2CampoId?' is-selected':'');d.style.cssText=`left:${z.x_ratio*100}%;top:${z.y_ratio*100}%;width:${z.w_ratio*100}%;height:${z.h_ratio*100}%`;d.innerHTML=`<span class="gc-zone-label">${f?escapeHtmlCF(f.nome_campo):'Campo'}</span>`;o.appendChild(d)});if(cal2Draft){const d=document.createElement('div');d.className='gc-draft-zone';d.style.cssText=`left:${cal2Draft.x*100}%;top:${cal2Draft.y*100}%;width:${cal2Draft.w*100}%;height:${cal2Draft.h*100}%`;o.appendChild(d)}}
+    function cal2Pos(e){const r=document.getElementById('cal2-overlay').getBoundingClientRect();return{x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))}}
+    function cal2Down(e){if(!cal2Pdf||!cal2CampoId)return;e.preventDefault();const p=cal2Pos(e);cal2Drawing=true;cal2SX=p.x;cal2SY=p.y;cal2Draft={x:p.x,y:p.y,w:0,h:0,pagina:cal2Page}}
+    function cal2Move(e){if(!cal2Drawing)return;e.preventDefault();const p=cal2Pos(e);cal2Draft={x:Math.min(cal2SX,p.x),y:Math.min(cal2SY,p.y),w:Math.abs(p.x-cal2SX),h:Math.abs(p.y-cal2SY),pagina:cal2Page};cal2Desenhar();cal2Btns()}
+    function cal2Up(e){if(!cal2Drawing)return;e.preventDefault();cal2Drawing=false;if(cal2Draft&&(cal2Draft.w<.005||cal2Draft.h<.005))cal2Draft=null;cal2Desenhar();cal2Btns()}
+    async function cal2SalvarZona(){if(!cal2CampoId||!cal2Draft)return;const p={campo_id:cal2CampoId,pagina:cal2Draft.pagina,x_ratio:cal2Draft.x,y_ratio:cal2Draft.y,w_ratio:cal2Draft.w,h_ratio:cal2Draft.h,ativo:true},{error}=await _supabase.from('guidecheck_calibracoes').upsert(p,{onConflict:'campo_id,pagina'});if(error)return alert(error.message);cal2Draft=null;await cal2SelecionarEspecialidade();cal2Desenhar();cal2Btns()}
+    async function cal2ExcluirZona(){const z=cal2Zonas.find(z=>z.campo_id===cal2CampoId&&z.pagina===cal2Page);if(!z)return;const{error}=await _supabase.from('guidecheck_calibracoes').delete().eq('id',z.id);if(error)return alert(error.message);await cal2SelecionarEspecialidade();cal2Desenhar();cal2Btns()}
+    function cal2Btns(){const s=document.getElementById('cal2-save-btn'),d=document.getElementById('cal2-delete-btn');if(s)s.disabled=!(cal2CampoId&&cal2Draft);if(d)d.disabled=!cal2Zonas.some(z=>z.campo_id===cal2CampoId&&z.pagina===cal2Page)}
+
+    let gc2ConvenioId=0,gc2EspecialidadeId=0,gc2Campos=[],gc2Calibracoes=[];
+    function gc2RenderSeletores(){const c=document.getElementById('gc2-convenio');if(c)c.innerHTML=gcOpts(gcvConvenios);const e=document.getElementById('gc2-especialidade');if(e)e.innerHTML=gcOpts([])}
+    function abrirConferenciaGuia(){reiniciarGuideCheck(false);navegar('tela-guidecheck');gc2RenderSeletores()}
+    function gc2SelecionarConvenio(){gc2ConvenioId=Number(document.getElementById('gc2-convenio').value)||0;document.getElementById('gc2-especialidade').innerHTML=gcOpts(gcvEspecialidades.filter(x=>x.convenio_id===gc2ConvenioId));document.getElementById('gc-upload-section').classList.add('hidden')}
+    async function gc2SelecionarEspecialidade(){gc2EspecialidadeId=Number(document.getElementById('gc2-especialidade').value)||0;if(!gc2EspecialidadeId)return;const[f,z]=await Promise.all([_supabase.from('guidecheck_campos').select('*').eq('especialidade_id',gc2EspecialidadeId).eq('ativo',true).order('ordem').order('numero_campo'),_supabase.from('guidecheck_calibracoes').select('*,guidecheck_campos!inner(especialidade_id)').eq('guidecheck_campos.especialidade_id',gc2EspecialidadeId).eq('ativo',true)]);if(f.error||z.error)return alert((f.error||z.error).message);gc2Campos=f.data||[];gc2Calibracoes=z.data||[];const c=gcvConvenios.find(x=>x.id===gc2ConvenioId),e=gcvEspecialidades.find(x=>x.id===gc2EspecialidadeId);document.getElementById('gc-selecao-texto').textContent=`${c?.nome||''} • ${e?.nome||''}`;document.getElementById('gc-selecao-resumo').classList.remove('hidden');document.getElementById('gc-upload-section').classList.remove('hidden');document.getElementById('gc-perfil-lateral').textContent=`${c?.nome||''} • ${e?.nome||''}`;guideCheckConvenio=c?.nome||'Configurado';guideCheckModalidade=e?.nome||'Especialidade';atualizarEtapasGuideCheck(2)}
+    function gcNorm(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim().toUpperCase()}
+    async function gc2ConferirPagina(n){const p=await guideCheckPdfDoc.getPage(n),tc=await p.getTextContent(),vp=p.getViewport({scale:1}),rs=[];for(const f of gc2Campos){const z=gc2Calibracoes.find(q=>q.campo_id===f.id&&q.pagina===n);if(!z){rs.push({campo:f,lido:'',status:'sem_calibracao'});continue}const x0=z.x_ratio*vp.width,x1=(z.x_ratio+z.w_ratio)*vp.width,yt=z.y_ratio*vp.height,yb=(z.y_ratio+z.h_ratio)*vp.height,parts=tc.items.filter(it=>{const x=it.transform[4],top=vp.height-it.transform[5];return x>=x0&&x<=x1&&top>=yt&&top<=yb}).map(it=>it.str),lido=parts.join(' ').replace(/\s+/g,' ').trim();let status=lido?'lido':'sem_texto';if(lido&&f.tipo_regra==='fixo')status=gcNorm(lido).includes(gcNorm(f.valor_esperado))?'ok':'erro';rs.push({campo:f,lido,status})}const item=guideCheckPaginas[guideCheckPaginaAtual];item.resultados=rs;item.status=rs.some(r=>r.status==='erro')?'pendencia':rs.some(r=>['sem_texto','sem_calibracao'].includes(r.status))?'em_analise':'ok';renderizarFilaGuideCheck();document.getElementById('gc-status-pagina').value=item.status;gc2RenderResultados(rs)}
+    function gc2RenderResultados(rs){let b=document.getElementById('gc2-resultados');if(!b){b=document.createElement('div');b.id='gc2-resultados';b.className='flex flex-col gap-2';document.querySelector('#gc-workspace aside:last-child .p-4.flex.flex-col.gap-4').prepend(b)}const m={ok:['✓','text-secondary'],erro:['✕','text-error'],lido:['•','text-primary'],sem_texto:['?','text-tertiary'],sem_calibracao:['—','text-outline']};b.innerHTML=rs.map(r=>`<div class="p-3 rounded-xl border border-outline-variant bg-surface-container-high"><div class="flex justify-between gap-2"><div class="font-bold text-xs">${r.campo.numero_campo??'—'} — ${escapeHtmlCF(r.campo.nome_campo)}</div><span class="${m[r.status][1]} font-bold">${m[r.status][0]}</span></div><div class="text-[10px] text-on-surface-variant mt-1">Lido: ${escapeHtmlCF(r.lido||'(sem texto extraível)')}</div>${r.campo.valor_esperado?`<div class="text-[10px] text-outline">Esperado: ${escapeHtmlCF(r.campo.valor_esperado)}</div>`:''}</div>`).join('')}
+
+    // Overrides para a Configuração v12
+    const _renderizarConfiguracoesLegado = renderizarConfiguracoes;
+    renderizarConfiguracoes = async function(){
+      await _renderizarConfiguracoesLegado();
+      await gcvCarregarBase();
+    };
+
+    setTimeout(()=>{const o=document.getElementById('cal2-overlay');if(o){o.addEventListener('pointerdown',cal2Down);o.addEventListener('pointermove',cal2Move);o.addEventListener('pointerup',cal2Up);o.addEventListener('pointercancel',cal2Up)}},0);
+
     // Inicialização da biblioteca PDF.js
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
@@ -2975,6 +2942,7 @@
       document.getElementById('gc-status-pagina').value = item.status;
 
       await renderizarPaginaPDFGuideCheck(item.pagina);
+      if (gc2EspecialidadeId) await gc2ConferirPagina(item.pagina);
     }
 
     async function renderizarPaginaPDFGuideCheck(numeroPagina) {
