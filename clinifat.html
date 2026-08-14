@@ -352,7 +352,7 @@
   <header class="flex justify-between items-center px-6 py-4 w-full bg-surface-container-low border-b border-outline-variant sticky top-0 z-50">
     <div class="flex items-center gap-4 cursor-pointer" onclick="navegar('tela-inicio')">
       <span class="text-xl font-bold text-primary font-headline-md">CliniFat</span>
-      <span class="text-xs px-2 py-1 bg-surface-container-highest rounded text-on-surface-variant font-label-sm hidden sm:inline-block">CliniTool • v12.0</span>
+      <span class="text-xs px-2 py-1 bg-surface-container-highest rounded text-on-surface-variant font-label-sm hidden sm:inline-block">CliniTool • v12.1</span>
     </div>
 
     <!-- Controles de Colunas (Tela Contador) -->
@@ -499,43 +499,6 @@
           </div>
         </details>
 
-        <!-- PROFISSIONAIS DO GUIDECHECK -->
-        <details class="bg-surface-container rounded-2xl border border-outline-variant overflow-hidden">
-          <summary class="cursor-pointer select-none p-5 bg-surface-container-high hover:bg-surface-container-highest flex items-center justify-between gap-3">
-            <div>
-              <h3 class="text-lg font-bold text-primary">Profissionais do GuideCheck</h3>
-              <p class="text-xs text-on-surface-variant mt-1">Base usada para confirmar identidade, CRM e dados profissionais das guias.</p>
-            </div>
-            <span class="material-symbols-outlined text-outline">expand_more</span>
-          </summary>
-
-          <div class="p-6">
-            <div id="form-guidecheck-profissional" class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-5">
-              <input id="cfg-gcp-nome" class="sa-input md:col-span-4" placeholder="Nome completo" autocomplete="off">
-              <input id="cfg-gcp-especialidade" class="sa-input md:col-span-2" placeholder="Especialidade">
-              <input id="cfg-gcp-crm" class="sa-input md:col-span-2" inputmode="numeric" placeholder="CRM (ex.: 12345)">
-              <input id="cfg-gcp-crm52" class="sa-input md:col-span-2" inputmode="numeric" placeholder="CRM/52 (ex.: 5212345)">
-              <input id="cfg-gcp-uf" class="sa-input md:col-span-1" maxlength="2" placeholder="UF">
-              <input id="cfg-gcp-cbo" class="sa-input md:col-span-1" inputmode="numeric" placeholder="CBO">
-              <input id="cfg-gcp-aliases" class="sa-input md:col-span-9" placeholder="Variações conhecidas do nome, separadas por ;">
-              <button onclick="salvarGuideCheckProfissional()" class="h-11 rounded-xl bg-primary-container text-on-primary-container font-bold md:col-span-2 flex items-center justify-center gap-2">
-                <span class="material-symbols-outlined text-sm">save</span>Salvar
-              </button>
-              <button id="cfg-gcp-cancel-btn" onclick="cancelarEdicaoGuideCheckProfissional()" class="hidden h-11 rounded-xl bg-surface-container-highest border border-outline-variant text-on-surface font-bold md:col-span-1 items-center justify-center">
-                <span class="material-symbols-outlined text-sm">close</span>
-              </button>
-            </div>
-
-            <details class="border border-outline-variant rounded-xl overflow-hidden">
-              <summary class="cursor-pointer p-4 bg-surface-container-high flex items-center justify-between">
-                <span class="font-bold text-sm text-primary">Mostrar profissionais do GuideCheck</span>
-                <span id="cfg-gcp-count" class="text-[10px] font-label-sm text-outline">0 item(ns)</span>
-              </summary>
-              <div id="cfg-gcp-lista" class="cf-list m-4"></div>
-            </details>
-          </div>
-        </details>
-
         <!-- CONVÊNIOS -->
         <details class="bg-surface-container rounded-2xl border border-outline-variant overflow-hidden">
           <summary class="cursor-pointer select-none p-5 bg-surface-container-high hover:bg-surface-container-highest flex items-center justify-between gap-3">
@@ -587,63 +550,132 @@
           </div>
         </details>
 
-        <!-- GUIDECHECK V2 — CONFIGURAÇÃO -->
-        <details class="bg-surface-container rounded-2xl border border-outline-variant overflow-hidden">
-          <summary class="cursor-pointer select-none p-5 bg-surface-container-high hover:bg-surface-container-highest flex items-center justify-between gap-3">
-            <div><h3 class="text-lg font-bold text-primary">GuideCheck — Configuração</h3>
-            <p class="text-xs text-on-surface-variant mt-1">Crie convênios, especialidades e campos sem alterar o código.</p></div>
-            <span class="material-symbols-outlined text-outline">expand_more</span>
-          </summary>
-          <div class="p-6 flex flex-col gap-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div class="border border-outline-variant rounded-xl p-4 bg-surface-container-high">
-                <h4 class="font-bold text-secondary mb-3">Convênios</h4>
-                <div class="flex gap-2 mb-3"><input id="gcv-nome" class="sa-input" placeholder="Novo convênio"><button onclick="gcvCriarConvenio()" class="h-11 px-4 rounded-xl bg-secondary text-on-secondary font-bold">Adicionar</button></div>
-                <div id="gcv-convenios-list" class="cf-list"></div>
-              </div>
-              <div class="border border-outline-variant rounded-xl p-4 bg-surface-container-high">
-                <h4 class="font-bold text-primary mb-3">Especialidades</h4>
-                <select id="gcv-esp-convenio" class="sa-input mb-2"></select>
-                <div class="flex gap-2 mb-3"><input id="gcv-esp-nome" class="sa-input" placeholder="Nova especialidade"><button onclick="gcvCriarEspecialidade()" class="h-11 px-4 rounded-xl bg-primary-container text-on-primary-container font-bold">Adicionar</button></div>
-                <div id="gcv-especialidades-list" class="cf-list"></div>
-              </div>
-            </div>
-            <div class="border border-outline-variant rounded-xl p-4 bg-surface-container-high">
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4"><select id="gcv-campo-convenio" class="sa-input" onchange="gcvAtualizarEspecialidadesCampos()"></select><select id="gcv-campo-especialidade" class="sa-input" onchange="gcvCarregarCampos()"></select></div>
-              <div class="grid grid-cols-1 md:grid-cols-12 gap-2 mb-4">
-                <input id="gcv-campo-numero" class="sa-input md:col-span-1" inputmode="numeric" placeholder="Nº">
-                <input id="gcv-campo-nome" class="sa-input md:col-span-3" placeholder="Nome do campo">
-                <select id="gcv-campo-tipo" class="sa-input md:col-span-2"><option value="fixo">Valor fixo</option><option value="profissional">Profissional</option><option value="texto">Texto / referência</option><option value="manual">Manual</option></select>
-                <input id="gcv-campo-valor" class="sa-input md:col-span-3" placeholder="Valor esperado">
-                <input id="gcv-campo-obs" class="sa-input md:col-span-2" placeholder="Observação">
-                <button onclick="gcvSalvarCampo()" class="h-11 rounded-xl bg-tertiary-container text-on-tertiary-container font-bold"><span class="material-symbols-outlined">save</span></button>
-              </div>
-              <div id="gcv-campos-list" class="cf-list"></div>
-            </div>
+        <!-- ACESSO À CONFIGURAÇÃO DO GUIDECHECK -->
+        <div class="bg-surface-container rounded-2xl border border-outline-variant p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h3 class="text-lg font-bold text-primary">GuideCheck</h3>
+            <p class="text-xs text-on-surface-variant mt-1">Convênios, especialidades, buscadores e profissionais ficam em uma área própria.</p>
           </div>
-        </details>
+          <button onclick="abrirConfiguracaoGuideCheck()" class="px-6 h-11 rounded-xl bg-primary-container text-on-primary-container font-bold flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined">tune</span>
+            Configurar GuideCheck
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONFIGURAÇÃO EXCLUSIVA DO GUIDECHECK -->
+    <div id="tela-guidecheck-config" class="screen">
+      <div class="max-w-7xl mx-auto flex flex-col gap-5">
+
+        <div class="bg-surface-container-high p-6 rounded-2xl border border-outline-variant flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div class="text-xs uppercase font-bold text-secondary font-label-sm mb-1">CliniFat • GuideCheck</div>
+            <h2 class="text-2xl font-bold text-primary font-headline-md">Configurar GuideCheck</h2>
+            <p class="text-sm text-on-surface-variant mt-1">Cadastre convênios, especialidades, profissionais e os termos que o sistema deverá procurar na página inteira.</p>
+          </div>
+          <button onclick="navegar('tela-configuracoes')" class="px-5 py-2.5 bg-surface-container-highest hover:bg-outline-variant rounded-xl text-on-surface font-label-sm flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">arrow_back</span>Voltar às Configurações
+          </button>
+        </div>
+
+        <div class="bg-surface-container rounded-2xl border border-outline-variant p-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 class="text-lg font-bold text-secondary">Convênios e especialidades</h3>
+              <p class="text-xs text-on-surface-variant mt-1">Cada combinação possui seu próprio conjunto de Buscadores.</p>
+            </div>
+            <button onclick="gcAdminAbrirNovoConvenio()" class="px-5 h-11 rounded-xl bg-secondary text-on-secondary font-bold flex items-center justify-center gap-2">
+              <span class="material-symbols-outlined">add</span>Adicionar Convênio
+            </button>
+          </div>
+
+          <div id="gcadmin-combinacoes" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 mt-5"></div>
+        </div>
 
         <details class="bg-surface-container rounded-2xl border border-outline-variant overflow-hidden">
           <summary class="cursor-pointer select-none p-5 bg-surface-container-high hover:bg-surface-container-highest flex items-center justify-between gap-3">
-            <div><h3 class="text-lg font-bold text-primary">Calibração de Guias</h3><p class="text-xs text-on-surface-variant mt-1">Convênio → Especialidade → Campo → área da guia.</p></div>
+            <div>
+              <h3 class="text-lg font-bold text-primary">Profissionais do GuideCheck</h3>
+              <p class="text-xs text-on-surface-variant mt-1">Base usada para cruzar nome, CRM, CRM/52, UF e CBO.</p>
+            </div>
             <span class="material-symbols-outlined text-outline">expand_more</span>
           </summary>
-          <div class="p-6 flex flex-col gap-5">
-            <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
-              <div class="md:col-span-4"><label class="sa-label">Convênio</label><select id="cal2-convenio" class="sa-input" onchange="cal2SelecionarConvenio()"></select></div>
-              <div class="md:col-span-4"><label class="sa-label">Especialidade</label><select id="cal2-especialidade" class="sa-input" onchange="cal2SelecionarEspecialidade()"></select></div>
-              <div class="md:col-span-4 flex items-end"><label class="w-full px-5 h-11 bg-primary-container text-on-primary-container rounded-xl font-bold cursor-pointer flex items-center justify-center gap-2"><span class="material-symbols-outlined text-sm">upload_file</span>Guia modelo<input type="file" id="cal2-pdf-input" accept="application/pdf" class="hidden" onchange="cal2CarregarPDF(event)"></label></div>
+          <div class="p-6">
+            <div id="form-guidecheck-profissional" class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-5">
+              <input id="cfg-gcp-nome" class="sa-input md:col-span-4" placeholder="Nome completo" autocomplete="off">
+              <input id="cfg-gcp-especialidade" class="sa-input md:col-span-2" placeholder="Especialidade">
+              <input id="cfg-gcp-crm" class="sa-input md:col-span-2" inputmode="numeric" placeholder="CRM">
+              <input id="cfg-gcp-crm52" class="sa-input md:col-span-2" inputmode="numeric" placeholder="CRM/52">
+              <input id="cfg-gcp-uf" class="sa-input md:col-span-1" maxlength="2" placeholder="UF">
+              <input id="cfg-gcp-cbo" class="sa-input md:col-span-1" inputmode="numeric" placeholder="CBO">
+              <input id="cfg-gcp-aliases" class="sa-input md:col-span-9" placeholder="Variações conhecidas do nome, separadas por ;">
+              <button onclick="salvarGuideCheckProfissional()" class="h-11 rounded-xl bg-primary-container text-on-primary-container font-bold md:col-span-2 flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-sm">save</span>Salvar
+              </button>
+              <button id="cfg-gcp-cancel-btn" onclick="cancelarEdicaoGuideCheckProfissional()" class="hidden h-11 rounded-xl bg-surface-container-highest border border-outline-variant text-on-surface font-bold md:col-span-1 items-center justify-center">
+                <span class="material-symbols-outlined text-sm">close</span>
+              </button>
             </div>
-            <div id="cal2-editor" class="hidden grid grid-cols-1 xl:grid-cols-12 gap-5">
-              <aside class="xl:col-span-3 bg-surface-container-high border border-outline-variant rounded-2xl overflow-hidden"><div class="p-4 border-b border-outline-variant"><div class="font-bold">Campos</div><div class="text-[10px] text-on-surface-variant mt-1">Selecione e desenhe a área.</div></div><div id="cal2-fields-list" class="p-2 flex flex-col gap-2 max-h-[680px] overflow-y-auto"></div></aside>
-              <section class="xl:col-span-7 bg-surface-container-lowest border border-outline-variant rounded-2xl overflow-hidden">
-                <div class="p-4 border-b border-outline-variant flex items-center justify-between"><div><div class="font-bold">Guia modelo</div><div id="cal2-page-info" class="text-[10px] text-on-surface-variant">Nenhum PDF carregado</div></div><div class="flex gap-2"><button onclick="cal2NavegarPagina(-1)" class="h-9 px-3 rounded-lg bg-surface-container-high border border-outline-variant">‹</button><button onclick="cal2NavegarPagina(1)" class="h-9 px-3 rounded-lg bg-surface-container-high border border-outline-variant">›</button></div></div>
-                <div class="p-4 overflow-auto min-h-[680px] flex justify-center items-start"><div id="cal2-stage" class="gc-calibration-stage"><canvas id="cal2-canvas"></canvas><div id="cal2-overlay" class="gc-calibration-overlay"></div></div></div>
-              </section>
-              <aside class="xl:col-span-2 bg-surface-container-high border border-outline-variant rounded-2xl overflow-hidden"><div class="p-4 border-b border-outline-variant"><div class="font-bold">Área</div></div><div class="p-4 flex flex-col gap-4"><div class="p-3 rounded-xl bg-surface-container border border-outline-variant"><div class="text-[10px] uppercase text-outline">Campo</div><div id="cal2-selected-label" class="text-sm font-bold mt-1">Selecione um campo</div></div><button id="cal2-save-btn" onclick="cal2SalvarZona()" disabled class="h-11 rounded-xl bg-secondary text-on-secondary font-bold disabled:opacity-40">Salvar área</button><button id="cal2-delete-btn" onclick="cal2ExcluirZona()" disabled class="h-11 rounded-xl border border-error text-error font-bold disabled:opacity-40">Remover área</button></div></aside>
-            </div>
+            <details class="border border-outline-variant rounded-xl overflow-hidden">
+              <summary class="cursor-pointer p-4 bg-surface-container-high flex items-center justify-between">
+                <span class="font-bold text-sm text-primary">Mostrar profissionais cadastrados</span>
+                <span id="cfg-gcp-count" class="text-[10px] font-label-sm text-outline">0 item(ns)</span>
+              </summary>
+              <div id="cfg-gcp-lista" class="cf-list m-4"></div>
+            </details>
           </div>
         </details>
+
+        <section class="bg-surface-container rounded-2xl border border-outline-variant overflow-hidden">
+          <div class="p-5 bg-surface-container-high border-b border-outline-variant">
+            <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+              <div>
+                <h3 class="text-lg font-bold text-tertiary">Buscadores</h3>
+                <p class="text-xs text-on-surface-variant mt-1">O GuideCheck lerá a página inteira e procurará os valores cadastrados aqui.</p>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 min-w-[420px]">
+                <select id="gcadmin-buscador-convenio" class="sa-input" onchange="gcAdminAtualizarEspecialidadesBuscador()"></select>
+                <select id="gcadmin-buscador-especialidade" class="sa-input" onchange="gcAdminCarregarBuscadores()"></select>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-5">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-2 mb-5">
+              <input id="gcadmin-campo-numero" class="sa-input md:col-span-1" inputmode="numeric" placeholder="Nº">
+              <input id="gcadmin-campo-nome" class="sa-input md:col-span-3" placeholder="Nome do campo">
+              <select id="gcadmin-campo-tipo" class="sa-input md:col-span-2">
+                <option value="fixo">Valor fixo</option>
+                <option value="profissional">Profissional</option>
+                <option value="texto">Texto / referência</option>
+                <option value="manual">Conferência manual</option>
+              </select>
+              <input id="gcadmin-campo-valor" class="sa-input md:col-span-3" placeholder="Valor esperado">
+              <input id="gcadmin-campo-obs" class="sa-input md:col-span-2" placeholder="Observação">
+              <button onclick="gcAdminSalvarBuscador()" class="h-11 rounded-xl bg-tertiary-container text-on-tertiary-container font-bold md:col-span-1">
+                <span class="material-symbols-outlined">save</span>
+              </button>
+            </div>
+            <div id="gcadmin-buscadores-list" class="cf-list"></div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+    <!-- MODAL NOVO CONVÊNIO GUIDECHECK -->
+    <div id="gcadmin-modal-convenio" class="fixed inset-0 z-[90] bg-black/70 hidden items-center justify-center p-4">
+      <div class="w-full max-w-md bg-surface-container-high border border-outline-variant rounded-2xl p-6 shadow-2xl">
+        <div class="flex items-center justify-between mb-5">
+          <div><h3 class="text-xl font-bold text-primary">Adicionar Convênio</h3><p class="text-xs text-on-surface-variant mt-1">Crie a combinação usada no GuideCheck.</p></div>
+          <button onclick="gcAdminFecharNovoConvenio()" class="p-2 rounded-lg hover:bg-outline-variant"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div class="flex flex-col gap-3">
+          <div><label class="sa-label">Nome do Convênio</label><input id="gcadmin-novo-convenio" class="sa-input" placeholder="Ex.: SulAmérica"></div>
+          <div><label class="sa-label">Especialidade</label><select id="gcadmin-nova-especialidade" class="sa-input"><option value="Consulta">Consulta</option><option value="SADT">SADT</option></select></div>
+          <button onclick="gcAdminCriarCombinacao()" class="h-11 rounded-xl bg-secondary text-on-secondary font-bold">Criar</button>
+        </div>
       </div>
     </div>
 
@@ -751,7 +783,7 @@
             <aside class="lg:col-span-3 bg-surface-container border border-outline-variant rounded-2xl overflow-hidden">
               <div class="p-4 border-b border-outline-variant">
                 <div class="font-bold">Conferência</div>
-                <div class="text-[10px] text-on-surface-variant font-label-sm mt-1">Fase 1 — organização da fila</div>
+                <div class="text-[10px] text-on-surface-variant font-label-sm mt-1">Leitura automática + revisão visual</div>
               </div>
               <div class="p-4 flex flex-col gap-4">
                 <div>
@@ -769,9 +801,14 @@
                   <div id="gc-perfil-lateral" class="text-sm font-bold mt-1">—</div>
                 </div>
 
-                <div class="p-3 rounded-xl border border-outline-variant bg-surface-container-high">
-                  <div class="text-[10px] uppercase text-outline font-label-sm">Próxima etapa</div>
-                  <div class="text-xs text-on-surface-variant mt-1">Aqui entrarão OCR, regras automáticas e checklist específico do convênio/modalidade selecionados.</div>
+                <div id="gc2-resumo-leitura" class="p-3 rounded-xl border border-outline-variant bg-surface-container-high">
+                  <div class="text-[10px] uppercase text-outline font-label-sm">Resumo da leitura</div>
+                  <div class="text-xs text-on-surface-variant mt-1">Aguardando análise desta guia.</div>
+                </div>
+
+                <div class="p-3 rounded-xl border border-tertiary bg-tertiary-container/10">
+                  <div class="text-[10px] uppercase text-tertiary font-label-sm">Revisão visual obrigatória</div>
+                  <div class="text-xs text-on-surface-variant mt-1">Assinaturas, rubricas, carimbos e qualidade física do documento permanecem sob responsabilidade do operador.</div>
                 </div>
 
                 <button onclick="irProximaPendenteGuideCheck()" class="h-11 rounded-xl bg-tertiary-container text-on-tertiary-container font-bold">
@@ -3066,6 +3103,470 @@
         if (e.key === 'Enter') { e.preventDefault(); salvarGuideCheckProfissional(); }
       });
     });
+
+
+    // ============================================================
+    // GUIDECHECK v12.1 — configuração exclusiva + busca página inteira
+    // ============================================================
+    let gcAdminConvenios = [];
+    let gcAdminEspecialidades = [];
+    let gcAdminBuscadores = [];
+    let gcAdminEditandoBuscadorId = null;
+    let gc2Profissionais = [];
+
+    async function renderizarConfiguracoesPrincipal() {
+      const [profRes, convRes] = await Promise.all([
+        _supabase.from('clinifat_profissionais').select('*').order('tipo').order('ordem').order('nome'),
+        _supabase.from('clinifat_convenios').select('*').order('tipo').order('ordem').order('nome')
+      ]);
+      if (profRes.error) throw profRes.error;
+      if (convRes.error) throw convRes.error;
+
+      const consulta = (profRes.data || []).filter(p => p.tipo === 'consulta');
+      const sadt = (profRes.data || []).filter(p => p.tipo === 'sadt');
+      const med = document.getElementById('cfg-prof-medicos');
+      const psi = document.getElementById('cfg-prof-psicologos');
+      if (med) med.innerHTML = consulta.map(linhaProfissional).join('') || '<div class="cf-list-empty">Nenhum profissional de Consulta.</div>';
+      if (psi) psi.innerHTML = sadt.map(linhaProfissional).join('') || '<div class="cf-list-empty">Nenhum profissional SADT.</div>';
+      document.getElementById('cfg-prof-medicos-count').textContent = `${consulta.length} item(ns)`;
+      document.getElementById('cfg-prof-psicologos-count').textContent = `${sadt.length} item(ns)`;
+      document.getElementById('cfg-prof-total-count').textContent = `${(profRes.data || []).length} item(ns)`;
+
+      const cc = (convRes.data || []).filter(c => c.tipo === 'consulta');
+      const cs = (convRes.data || []).filter(c => c.tipo === 'sadt');
+      document.getElementById('cfg-conv-consulta').innerHTML = cc.map(linhaConvenio).join('') || '<div class="cf-list-empty">Nenhum convênio de Consulta.</div>';
+      document.getElementById('cfg-conv-sadt').innerHTML = cs.map(linhaConvenio).join('') || '<div class="cf-list-empty">Nenhum convênio SADT.</div>';
+      document.getElementById('cfg-conv-consulta-count').textContent = `${cc.length} item(ns)`;
+      document.getElementById('cfg-conv-sadt-count').textContent = `${cs.length} item(ns)`;
+      document.getElementById('cfg-conv-total-count').textContent = `${(convRes.data || []).length} item(ns)`;
+    }
+
+    renderizarConfiguracoes = renderizarConfiguracoesPrincipal;
+
+    async function abrirConfiguracaoGuideCheck() {
+      navegar('tela-guidecheck-config');
+      await gcAdminCarregarTudo();
+    }
+
+    async function gcAdminCarregarTudo() {
+      const [cRes, eRes, pRes] = await Promise.all([
+        _supabase.from('guidecheck_convenios').select('*').eq('ativo', true).order('ordem').order('nome'),
+        _supabase.from('guidecheck_especialidades').select('*').eq('ativo', true).order('ordem').order('nome'),
+        _supabase.from('guidecheck_profissionais').select('*').order('ordem').order('nome')
+      ]);
+      if (cRes.error) throw cRes.error;
+      if (eRes.error) throw eRes.error;
+      if (pRes.error) throw pRes.error;
+
+      gcAdminConvenios = cRes.data || [];
+      gcAdminEspecialidades = eRes.data || [];
+
+      const combos = document.getElementById('gcadmin-combinacoes');
+      combos.innerHTML = gcAdminEspecialidades.map(e => {
+        const c = gcAdminConvenios.find(x => x.id === e.convenio_id);
+        return `<div class="p-4 rounded-xl bg-surface-container-high border border-outline-variant flex items-center gap-3">
+          <span class="material-symbols-outlined text-primary">description</span>
+          <div class="flex-1 min-w-0">
+            <div class="font-bold text-sm truncate">${escapeHtmlCF(c?.nome || '')}</div>
+            <div class="text-[10px] text-on-surface-variant font-label-sm">${escapeHtmlCF(e.nome)}</div>
+          </div>
+          ${isClinifatMaster ? `<button onclick="gcAdminExcluirCombinacao(${e.id},'${escapeJsCF(c?.nome||'')}','${escapeJsCF(e.nome)}')" class="p-2 text-error" title="Excluir"><span class="material-symbols-outlined text-sm">delete</span></button>` : ''}
+        </div>`;
+      }).join('') || '<div class="text-sm text-on-surface-variant">Nenhuma combinação cadastrada.</div>';
+
+      document.getElementById('cfg-gcp-lista').innerHTML =
+        (pRes.data || []).map(linhaGuideCheckProfissional).join('') ||
+        '<div class="cf-list-empty">Nenhum profissional cadastrado.</div>';
+      document.getElementById('cfg-gcp-count').textContent = `${(pRes.data || []).length} item(ns)`;
+
+      const convenioSelect = document.getElementById('gcadmin-buscador-convenio');
+      convenioSelect.innerHTML = gcOpts(gcAdminConvenios);
+      gcAdminAtualizarEspecialidadesBuscador();
+    }
+
+    function gcAdminAbrirNovoConvenio() {
+      const m = document.getElementById('gcadmin-modal-convenio');
+      m.classList.remove('hidden');
+      m.classList.add('flex');
+      setTimeout(() => document.getElementById('gcadmin-novo-convenio').focus(), 50);
+    }
+
+    function gcAdminFecharNovoConvenio() {
+      const m = document.getElementById('gcadmin-modal-convenio');
+      m.classList.add('hidden');
+      m.classList.remove('flex');
+    }
+
+    async function gcAdminCriarCombinacao() {
+      if (!isClinifatMaster) return alert('Acesso restrito ao Master.');
+      const nome = document.getElementById('gcadmin-novo-convenio').value.trim();
+      const especialidade = document.getElementById('gcadmin-nova-especialidade').value;
+      if (!nome) return alert('Informe o nome do convênio.');
+
+      let convenioId;
+      const existente = gcAdminConvenios.find(c => gcNorm(c.nome) === gcNorm(nome));
+      if (existente) {
+        convenioId = existente.id;
+      } else {
+        const { data, error } = await _supabase.from('guidecheck_convenios').insert({ nome }).select('id').single();
+        if (error) return alert(error.message);
+        convenioId = data.id;
+      }
+
+      const { error } = await _supabase.from('guidecheck_especialidades').insert({
+        convenio_id: convenioId,
+        nome: especialidade
+      });
+      if (error && !String(error.message).toLowerCase().includes('duplicate')) return alert(error.message);
+
+      document.getElementById('gcadmin-novo-convenio').value = '';
+      gcAdminFecharNovoConvenio();
+      await gcAdminCarregarTudo();
+    }
+
+    async function gcAdminExcluirCombinacao(especialidadeId, convenio, especialidade) {
+      if (!confirm(`Excluir ${convenio} • ${especialidade} e todos os Buscadores vinculados?`)) return;
+      const { error } = await _supabase.from('guidecheck_especialidades').delete().eq('id', especialidadeId);
+      if (error) return alert(error.message);
+      await gcAdminCarregarTudo();
+    }
+
+    function gcAdminAtualizarEspecialidadesBuscador() {
+      const cid = Number(document.getElementById('gcadmin-buscador-convenio')?.value) || 0;
+      const esp = document.getElementById('gcadmin-buscador-especialidade');
+      if (!esp) return;
+      esp.innerHTML = gcOpts(gcAdminEspecialidades.filter(e => !cid || e.convenio_id === cid));
+      gcAdminCarregarBuscadores();
+    }
+
+    async function gcAdminCarregarBuscadores() {
+      const eid = Number(document.getElementById('gcadmin-buscador-especialidade')?.value) || 0;
+      const box = document.getElementById('gcadmin-buscadores-list');
+      if (!box) return;
+      if (!eid) {
+        gcAdminBuscadores = [];
+        box.innerHTML = '<div class="cf-list-empty">Selecione convênio e especialidade.</div>';
+        return;
+      }
+
+      const { data, error } = await _supabase.from('guidecheck_campos')
+        .select('*').eq('especialidade_id', eid).eq('ativo', true)
+        .order('ordem').order('numero_campo');
+      if (error) return alert(error.message);
+      gcAdminBuscadores = data || [];
+
+      box.innerHTML = gcAdminBuscadores.map(f => `
+        <div class="cf-list-row">
+          <div class="w-9 h-9 rounded-lg border border-outline-variant flex items-center justify-center font-bold text-primary">${f.numero_campo ?? '—'}</div>
+          <div class="min-w-0 flex-1">
+            <div class="font-bold text-sm">${escapeHtmlCF(f.nome_campo)}</div>
+            <div class="text-[10px] text-on-surface-variant font-label-sm">
+              ${escapeHtmlCF(f.tipo_regra)}
+              ${f.valor_esperado ? ` • Esperado: ${escapeHtmlCF(f.valor_esperado)}` : ''}
+            </div>
+            ${f.observacao ? `<div class="text-[10px] text-outline mt-1">${escapeHtmlCF(f.observacao)}</div>` : ''}
+          </div>
+          ${isClinifatMaster ? `
+            <button onclick="gcAdminEditarBuscador(${f.id})" class="p-2 text-primary" title="Editar"><span class="material-symbols-outlined text-sm">edit</span></button>
+            <button onclick="gcAdminExcluirBuscador(${f.id})" class="p-2 text-error" title="Excluir"><span class="material-symbols-outlined text-sm">delete</span></button>
+          ` : ''}
+        </div>`).join('') || '<div class="cf-list-empty">Nenhum Buscador cadastrado.</div>';
+    }
+
+    function gcAdminEditarBuscador(id) {
+      const f = gcAdminBuscadores.find(x => x.id === id);
+      if (!f) return;
+      gcAdminEditandoBuscadorId = id;
+      document.getElementById('gcadmin-campo-numero').value = f.numero_campo ?? '';
+      document.getElementById('gcadmin-campo-nome').value = f.nome_campo || '';
+      document.getElementById('gcadmin-campo-tipo').value = f.tipo_regra || 'fixo';
+      document.getElementById('gcadmin-campo-valor').value = f.valor_esperado || '';
+      document.getElementById('gcadmin-campo-obs').value = f.observacao || '';
+    }
+
+    async function gcAdminSalvarBuscador() {
+      if (!isClinifatMaster) return alert('Acesso restrito ao Master.');
+      const especialidade_id = Number(document.getElementById('gcadmin-buscador-especialidade').value);
+      if (!especialidade_id) return alert('Selecione convênio e especialidade.');
+
+      const numeroRaw = document.getElementById('gcadmin-campo-numero').value.trim();
+      const payload = {
+        especialidade_id,
+        numero_campo: numeroRaw ? Number(numeroRaw) : null,
+        nome_campo: document.getElementById('gcadmin-campo-nome').value.trim(),
+        tipo_regra: document.getElementById('gcadmin-campo-tipo').value,
+        valor_esperado: document.getElementById('gcadmin-campo-valor').value.trim() || null,
+        observacao: document.getElementById('gcadmin-campo-obs').value.trim() || null
+      };
+      if (!payload.nome_campo) return alert('Informe o nome do campo.');
+
+      const q = gcAdminEditandoBuscadorId
+        ? _supabase.from('guidecheck_campos').update(payload).eq('id', gcAdminEditandoBuscadorId)
+        : _supabase.from('guidecheck_campos').insert(payload);
+      const { error } = await q;
+      if (error) return alert(error.message);
+
+      gcAdminEditandoBuscadorId = null;
+      ['gcadmin-campo-numero','gcadmin-campo-nome','gcadmin-campo-valor','gcadmin-campo-obs'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      document.getElementById('gcadmin-campo-nome').focus();
+      await gcAdminCarregarBuscadores();
+    }
+
+    async function gcAdminExcluirBuscador(id) {
+      if (!confirm('Excluir este Buscador?')) return;
+      const { error } = await _supabase.from('guidecheck_campos').delete().eq('id', id);
+      if (error) return alert(error.message);
+      await gcAdminCarregarBuscadores();
+    }
+
+    // Após salvar/editar profissional do GuideCheck, recarrega a tela exclusiva.
+    const _salvarGuideCheckProfissional121 = salvarGuideCheckProfissional;
+    salvarGuideCheckProfissional = async function() {
+      await _salvarGuideCheckProfissional121();
+      if (document.getElementById('tela-guidecheck-config')?.classList.contains('active')) {
+        await gcAdminCarregarTudo();
+      }
+    };
+
+    // Seletores da conferência passam a usar somente Convênio + Especialidade.
+    gc2RenderSeletores = function() {
+      const c = document.getElementById('gc2-convenio');
+      if (c) c.innerHTML = gcOpts(gcAdminConvenios.length ? gcAdminConvenios : gcvConvenios);
+      const e = document.getElementById('gc2-especialidade');
+      if (e) e.innerHTML = gcOpts([]);
+    };
+
+    abrirConferenciaGuia = async function() {
+      reiniciarGuideCheck(false);
+      navegar('tela-guidecheck');
+      const [cRes, eRes] = await Promise.all([
+        _supabase.from('guidecheck_convenios').select('*').eq('ativo',true).order('ordem').order('nome'),
+        _supabase.from('guidecheck_especialidades').select('*').eq('ativo',true).order('ordem').order('nome')
+      ]);
+      gcAdminConvenios = cRes.data || [];
+      gcAdminEspecialidades = eRes.data || [];
+      gc2RenderSeletores();
+    };
+
+    gc2SelecionarConvenio = function() {
+      gc2ConvenioId = Number(document.getElementById('gc2-convenio').value) || 0;
+      document.getElementById('gc2-especialidade').innerHTML =
+        gcOpts(gcAdminEspecialidades.filter(x => x.convenio_id === gc2ConvenioId));
+      document.getElementById('gc-upload-section').classList.add('hidden');
+      document.getElementById('gc-selecao-resumo').classList.add('hidden');
+    };
+
+    gc2SelecionarEspecialidade = async function() {
+      gc2EspecialidadeId = Number(document.getElementById('gc2-especialidade').value) || 0;
+      if (!gc2EspecialidadeId) return;
+
+      const [fRes, pRes] = await Promise.all([
+        _supabase.from('guidecheck_campos').select('*')
+          .eq('especialidade_id', gc2EspecialidadeId).eq('ativo', true)
+          .order('ordem').order('numero_campo'),
+        _supabase.from('guidecheck_profissionais').select('*').eq('ativo', true).order('nome')
+      ]);
+      if (fRes.error) return alert(fRes.error.message);
+      if (pRes.error) return alert(pRes.error.message);
+
+      gc2Campos = fRes.data || [];
+      gc2Profissionais = pRes.data || [];
+      gc2Calibracoes = []; // abolidas nesta versão
+
+      const c = gcAdminConvenios.find(x => x.id === gc2ConvenioId);
+      const e = gcAdminEspecialidades.find(x => x.id === gc2EspecialidadeId);
+      document.getElementById('gc-selecao-texto').textContent = `${c?.nome || ''} • ${e?.nome || ''}`;
+      document.getElementById('gc-selecao-resumo').classList.remove('hidden');
+      document.getElementById('gc-upload-section').classList.remove('hidden');
+      document.getElementById('gc-perfil-lateral').textContent = `${c?.nome || ''} • ${e?.nome || ''}`;
+      guideCheckConvenio = c?.nome || 'Configurado';
+      guideCheckModalidade = e?.nome || 'Especialidade';
+      atualizarEtapasGuideCheck(2);
+    };
+
+    function gcTextoPaginaNormalizado(textContent) {
+      return gcNorm((textContent.items || []).map(i => i.str).join(' '));
+    }
+
+    function gcVariantesNome(p) {
+      const nome = gcNorm(p.nome || '');
+      const tokens = nome.split(' ').filter(Boolean);
+      const variantes = new Set([nome]);
+      (p.aliases || []).forEach(a => variantes.add(gcNorm(a)));
+
+      if (tokens.length >= 2) {
+        variantes.add(`${tokens[0]} ${tokens[tokens.length - 1]}`);
+        if (tokens.length >= 3) {
+          variantes.add(`${tokens[0]} ${tokens[1]}`);
+          variantes.add(`${tokens[0]} ${tokens[1][0]} ${tokens[tokens.length - 1]}`);
+        }
+      }
+      return [...variantes].filter(v => v.length >= 4);
+    }
+
+    function gcEncontrarProfissional(texto) {
+      // CRM é a confirmação mais forte.
+      for (const p of gc2Profissionais) {
+        const crm = String(p.crm || '').replace(/\D/g,'');
+        const crm52 = String(p.crm_52 || '').replace(/\D/g,'');
+        const numerico = texto.replace(/\D/g,' ');
+        if ((crm52 && numerico.includes(crm52)) || (crm && numerico.includes(crm))) {
+          const nomeEncontrado = gcVariantesNome(p).some(v => texto.includes(v));
+          return { profissional:p, nomeEncontrado, crmEncontrado:true };
+        }
+      }
+
+      for (const p of gc2Profissionais) {
+        if (gcVariantesNome(p).some(v => texto.includes(v))) {
+          return { profissional:p, nomeEncontrado:true, crmEncontrado:false };
+        }
+      }
+      return null;
+    }
+
+    gc2ConferirPagina = async function(numeroPagina) {
+      const page = await guideCheckPdfDoc.getPage(numeroPagina);
+      const tc = await page.getTextContent();
+      const texto = gcTextoPaginaNormalizado(tc);
+      const resultados = [];
+      const profissionalMatch = gcEncontrarProfissional(texto);
+
+      for (const f of gc2Campos) {
+        let status = 'lido';
+        let lido = '';
+        let detalhe = '';
+
+        if (f.tipo_regra === 'manual') {
+          status = 'manual';
+          detalhe = 'Conferência visual do operador.';
+        } else if (f.tipo_regra === 'profissional') {
+          if (!profissionalMatch) {
+            status = 'erro';
+            detalhe = 'Nenhum profissional cadastrado foi confirmado na página.';
+          } else {
+            const p = profissionalMatch.profissional;
+            lido = p.nome;
+            if (profissionalMatch.crmEncontrado && profissionalMatch.nomeEncontrado) {
+              status = 'ok';
+              detalhe = `Profissional e CRM confirmados${p.crm ? ` • CRM ${p.crm}` : ''}${p.crm_52 ? ` • CRM/52 ${p.crm_52}` : ''}.`;
+            } else if (profissionalMatch.crmEncontrado) {
+              status = 'confirmar';
+              detalhe = `CRM corresponde a ${p.nome}, mas o nome precisa de revisão visual.`;
+            } else {
+              status = 'confirmar';
+              detalhe = `Nome compatível com ${p.nome}, mas CRM não foi confirmado.`;
+            }
+          }
+        } else {
+          let esperado = String(f.valor_esperado || '').trim();
+
+          // CBO pode vir da base do profissional identificado.
+          if (!esperado && Number(f.numero_campo) === 16 && profissionalMatch?.profissional?.cbo) {
+            esperado = profissionalMatch.profissional.cbo;
+            detalhe = `CBO esperado conforme ${profissionalMatch.profissional.nome}.`;
+          }
+
+          if (!esperado) {
+            status = 'manual';
+            detalhe = 'Buscador sem valor esperado; revisar visualmente.';
+          } else {
+            const esperadoNorm = gcNorm(esperado);
+            const encontrou = texto.includes(esperadoNorm);
+            lido = encontrou ? esperado : '';
+            status = encontrou ? 'ok' : 'erro';
+            detalhe = encontrou
+              ? `Valor "${esperado}" localizado na página.`
+              : `Valor esperado "${esperado}" não foi localizado na página.`;
+          }
+        }
+
+        resultados.push({ campo:f, lido, status, detalhe });
+      }
+
+      const item = guideCheckPaginas[guideCheckPaginaAtual];
+      item.resultados = resultados;
+
+      const erros = resultados.filter(r => r.status === 'erro');
+      const confirmar = resultados.filter(r => r.status === 'confirmar');
+      const ok = resultados.filter(r => r.status === 'ok');
+      const manuais = resultados.filter(r => r.status === 'manual');
+
+      // O sistema nunca dá OK final sozinho: o operador continua responsável pela revisão visual.
+      item.status = erros.length ? 'pendencia' : 'em_analise';
+
+      renderizarFilaGuideCheck();
+      document.getElementById('gc-status-pagina').value = item.status;
+
+      const resumo = document.getElementById('gc2-resumo-leitura');
+      if (resumo) {
+        resumo.innerHTML = `
+          <div class="text-[10px] uppercase text-outline font-label-sm">Resumo da leitura</div>
+          <div class="text-xs mt-2 text-on-surface">
+            <span class="text-secondary font-bold">${ok.length} confirmado(s)</span> •
+            <span class="text-error font-bold">${erros.length} divergência(s)</span> •
+            <span class="text-tertiary font-bold">${confirmar.length} para confirmar</span> •
+            ${manuais.length} manual(is)
+          </div>
+          <div class="text-[10px] text-on-surface-variant mt-2">O status final deve ser definido pelo operador após a revisão visual.</div>
+        `;
+      }
+
+      gc2RenderResultados(resultados);
+    };
+
+    gc2RenderResultados = function(resultados) {
+      let box = document.getElementById('gc2-resultados');
+      if (!box) {
+        box = document.createElement('div');
+        box.id = 'gc2-resultados';
+        box.className = 'flex flex-col gap-2';
+        document.querySelector('#gc-workspace aside:last-child .p-4.flex.flex-col.gap-4').prepend(box);
+      }
+
+      const meta = {
+        ok: ['check_circle','text-secondary','Confirmado'],
+        erro: ['cancel','text-error','Divergência'],
+        confirmar: ['warning','text-tertiary','Confirmar'],
+        manual: ['visibility','text-primary','Revisão visual'],
+        lido: ['info','text-primary','Lido']
+      };
+
+      const confirmados = resultados.filter(r => r.status === 'ok');
+      const outros = resultados.filter(r => r.status !== 'ok');
+
+      const titulo = confirmados.length
+        ? `<div class="text-[10px] uppercase font-bold text-secondary font-label-sm mb-1">O GuideCheck conferiu e aprovou</div>`
+        : '';
+
+      const cards = [...confirmados, ...outros].map(r => {
+        const m = meta[r.status] || meta.lido;
+        return `<div class="p-3 rounded-xl border border-outline-variant bg-surface-container-high">
+          <div class="flex justify-between gap-2">
+            <div class="font-bold text-xs">${r.campo.numero_campo ?? '—'} — ${escapeHtmlCF(r.campo.nome_campo)}</div>
+            <span class="${m[1]} flex items-center gap-1 text-[10px] font-bold">
+              <span class="material-symbols-outlined text-sm">${m[0]}</span>${m[2]}
+            </span>
+          </div>
+          <div class="text-[10px] text-on-surface-variant mt-2">${escapeHtmlCF(r.detalhe || '')}</div>
+          ${r.campo.valor_esperado ? `<div class="text-[10px] text-outline mt-1">Esperado: ${escapeHtmlCF(r.campo.valor_esperado)}</div>` : ''}
+        </div>`;
+      }).join('');
+
+      box.innerHTML = titulo + cards;
+    };
+
+    // Enter para cadastro rápido de Buscadores.
+    ['gcadmin-campo-numero','gcadmin-campo-nome','gcadmin-campo-valor','gcadmin-campo-obs'].forEach(id => {
+      document.getElementById(id)?.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          gcAdminSalvarBuscador();
+        }
+      });
+    });
+
 
     // Inicialização
     aplicarColunas(colunasAtuais);
