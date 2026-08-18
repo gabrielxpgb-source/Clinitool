@@ -326,6 +326,81 @@
       pointer-events: none;
     }
 
+
+    /* GuideCheck v12.2 — workspace amplo e conferência em grade */
+    .gc22-shell {
+      display: grid;
+      grid-template-columns: 118px minmax(0, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
+    .gc22-queue {
+      position: sticky;
+      top: 88px;
+      max-height: calc(100vh - 110px);
+      overflow: hidden;
+    }
+    .gc22-queue-list {
+      max-height: calc(100vh - 180px);
+      overflow-y: auto;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .gc22-main {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .gc22-document {
+      min-width: 0;
+    }
+    .gc22-document-view {
+      min-height: 520px;
+      max-height: 72vh;
+      overflow: auto;
+    }
+    .gc22-results-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .gc22-result-card {
+      min-width: 0;
+      border: 1px solid #414753;
+      border-radius: .8rem;
+      background: #282a2c;
+      padding: 11px 12px;
+    }
+    .gc22-result-card[data-status="ok"] { border-color: rgba(77,224,130,.48); }
+    .gc22-result-card[data-status="erro"] { border-color: rgba(255,180,171,.6); }
+    .gc22-result-card[data-status="confirmar"] { border-color: rgba(255,184,115,.6); }
+    .gc22-result-card[data-status="manual"] { border-color: rgba(169,199,255,.45); }
+    .gc22-filter.is-active {
+      background: #4d96ff;
+      color: #002e61;
+      border-color: #4d96ff;
+    }
+    @media (max-width: 1180px) {
+      .gc22-results-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
+    }
+    @media (max-width: 900px) {
+      .gc22-shell { grid-template-columns: 1fr; }
+      .gc22-queue { position: static; max-height: none; }
+      .gc22-queue-list {
+        max-height: none;
+        flex-direction: row;
+        overflow-x: auto;
+        overflow-y: hidden;
+      }
+      .gc22-results-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    }
+    @media (max-width: 620px) {
+      .gc22-results-grid { grid-template-columns: 1fr; }
+    }
+
   </style>
 </head>
 
@@ -352,7 +427,7 @@
   <header class="flex justify-between items-center px-6 py-4 w-full bg-surface-container-low border-b border-outline-variant sticky top-0 z-50">
     <div class="flex items-center gap-4 cursor-pointer" onclick="navegar('tela-inicio')">
       <span class="text-xl font-bold text-primary font-headline-md">CliniFat</span>
-      <span class="text-xs px-2 py-1 bg-surface-container-highest rounded text-on-surface-variant font-label-sm hidden sm:inline-block">CliniTool • v12.1</span>
+      <span class="text-xs px-2 py-1 bg-surface-container-highest rounded text-on-surface-variant font-label-sm hidden sm:inline-block">CliniTool • v12.2</span>
     </div>
 
     <!-- Controles de Colunas (Tela Contador) -->
@@ -742,88 +817,95 @@
 
         <!-- Passo 3 / Workspace -->
         <section id="gc-workspace" class="hidden">
-          <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          <div class="gc22-shell">
 
-            <!-- Fila -->
-            <aside class="lg:col-span-3 bg-surface-container border border-outline-variant rounded-2xl overflow-hidden">
-              <div class="p-4 border-b border-outline-variant">
-                <div class="flex items-center justify-between gap-2">
+            <!-- FILA COMPACTA -->
+            <aside class="gc22-queue bg-surface-container border border-outline-variant rounded-2xl">
+              <div class="p-3 border-b border-outline-variant">
+                <div class="font-bold text-sm">Fila</div>
+                <div id="gc-fila-resumo" class="text-[9px] text-on-surface-variant font-label-sm mt-1">0 páginas</div>
+              </div>
+              <div id="gc-fila-paginas" class="gc22-queue-list"></div>
+            </aside>
+
+            <div class="gc22-main">
+
+              <!-- DOCUMENTO -->
+              <section class="gc22-document bg-surface-container border border-outline-variant rounded-2xl overflow-hidden">
+                <div class="p-4 border-b border-outline-variant flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <div class="font-bold">Fila de guias</div>
-                    <div id="gc-fila-resumo" class="text-[10px] text-on-surface-variant font-label-sm mt-1">0 páginas</div>
+                    <div class="flex items-center gap-2">
+                      <div id="gc-doc-titulo" class="font-bold">Documento</div>
+                      <span id="gc-status-badge" class="px-2 py-1 rounded-md bg-surface-container-highest text-[10px] font-label-sm text-outline">Não iniciada</span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 mt-1">
+                      <div id="gc-doc-subtitulo" class="text-[10px] text-on-surface-variant font-label-sm">Página 0 / 0</div>
+                      <span class="text-outline">•</span>
+                      <div id="gc-perfil-lateral" class="text-[10px] text-primary font-label-sm">—</div>
+                    </div>
                   </div>
-                  <span class="material-symbols-outlined text-primary">view_list</span>
+                  <div class="flex gap-2">
+                    <button onclick="navegarPaginaGuideCheck(-1)" class="h-9 px-3 rounded-lg bg-surface-container-high border border-outline-variant hover:bg-outline-variant flex items-center gap-1">
+                      <span class="material-symbols-outlined text-sm">chevron_left</span>Anterior
+                    </button>
+                    <button onclick="navegarPaginaGuideCheck(1)" class="h-9 px-3 rounded-lg bg-surface-container-high border border-outline-variant hover:bg-outline-variant flex items-center gap-1">
+                      Próxima<span class="material-symbols-outlined text-sm">chevron_right</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
-              <div id="gc-fila-paginas" class="max-h-[620px] overflow-y-auto p-2 flex flex-col gap-2"></div>
-            </aside>
+                <div class="gc22-document-view p-4 bg-surface-container-lowest flex justify-center items-start">
+                  <canvas id="gc-pdf-canvas" class="max-w-full bg-white shadow-xl"></canvas>
+                </div>
+              </section>
 
-            <!-- Documento -->
-            <div class="lg:col-span-6 bg-surface-container border border-outline-variant rounded-2xl overflow-hidden">
-              <div class="p-4 border-b border-outline-variant flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <div id="gc-doc-titulo" class="font-bold">Documento</div>
-                  <div id="gc-doc-subtitulo" class="text-[10px] text-on-surface-variant font-label-sm">Página 0 / 0</div>
+              <!-- CONFERÊNCIA -->
+              <section class="bg-surface-container border border-outline-variant rounded-2xl overflow-hidden">
+                <div class="p-4 border-b border-outline-variant">
+                  <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <h3 class="font-bold">Conferência automática</h3>
+                        <span id="gc22-summary-badge" class="text-[10px] font-label-sm text-outline">Aguardando análise</span>
+                      </div>
+                      <div id="gc2-resumo-leitura" class="text-xs text-on-surface-variant mt-1">Aguardando análise desta guia.</div>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2">
+                      <button class="gc22-filter is-active h-8 px-3 rounded-lg border border-outline-variant bg-surface-container-high text-[10px] font-bold" data-gcfilter="todos" onclick="gc22FiltrarResultados('todos')">Todos <span id="gc22-count-todos">0</span></button>
+                      <button class="gc22-filter h-8 px-3 rounded-lg border border-outline-variant bg-surface-container-high text-[10px] font-bold text-secondary" data-gcfilter="ok" onclick="gc22FiltrarResultados('ok')">✓ OK <span id="gc22-count-ok">0</span></button>
+                      <button class="gc22-filter h-8 px-3 rounded-lg border border-outline-variant bg-surface-container-high text-[10px] font-bold text-error" data-gcfilter="erro" onclick="gc22FiltrarResultados('erro')">✕ Pendências <span id="gc22-count-erro">0</span></button>
+                      <button class="gc22-filter h-8 px-3 rounded-lg border border-outline-variant bg-surface-container-high text-[10px] font-bold text-tertiary" data-gcfilter="confirmar" onclick="gc22FiltrarResultados('confirmar')">⚠ Revisar <span id="gc22-count-confirmar">0</span></button>
+                    </div>
+                  </div>
                 </div>
-                <div class="flex gap-2">
-                  <button onclick="navegarPaginaGuideCheck(-1)" class="h-9 px-3 rounded-lg bg-surface-container-high border border-outline-variant hover:bg-outline-variant flex items-center gap-1">
-                    <span class="material-symbols-outlined text-sm">chevron_left</span>Anterior
-                  </button>
-                  <button onclick="navegarPaginaGuideCheck(1)" class="h-9 px-3 rounded-lg bg-surface-container-high border border-outline-variant hover:bg-outline-variant flex items-center gap-1">
-                    Próxima<span class="material-symbols-outlined text-sm">chevron_right</span>
-                  </button>
+
+                <div class="p-4">
+                  <div id="gc2-resultados" class="gc22-results-grid"></div>
                 </div>
-              </div>
-              <div class="p-4 bg-surface-container-lowest min-h-[650px] flex justify-center items-start overflow-auto">
-                <canvas id="gc-pdf-canvas" class="max-w-full bg-white shadow-xl"></canvas>
-              </div>
+
+                <div class="p-4 border-t border-outline-variant bg-surface-container-high flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                  <div class="text-[10px] text-on-surface-variant">
+                    <span class="text-primary font-bold">Revisão visual:</span>
+                    assinaturas, rubricas, carimbos e condição física da guia permanecem com o operador.
+                  </div>
+                  <div class="flex flex-wrap gap-2">
+                    <button onclick="irProximaPendenteGuideCheck()" class="h-9 px-4 rounded-lg bg-tertiary-container text-on-tertiary-container font-bold text-xs">Próxima pendente</button>
+                    <button onclick="irProximaNaoIniciadaGuideCheck()" class="h-9 px-4 rounded-lg bg-primary-container text-on-primary-container font-bold text-xs">Próxima não iniciada</button>
+                    <button onclick="reiniciarGuideCheck()" class="h-9 px-4 rounded-lg border border-error text-error font-bold text-xs">Encerrar PDF</button>
+                  </div>
+                </div>
+              </section>
+
             </div>
-
-            <!-- Estado da página -->
-            <aside class="lg:col-span-3 bg-surface-container border border-outline-variant rounded-2xl overflow-hidden">
-              <div class="p-4 border-b border-outline-variant">
-                <div class="font-bold">Conferência</div>
-                <div class="text-[10px] text-on-surface-variant font-label-sm mt-1">Leitura automática + revisão visual</div>
-              </div>
-              <div class="p-4 flex flex-col gap-4">
-                <div>
-                  <label class="sa-label">Status da página</label>
-                  <select id="gc-status-pagina" class="sa-input" onchange="alterarStatusPaginaGuideCheck(this.value)">
-                    <option value="nao_iniciada">Não iniciada</option>
-                    <option value="em_analise">Em análise</option>
-                    <option value="pendencia">Com pendência</option>
-                    <option value="ok">OK</option>
-                  </select>
-                </div>
-
-                <div class="p-3 rounded-xl border border-outline-variant bg-surface-container-high">
-                  <div class="text-[10px] uppercase text-outline font-label-sm">Perfil</div>
-                  <div id="gc-perfil-lateral" class="text-sm font-bold mt-1">—</div>
-                </div>
-
-                <div id="gc2-resumo-leitura" class="p-3 rounded-xl border border-outline-variant bg-surface-container-high">
-                  <div class="text-[10px] uppercase text-outline font-label-sm">Resumo da leitura</div>
-                  <div class="text-xs text-on-surface-variant mt-1">Aguardando análise desta guia.</div>
-                </div>
-
-                <div class="p-3 rounded-xl border border-tertiary bg-tertiary-container/10">
-                  <div class="text-[10px] uppercase text-tertiary font-label-sm">Revisão visual obrigatória</div>
-                  <div class="text-xs text-on-surface-variant mt-1">Assinaturas, rubricas, carimbos e qualidade física do documento permanecem sob responsabilidade do operador.</div>
-                </div>
-
-                <button onclick="irProximaPendenteGuideCheck()" class="h-11 rounded-xl bg-tertiary-container text-on-tertiary-container font-bold">
-                  Próxima pendente
-                </button>
-                <button onclick="irProximaNaoIniciadaGuideCheck()" class="h-11 rounded-xl bg-primary-container text-on-primary-container font-bold">
-                  Próxima não iniciada
-                </button>
-                <button onclick="reiniciarGuideCheck()" class="h-11 rounded-xl border border-error text-error hover:bg-error-container/30 font-bold">
-                  Encerrar este PDF
-                </button>
-              </div>
-            </aside>
-
           </div>
+
+          <!-- select mantido oculto para compatibilidade com a lógica existente -->
+          <select id="gc-status-pagina" class="hidden" onchange="alterarStatusPaginaGuideCheck(this.value)">
+            <option value="nao_iniciada">Não iniciada</option>
+            <option value="em_analise">Em análise</option>
+            <option value="pendencia">Com pendência</option>
+            <option value="ok">OK</option>
+          </select>
         </section>
       </div>
     </div>
@@ -3567,6 +3649,269 @@
       });
     });
 
+
+
+    // ============================================================
+    // GUIDECHECK v12.2 — interface compacta + status automático real
+    // ============================================================
+    let gc22FiltroAtual = 'todos';
+
+    function gc22StatusMeta(status) {
+      return {
+        nao_iniciada: { label:'Não iniciada', cls:'text-outline bg-surface-container-highest' },
+        em_analise: { label:'Revisar', cls:'text-tertiary bg-tertiary-container/20' },
+        pendencia: { label:'Pendência', cls:'text-error bg-error-container/30' },
+        ok: { label:'OK', cls:'text-secondary bg-secondary/10' }
+      }[status] || { label:status, cls:'text-outline bg-surface-container-highest' };
+    }
+
+    function gc22AtualizarStatusCabecalho() {
+      const item = guideCheckPaginas[guideCheckPaginaAtual];
+      const badge = document.getElementById('gc-status-badge');
+      if (!item || !badge) return;
+      const meta = gc22StatusMeta(item.status);
+      badge.textContent = meta.label;
+      badge.className = `px-2 py-1 rounded-md text-[10px] font-label-sm font-bold ${meta.cls}`;
+    }
+
+    // Fila compacta: informação suficiente sem desperdiçar largura.
+    renderizarFilaGuideCheck = function() {
+      const fila = document.getElementById('gc-fila-paginas');
+      if (!fila) return;
+      fila.innerHTML = '';
+
+      guideCheckPaginas.forEach((item, index) => {
+        const meta = statusGuideCheckMeta(item.status);
+        const ativo = index === guideCheckPaginaAtual;
+        const resultados = item.resultados || [];
+        const erros = resultados.filter(r => r.status === 'erro').length;
+        const revisar = resultados.filter(r => r.status === 'confirmar').length;
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.title = `Guia ${item.pagina} — ${meta.label}`;
+        btn.className = `w-full min-w-[82px] p-2 rounded-xl border text-left transition-all ${
+          ativo ? 'bg-surface-container-highest border-primary' : 'bg-surface-container-high border-outline-variant hover:border-primary'
+        }`;
+
+        const statusExtra = erros ? `<span class="text-error">${erros} erro(s)</span>` :
+                            revisar ? `<span class="text-tertiary">${revisar} revisar</span>` :
+                            item.status === 'ok' ? `<span class="text-secondary">OK</span>` :
+                            `<span class="text-outline">${meta.label}</span>`;
+
+        btn.innerHTML = `
+          <div class="flex items-center justify-between gap-1">
+            <span class="font-bold text-xs">${String(item.pagina).padStart(2,'0')}</span>
+            <span class="material-symbols-outlined text-sm ${meta.cls.split(' ')[0]}">${meta.icon}</span>
+          </div>
+          <div class="text-[9px] font-label-sm mt-1">${statusExtra}</div>
+        `;
+
+        btn.addEventListener('click', () => selecionarPaginaGuideCheck(index));
+        fila.appendChild(btn);
+      });
+
+      const ok = guideCheckPaginas.filter(p => p.status === 'ok').length;
+      const pend = guideCheckPaginas.filter(p => p.status === 'pendencia').length;
+      const rev = guideCheckPaginas.filter(p => p.status === 'em_analise').length;
+      document.getElementById('gc-fila-resumo').textContent =
+        `${guideCheckPaginas.length} guias • ${ok} OK • ${pend} pend. • ${rev} revisar`;
+
+      gc22AtualizarStatusCabecalho();
+    };
+
+    // Status automático:
+    // - erro => Pendência
+    // - confirmar => Revisar
+    // - todo buscador automático confirmado => OK
+    // Campos manuais NÃO rebaixam o status automático.
+    const _gc2ConferirPagina122 = gc2ConferirPagina;
+    gc2ConferirPagina = async function(numeroPagina) {
+      const page = await guideCheckPdfDoc.getPage(numeroPagina);
+      const tc = await page.getTextContent();
+      const texto = gcTextoPaginaNormalizado(tc);
+      const resultados = [];
+      const profissionalMatch = gcEncontrarProfissional(texto);
+
+      for (const f of gc2Campos) {
+        let status = 'lido';
+        let lido = '';
+        let detalhe = '';
+
+        if (f.tipo_regra === 'manual') {
+          status = 'manual';
+          detalhe = 'Conferência visual do operador.';
+        } else if (f.tipo_regra === 'profissional') {
+          if (!profissionalMatch) {
+            status = 'erro';
+            detalhe = 'Nenhum profissional cadastrado foi confirmado na página.';
+          } else {
+            const p = profissionalMatch.profissional;
+            lido = p.nome;
+            if (profissionalMatch.crmEncontrado && profissionalMatch.nomeEncontrado) {
+              status = 'ok';
+              detalhe = `Profissional e CRM confirmados${p.crm ? ` • CRM ${p.crm}` : ''}${p.crm_52 ? ` • CRM/52 ${p.crm_52}` : ''}.`;
+            } else if (profissionalMatch.crmEncontrado) {
+              status = 'confirmar';
+              detalhe = `CRM corresponde a ${p.nome}, mas o nome precisa de revisão.`;
+            } else {
+              status = 'confirmar';
+              detalhe = `Nome compatível com ${p.nome}, mas CRM não foi confirmado.`;
+            }
+          }
+        } else {
+          let esperado = String(f.valor_esperado || '').trim();
+
+          if (!esperado && Number(f.numero_campo) === 16 && profissionalMatch?.profissional?.cbo) {
+            esperado = profissionalMatch.profissional.cbo;
+            detalhe = `CBO esperado conforme ${profissionalMatch.profissional.nome}.`;
+          }
+
+          if (!esperado) {
+            status = 'manual';
+            detalhe = 'Sem valor automático configurado; revisar visualmente.';
+          } else {
+            const encontrou = texto.includes(gcNorm(esperado));
+            lido = encontrou ? esperado : '';
+            status = encontrou ? 'ok' : 'erro';
+            detalhe = encontrou
+              ? `Valor "${esperado}" localizado na página.`
+              : `Valor esperado "${esperado}" não foi localizado na página.`;
+          }
+        }
+
+        resultados.push({ campo:f, lido, status, detalhe });
+      }
+
+      const item = guideCheckPaginas[guideCheckPaginaAtual];
+      item.resultados = resultados;
+
+      const erros = resultados.filter(r => r.status === 'erro');
+      const confirmar = resultados.filter(r => r.status === 'confirmar');
+      const automaticos = resultados.filter(r => r.status !== 'manual');
+      const ok = resultados.filter(r => r.status === 'ok');
+      const manuais = resultados.filter(r => r.status === 'manual');
+
+      if (erros.length) {
+        item.status = 'pendencia';
+      } else if (confirmar.length) {
+        item.status = 'em_analise';
+      } else if (automaticos.length && automaticos.every(r => r.status === 'ok')) {
+        item.status = 'ok';
+      } else {
+        item.status = 'em_analise';
+      }
+
+      renderizarFilaGuideCheck();
+
+      const hiddenSelect = document.getElementById('gc-status-pagina');
+      if (hiddenSelect) hiddenSelect.value = item.status;
+
+      const resumo = document.getElementById('gc2-resumo-leitura');
+      const summaryBadge = document.getElementById('gc22-summary-badge');
+      if (resumo) {
+        resumo.innerHTML = `
+          <span class="text-secondary font-bold">${ok.length} confirmado(s)</span> •
+          <span class="text-error font-bold">${erros.length} divergência(s)</span> •
+          <span class="text-tertiary font-bold">${confirmar.length} para revisar</span>
+          ${manuais.length ? ` • ${manuais.length} visual(is)` : ''}
+        `;
+      }
+
+      if (summaryBadge) {
+        if (item.status === 'ok') {
+          summaryBadge.textContent = 'Verificação automática concluída: OK';
+          summaryBadge.className = 'text-[10px] font-label-sm font-bold text-secondary';
+        } else if (item.status === 'pendencia') {
+          summaryBadge.textContent = 'Foram encontradas divergências';
+          summaryBadge.className = 'text-[10px] font-label-sm font-bold text-error';
+        } else {
+          summaryBadge.textContent = 'Há item(ns) para revisar';
+          summaryBadge.className = 'text-[10px] font-label-sm font-bold text-tertiary';
+        }
+      }
+
+      gc2RenderResultados(resultados);
+      gc22AtualizarStatusCabecalho();
+    };
+
+    gc2RenderResultados = function(resultados) {
+      const box = document.getElementById('gc2-resultados');
+      if (!box) return;
+
+      const meta = {
+        ok: { icon:'check_circle', cls:'text-secondary', label:'Confirmado' },
+        erro: { icon:'cancel', cls:'text-error', label:'Divergência' },
+        confirmar: { icon:'warning', cls:'text-tertiary', label:'Revisar' },
+        manual: { icon:'visibility', cls:'text-primary', label:'Visual' },
+        lido: { icon:'info', cls:'text-primary', label:'Lido' }
+      };
+
+      const ordem = { erro:0, confirmar:1, ok:2, manual:3, lido:4 };
+      const ordenados = [...resultados].sort((a,b) => (ordem[a.status] ?? 9) - (ordem[b.status] ?? 9));
+
+      box.innerHTML = ordenados.map(r => {
+        const m = meta[r.status] || meta.lido;
+        return `
+          <article class="gc22-result-card" data-gcstatus="${r.status}" data-status="${r.status}">
+            <div class="flex items-start justify-between gap-2">
+              <div class="min-w-0">
+                <div class="font-bold text-xs truncate">${r.campo.numero_campo ?? '—'} — ${escapeHtmlCF(r.campo.nome_campo)}</div>
+                ${r.status === 'ok' && r.campo.valor_esperado
+                  ? `<div class="text-[10px] text-on-surface-variant mt-1 truncate">${escapeHtmlCF(r.campo.valor_esperado)}</div>`
+                  : ''}
+              </div>
+              <span class="${m.cls} shrink-0" title="${m.label}">
+                <span class="material-symbols-outlined text-base">${m.icon}</span>
+              </span>
+            </div>
+
+            ${r.status !== 'ok' ? `
+              <div class="text-[10px] text-on-surface-variant mt-2 leading-relaxed">${escapeHtmlCF(r.detalhe || '')}</div>
+              ${r.campo.valor_esperado ? `<div class="text-[10px] text-outline mt-1">Esperado: ${escapeHtmlCF(r.campo.valor_esperado)}</div>` : ''}
+            ` : ''}
+          </article>
+        `;
+      }).join('');
+
+      const counts = {
+        todos: resultados.length,
+        ok: resultados.filter(r => r.status === 'ok').length,
+        erro: resultados.filter(r => r.status === 'erro').length,
+        confirmar: resultados.filter(r => r.status === 'confirmar').length
+      };
+      Object.entries(counts).forEach(([k,v]) => {
+        const el = document.getElementById(`gc22-count-${k}`);
+        if (el) el.textContent = v;
+      });
+
+      gc22FiltrarResultados(gc22FiltroAtual, false);
+    };
+
+    function gc22FiltrarResultados(filtro, atualizarBotao=true) {
+      gc22FiltroAtual = filtro;
+      document.querySelectorAll('#gc2-resultados [data-gcstatus]').forEach(card => {
+        card.classList.toggle('hidden', filtro !== 'todos' && card.dataset.gcstatus !== filtro);
+      });
+
+      if (atualizarBotao !== false) {
+        document.querySelectorAll('.gc22-filter').forEach(btn => {
+          btn.classList.toggle('is-active', btn.dataset.gcfilter === filtro);
+        });
+      } else {
+        document.querySelectorAll('.gc22-filter').forEach(btn => {
+          btn.classList.toggle('is-active', btn.dataset.gcfilter === gc22FiltroAtual);
+        });
+      }
+    }
+
+    // Ao trocar de guia, sincroniza cabeçalho e mantém filtro.
+    const _selecionarPaginaGuideCheck122 = selecionarPaginaGuideCheck;
+    selecionarPaginaGuideCheck = async function(index) {
+      await _selecionarPaginaGuideCheck122(index);
+      gc22AtualizarStatusCabecalho();
+      gc22FiltrarResultados(gc22FiltroAtual, false);
+    };
 
     // Inicialização
     aplicarColunas(colunasAtuais);
