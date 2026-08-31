@@ -437,7 +437,7 @@
   <header class="flex justify-between items-center px-6 py-4 w-full bg-surface-container-low border-b border-outline-variant sticky top-0 z-50">
     <div class="flex items-center gap-4 cursor-pointer" onclick="navegar('tela-inicio')">
       <span class="text-xl font-bold text-primary font-headline-md">CliniFat</span>
-      <span class="text-xs px-2 py-1 bg-surface-container-highest rounded text-on-surface-variant font-label-sm hidden sm:inline-block">CliniTool • v12.3</span>
+      <span class="text-xs px-2 py-1 bg-surface-container-highest rounded text-on-surface-variant font-label-sm hidden sm:inline-block">CliniTool • v12.4</span>
     </div>
 
     <!-- Controles de Colunas (Tela Contador) -->
@@ -2698,8 +2698,9 @@
         usuario: document.getElementById('input-nome-operador').value.trim(),
         protocolo: document.getElementById('input-protocolo').value.trim(),
         lote: document.getElementById('input-lote').value.trim(),
-        unidade: document.getElementById('select-unidade').value,
-        tipoGuia: tipoAtual === 'consulta' ? 'Consulta' : 'SADT',
+        unidade: document.getElementById('select-unidade').value.toLocaleUpperCase('pt-BR'),
+        tipoGuia: tipoAtual === 'consulta' ? 'CONSULTA' : 'SADT',
+        dataFechamento: document.getElementById('input-data-fechamento').value.trim(),
         convenio: convenio?.nome || '',
         valorGuia: Number(valorAtual || 0),
         quantidade,
@@ -2722,6 +2723,7 @@
         if (!r.lote) faltando.push('Lote');
         if (!r.unidade) faltando.push('Unidade');
         if (!r.convenio) faltando.push('Convênio');
+        if (!r.dataFechamento) faltando.push('Data de Fechamento');
       }
       if (r.quantidade <= 0) faltando.push('Quantidade de guias');
       if (tipo === 'envio' && !r.profissionais.length) faltando.push('Profissionais com atendimento');
@@ -2781,7 +2783,7 @@
       if (tipo === 'recebimento' || tipo === 'convenios') {
         texto = [
           r.usuario, r.protocolo, r.lote, r.unidade, r.tipoGuia,
-          r.convenio, moedaPlanilhaCF(r.valorGuia), r.quantidade, moedaPlanilhaCF(r.valorTotal)
+          r.convenio, '', r.quantidade, '', r.dataFechamento
         ].join('\t');
         mensagem = tipo === 'recebimento'
           ? '✓ Controle de Recebimento copiado.'
