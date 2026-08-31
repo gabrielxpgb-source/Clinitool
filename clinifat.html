@@ -401,6 +401,16 @@
       .gc22-results-grid { grid-template-columns: 1fr; }
     }
 
+    /* CliniFat v12.3 — operação do lote e exportação para planilhas */
+    .cf-copy-btn.is-copied {
+      background: rgba(77, 224, 130, .16) !important;
+      border-color: #4de082 !important;
+      color: #4de082 !important;
+      box-shadow: 0 0 0 1px rgba(77, 224, 130, .18);
+    }
+    .cf-copy-toast { transition: opacity .18s ease, transform .18s ease; }
+
+
   </style>
 </head>
 
@@ -427,7 +437,7 @@
   <header class="flex justify-between items-center px-6 py-4 w-full bg-surface-container-low border-b border-outline-variant sticky top-0 z-50">
     <div class="flex items-center gap-4 cursor-pointer" onclick="navegar('tela-inicio')">
       <span class="text-xl font-bold text-primary font-headline-md">CliniFat</span>
-      <span class="text-xs px-2 py-1 bg-surface-container-highest rounded text-on-surface-variant font-label-sm hidden sm:inline-block">CliniTool • v12.2</span>
+      <span class="text-xs px-2 py-1 bg-surface-container-highest rounded text-on-surface-variant font-label-sm hidden sm:inline-block">CliniTool • v12.3</span>
     </div>
 
     <!-- Controles de Colunas (Tela Contador) -->
@@ -621,6 +631,36 @@
                   <div id="cfg-conv-sadt" class="cf-list"></div>
                 </div>
               </div>
+            </details>
+          </div>
+        </details>
+
+        <!-- UNIDADES DE ATENDIMENTO -->
+        <details class="bg-surface-container rounded-2xl border border-outline-variant overflow-hidden">
+          <summary class="cursor-pointer select-none p-5 bg-surface-container-high hover:bg-surface-container-highest flex items-center justify-between gap-3">
+            <div>
+              <h3 class="text-lg font-bold text-tertiary">Unidades de Atendimento</h3>
+              <p class="text-xs text-on-surface-variant mt-1">Unidades disponíveis no contador e usadas nas exportações para planilhas.</p>
+            </div>
+            <span class="material-symbols-outlined text-outline">expand_more</span>
+          </summary>
+          <div class="p-6">
+            <div id="form-unidade" class="grid grid-cols-1 md:grid-cols-6 gap-3 mb-5">
+              <input id="cfg-unidade-nome" class="sa-input md:col-span-4" placeholder="Nome da unidade" autocomplete="off">
+              <button onclick="salvarUnidade()" class="h-11 rounded-xl bg-tertiary-container text-on-tertiary-container font-bold md:col-span-1 flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-sm">save</span>Salvar
+              </button>
+              <button id="cfg-unidade-cancel-btn" onclick="cancelarEdicaoUnidade()" class="hidden h-11 rounded-xl bg-surface-container-highest border border-outline-variant text-on-surface font-bold md:col-span-1 items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-sm">close</span>Cancelar
+              </button>
+            </div>
+
+            <details class="border border-outline-variant rounded-xl overflow-hidden">
+              <summary class="cursor-pointer p-4 bg-surface-container-high flex items-center justify-between">
+                <span class="font-bold text-sm text-tertiary">Mostrar unidades cadastradas</span>
+                <span id="cfg-unidade-count" class="text-[10px] font-label-sm text-outline">0 item(ns)</span>
+              </summary>
+              <div id="cfg-unidades-lista" class="cf-list m-4"></div>
             </details>
           </div>
         </details>
@@ -925,32 +965,46 @@
 
       <textarea id="input-captura-qr" aria-label="Captura do leitor QR Code" autocomplete="off" spellcheck="false" style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;"></textarea>
 
-      <section class="grid grid-cols-1 md:grid-cols-12 gap-4 mb-8">
-        <div class="md:col-span-4 relative">
-          <label class="absolute -top-2.5 left-4 bg-background px-2 text-xs font-label-sm text-primary z-10">Convênio</label>
+      <section class="grid grid-cols-1 md:grid-cols-12 gap-4 mb-4">
+        <div class="md:col-span-3 relative">
+          <label class="absolute -top-2.5 left-4 bg-background px-2 text-xs font-label-sm text-secondary z-10">Nome</label>
+          <input type="text" id="input-nome-operador" onblur="normalizarNomeOperador()" placeholder="Nome do operador" class="w-full h-14 px-4 bg-surface-container border border-outline-variant rounded-xl focus:border-secondary focus:ring-0 transition-all text-on-surface">
+        </div>
+
+        <div class="md:col-span-3 relative">
+          <label class="absolute -top-2.5 left-4 bg-background px-2 text-xs font-label-sm text-tertiary z-10">Unidade</label>
           <div class="relative">
-            <select id="select-convenio" onchange="selecionarConvenio()" class="w-full h-14 pl-4 pr-10 bg-surface-container border border-outline-variant rounded-xl focus:border-primary focus:ring-0 transition-all appearance-none text-on-surface">
-            </select>
+            <select id="select-unidade" class="w-full h-14 pl-4 pr-10 bg-surface-container border border-outline-variant rounded-xl focus:border-tertiary focus:ring-0 transition-all appearance-none text-on-surface"></select>
             <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-outline">expand_more</span>
           </div>
         </div>
 
-        <div class="md:col-span-2 relative">
+        <div class="md:col-span-6 relative">
+          <label class="absolute -top-2.5 left-4 bg-background px-2 text-xs font-label-sm text-primary z-10">Convênio</label>
+          <div class="relative">
+            <select id="select-convenio" onchange="selecionarConvenio()" class="w-full h-14 pl-4 pr-10 bg-surface-container border border-outline-variant rounded-xl focus:border-primary focus:ring-0 transition-all appearance-none text-on-surface"></select>
+            <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-outline">expand_more</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid grid-cols-1 md:grid-cols-12 gap-4 mb-8">
+        <div class="md:col-span-3 relative">
           <label class="absolute -top-2.5 left-4 bg-background px-2 text-xs font-label-sm text-primary z-10">Lote</label>
           <input type="text" id="input-lote" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'')" placeholder="Nº do lote" class="w-full h-14 px-4 bg-surface-container border border-outline-variant rounded-xl focus:border-primary focus:ring-0 transition-all text-on-surface">
         </div>
 
-        <div class="md:col-span-2 relative">
+        <div class="md:col-span-3 relative">
           <label class="absolute -top-2.5 left-4 bg-background px-2 text-xs font-label-sm text-primary z-10">Protocolo</label>
           <input type="text" id="input-protocolo" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'')" placeholder="Nº protocolo" class="w-full h-14 px-4 bg-surface-container border border-outline-variant rounded-xl focus:border-primary focus:ring-0 transition-all text-on-surface">
         </div>
 
-        <div class="md:col-span-2 relative">
+        <div class="md:col-span-3 relative">
           <label class="absolute -top-2.5 left-4 bg-background px-2 text-xs font-label-sm text-primary z-10">Data Fechamento</label>
           <input type="text" id="input-data-fechamento" inputmode="numeric" maxlength="10" oninput="formatarDataFechamento(this)" placeholder="DD/MM/AAAA" class="w-full h-14 px-4 bg-surface-container border border-outline-variant rounded-xl focus:border-primary focus:ring-0 transition-all text-on-surface">
         </div>
 
-        <div class="md:col-span-2 flex items-center justify-center bg-surface-container border border-outline-variant rounded-xl h-14 px-4">
+        <div class="md:col-span-3 flex items-center justify-center bg-surface-container border border-outline-variant rounded-xl h-14 px-4">
           <label for="switch-prioridade" class="flex items-center justify-between gap-3 w-full cursor-pointer select-none">
             <span class="text-xs font-label-sm text-on-surface font-bold">Prioridade</span>
             <div class="relative inline-block w-10 shrink-0">
@@ -1157,26 +1211,34 @@
         </div>
       </div>
 
-      <div class="flex flex-wrap items-center gap-3">
-        <button onclick="zerar()" class="h-12 px-6 rounded-xl border border-error text-error font-label-md hover:bg-error-container hover:text-on-error-container transition-all flex items-center gap-2">
-          <span class="material-symbols-outlined text-sm">refresh</span>
-          Zerar
-        </button>
-        <button onclick="ce()" class="h-12 px-6 rounded-xl border border-tertiary text-tertiary font-label-md hover:bg-tertiary-container hover:text-on-tertiary-container transition-all flex items-center gap-2" title="Zerar contadores mantendo o convênio selecionado">
-          <span class="material-symbols-outlined text-sm">restart_alt</span>
-          CE
-        </button>
-        <button onclick="navegar('tela-inicio')" class="h-12 px-6 rounded-xl bg-surface-container-highest text-on-surface font-label-md hover:bg-outline-variant transition-all">
-          Voltar
-        </button>
-        <button onclick="imprimirComprovante()" class="h-12 px-6 rounded-xl bg-primary-container text-on-primary-container font-label-md shadow-md hover:opacity-90 transition-all flex items-center gap-2">
-          <span class="material-symbols-outlined text-sm">print</span>
-          Imprimir
-        </button>
-        <button onclick="salvarArquivoTXT()" class="h-12 px-6 rounded-xl bg-secondary text-on-secondary font-label-md shadow-md hover:opacity-90 transition-all flex items-center gap-2">
-          <span class="material-symbols-outlined text-sm">download</span>
-          Baixar TXT
-        </button>
+      <div class="flex flex-col items-end gap-3">
+        <div class="flex flex-wrap items-center justify-end gap-2">
+          <button id="btn-copy-recebimento" onclick="copiarParaPlanilha('recebimento')" class="cf-copy-btn h-10 px-4 rounded-xl border border-primary text-primary font-label-sm hover:bg-primary/10 transition-all flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">content_copy</span>Controle de Recebimento
+          </button>
+          <button id="btn-copy-convenios" onclick="copiarParaPlanilha('convenios')" class="cf-copy-btn h-10 px-4 rounded-xl border border-primary text-primary font-label-sm hover:bg-primary/10 transition-all flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">content_copy</span>Convênios
+          </button>
+          <button id="btn-copy-envio" onclick="copiarParaPlanilha('envio')" class="cf-copy-btn h-10 px-4 rounded-xl border border-primary text-primary font-label-sm hover:bg-primary/10 transition-all flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">content_copy</span>Controle de Envio
+          </button>
+        </div>
+        <div id="cf-copy-status" class="cf-copy-toast min-h-[18px] text-[10px] font-label-sm text-on-surface-variant"></div>
+        <div class="flex flex-wrap items-center justify-end gap-3">
+          <button onclick="zerar()" class="h-12 px-6 rounded-xl border border-error text-error font-label-md hover:bg-error-container hover:text-on-error-container transition-all flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">refresh</span>Zerar
+          </button>
+          <button onclick="ce()" class="h-12 px-6 rounded-xl border border-tertiary text-tertiary font-label-md hover:bg-tertiary-container hover:text-on-tertiary-container transition-all flex items-center gap-2" title="Zerar contadores mantendo convênio, unidade e nome operacional">
+            <span class="material-symbols-outlined text-sm">restart_alt</span>CE
+          </button>
+          <button onclick="navegar('tela-inicio')" class="h-12 px-6 rounded-xl bg-surface-container-highest text-on-surface font-label-md hover:bg-outline-variant transition-all">Voltar</button>
+          <button onclick="imprimirComprovante()" class="h-12 px-6 rounded-xl bg-primary-container text-on-primary-container font-label-md shadow-md hover:opacity-90 transition-all flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">print</span>Imprimir
+          </button>
+          <button onclick="salvarArquivoTXT()" class="h-12 px-6 rounded-xl bg-secondary text-on-secondary font-label-md shadow-md hover:opacity-90 transition-all flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">download</span>Baixar TXT
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -1269,10 +1331,13 @@
 
     let currentUserProfile = null;
     let isClinifatMaster = false;
+    let nomeUsuarioOriginal = '';
+    let editandoUnidadeId = null;
 
     let dados = {
       profissionais: { consulta: [], sadt: [] },
-      convenios: { consulta: [], sadt: [] }
+      convenios: { consulta: [], sadt: [] },
+      unidades: []
     };
 
     let tipoAtual = 'consulta';
@@ -1310,6 +1375,29 @@
       return `${normalizeUsername(username)}@${AUTH_EMAIL_DOMAIN}`;
     }
 
+    function capitalizarPalavraCF(valor) {
+      const s = String(valor || '').trim().toLocaleLowerCase('pt-BR');
+      return s ? s.charAt(0).toLocaleUpperCase('pt-BR') + s.slice(1) : '';
+    }
+
+    function formatarNomeCompleto(valor) {
+      return String(valor || '').trim().replace(/\s+/g, ' ').split(' ')
+        .filter(Boolean).map(capitalizarPalavraCF).join(' ');
+    }
+
+    function primeiroNomePerfil(profile) {
+      const base = profile?.nome_exibicao || profile?.nome_completo || profile?.username || '';
+      return capitalizarPalavraCF(String(base).trim().split(/\s+/)[0] || '');
+    }
+
+    function normalizarNomeOperador() {
+      const input = document.getElementById('input-nome-operador');
+      if (!input) return '';
+      const primeiro = String(input.value || '').trim().split(/\s+/)[0] || '';
+      input.value = capitalizarPalavraCF(primeiro);
+      return input.value;
+    }
+
     async function carregarPerfilCliniFat(authUser) {
       const { data: profile, error } = await _supabase
         .from('profiles')
@@ -1329,6 +1417,7 @@
 
       currentUserProfile = profile;
       isClinifatMaster = profile.is_master === true;
+      nomeUsuarioOriginal = primeiroNomePerfil(profile);
 
       const label = document.getElementById('clinifat-user-label');
       if (label) label.textContent = profile.nome_exibicao || profile.nome_completo || profile.username;
@@ -1337,6 +1426,7 @@
       document.getElementById('config-no-master')?.classList.toggle('hidden', isClinifatMaster);
       document.getElementById('form-profissional')?.classList.toggle('hidden', !isClinifatMaster);
       document.getElementById('form-convenio')?.classList.toggle('hidden', !isClinifatMaster);
+      document.getElementById('form-unidade')?.classList.toggle('hidden', !isClinifatMaster);
     }
 
     async function liberarCliniFat(authUser) {
@@ -1399,7 +1489,7 @@
         statusEl.className = 'p-3 rounded-xl bg-surface-container text-center font-label-sm text-sm border border-outline-variant text-primary';
       }
 
-      const [profRes, convRes] = await Promise.all([
+      const [profRes, convRes, unidRes] = await Promise.all([
         _supabase.from('clinifat_profissionais')
           .select('id,nome,tipo,ativo,ordem')
           .eq('ativo', true)
@@ -1407,19 +1497,25 @@
         _supabase.from('clinifat_convenios')
           .select('id,nome,tipo,valor,ativo,ordem')
           .eq('ativo', true)
-          .order('tipo').order('ordem').order('nome')
+          .order('tipo').order('ordem').order('nome'),
+        _supabase.from('clinifat_unidades')
+          .select('id,nome,ativo,ordem')
+          .eq('ativo', true)
+          .order('ordem').order('nome')
       ]);
 
       if (profRes.error) throw new Error('Erro ao carregar profissionais: ' + profRes.error.message);
       if (convRes.error) throw new Error('Erro ao carregar convênios: ' + convRes.error.message);
+      if (unidRes.error) console.warn('Tabela clinifat_unidades indisponível; usando unidades padrão.', unidRes.error);
 
       dados = {
         profissionais: { consulta: [], sadt: [] },
-        convenios: { consulta: [], sadt: [] }
+        convenios: { consulta: [], sadt: [] },
+        unidades: unidRes.error ? [{id:null,nome:'Centro'},{id:null,nome:'Icaraí'}] : (unidRes.data || [])
       };
 
       (profRes.data || []).forEach(p => {
-        if (dados.profissionais[p.tipo]) dados.profissionais[p.tipo].push(p.nome);
+        if (dados.profissionais[p.tipo]) dados.profissionais[p.tipo].push(formatarNomeCompleto(p.nome));
       });
 
       (convRes.data || []).forEach(c => {
@@ -1435,7 +1531,8 @@
       if (statusEl) {
         const totalP = (profRes.data || []).length;
         const totalC = (convRes.data || []).length;
-        statusEl.innerText = `🟢 CliniFat atualizado — ${totalP} profissionais • ${totalC} convênios`;
+        const totalU = dados.unidades.length;
+        statusEl.innerText = `🟢 CliniFat atualizado — ${totalP} profissionais • ${totalC} convênios • ${totalU} unidades`;
         statusEl.className = 'p-3 rounded-xl bg-surface-container text-center font-label-sm text-sm border border-outline-variant text-secondary';
       }
 
@@ -1685,7 +1782,11 @@
 
     function cancelarEdicaoGuideCheckProfissional() {
       editandoGuideCheckProfissionalId = null;
-      ['cfg-gcp-nome','cfg-gcp-especialidade','cfg-gcp-crm','cfg-gcp-crm52','cfg-gcp-uf','cfg-gcp-cbo','cfg-gcp-aliases'].forEach(id => {
+      document.getElementById('cfg-unidade-nome')?.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); salvarUnidade(); }
+    });
+
+    ['cfg-gcp-nome','cfg-gcp-especialidade','cfg-gcp-crm','cfg-gcp-crm52','cfg-gcp-uf','cfg-gcp-cbo','cfg-gcp-aliases'].forEach(id => {
         const el = document.getElementById(id); if (el) el.value = '';
       });
       const cancel = document.getElementById('cfg-gcp-cancel-btn');
@@ -1729,6 +1830,71 @@
       if (!confirm(`Excluir "${nome}" da base do GuideCheck?`)) return;
       const { error } = await _supabase.from('guidecheck_profissionais').delete().eq('id', id);
       if (error) return alert(error.message);
+      await renderizarConfiguracoes();
+    }
+
+    // UNIDADES
+    function linhaUnidade(u) {
+      return `
+        <div class="cf-list-row ${u.ativo ? '' : 'is-inactive'}">
+          <span class="material-symbols-outlined text-base text-tertiary">location_on</span>
+          <div class="min-w-0 flex-1">
+            <div class="font-bold text-sm truncate">${escapeHtmlCF(u.nome)}</div>
+            <div class="text-[10px] text-on-surface-variant font-label-sm">${u.ativo ? 'ATIVA' : 'INATIVA'}</div>
+          </div>
+          ${isClinifatMaster ? `
+            <button onclick="iniciarEdicaoUnidade(${u.id},'${escapeJsCF(u.nome)}')" class="p-2 rounded-lg text-primary hover:bg-primary/10" title="Editar"><span class="material-symbols-outlined text-sm">edit</span></button>
+            <button onclick="alternarUnidade(${u.id},${!u.ativo})" class="p-2 rounded-lg hover:bg-outline-variant" title="${u.ativo?'Desativar':'Ativar'}"><span class="material-symbols-outlined text-sm">${u.ativo?'visibility_off':'visibility'}</span></button>
+            <button onclick="excluirUnidade(${u.id},'${escapeJsCF(u.nome)}')" class="p-2 rounded-lg text-error hover:bg-error-container/30" title="Excluir"><span class="material-symbols-outlined text-sm">delete</span></button>
+          ` : ''}
+        </div>`;
+    }
+
+    function iniciarEdicaoUnidade(id, nome) {
+      editandoUnidadeId = Number(id);
+      document.getElementById('cfg-unidade-nome').value = nome;
+      const cancel = document.getElementById('cfg-unidade-cancel-btn');
+      cancel.classList.remove('hidden'); cancel.classList.add('flex');
+      document.getElementById('cfg-unidade-nome').focus();
+    }
+
+    function cancelarEdicaoUnidade() {
+      editandoUnidadeId = null;
+      const input = document.getElementById('cfg-unidade-nome');
+      if (input) input.value = '';
+      const cancel = document.getElementById('cfg-unidade-cancel-btn');
+      if (cancel) { cancel.classList.add('hidden'); cancel.classList.remove('flex'); }
+    }
+
+    async function salvarUnidade() {
+      if (!isClinifatMaster) return alert('Acesso restrito ao Master.');
+      const nome = formatarNomeCompleto(document.getElementById('cfg-unidade-nome').value);
+      if (!nome) return alert('Informe o nome da unidade.');
+      const q = editandoUnidadeId
+        ? _supabase.from('clinifat_unidades').update({ nome }).eq('id', editandoUnidadeId)
+        : _supabase.from('clinifat_unidades').insert({ nome });
+      const { error } = await q;
+      if (error) return alert('Erro ao salvar unidade: ' + error.message);
+      cancelarEdicaoUnidade();
+      await carregarDadosSupabase();
+      await renderizarConfiguracoes();
+      document.getElementById('cfg-unidade-nome')?.focus();
+    }
+
+    async function alternarUnidade(id, ativo) {
+      if (!isClinifatMaster) return;
+      const { error } = await _supabase.from('clinifat_unidades').update({ ativo }).eq('id', id);
+      if (error) return alert(error.message);
+      await carregarDadosSupabase();
+      await renderizarConfiguracoes();
+    }
+
+    async function excluirUnidade(id, nome) {
+      if (!isClinifatMaster) return;
+      if (!confirm(`Excluir a unidade "${nome}"?`)) return;
+      const { error } = await _supabase.from('clinifat_unidades').delete().eq('id', id);
+      if (error) return alert(error.message);
+      await carregarDadosSupabase();
       await renderizarConfiguracoes();
     }
 
@@ -2240,8 +2406,27 @@
       tipoAtual = tipo;
       document.getElementById('titulo-tipo').innerText = `Contador - ${tipo.toUpperCase()}`;
       carregarDropdownConvenios();
+      carregarDropdownUnidades();
       iniciarContadores();
+      const nomeInput = document.getElementById('input-nome-operador');
+      if (nomeInput) nomeInput.value = nomeUsuarioOriginal;
+      resetarBotoesPlanilhas();
       navegar('tela-contador');
+    }
+
+    function carregarDropdownUnidades(valorPreservado = '') {
+      const select = document.getElementById('select-unidade');
+      if (!select) return;
+      select.innerHTML = '<option value="">Selecione uma unidade</option>';
+      (dados.unidades || []).forEach(u => {
+        const opt = document.createElement('option');
+        opt.value = u.nome;
+        opt.textContent = u.nome;
+        select.appendChild(opt);
+      });
+      if (valorPreservado && [...select.options].some(o => o.value === valorPreservado)) {
+        select.value = valorPreservado;
+      }
     }
 
     function carregarDropdownConvenios() {
@@ -2467,7 +2652,10 @@
         document.getElementById('input-data-fechamento').value = '';
         document.getElementById('switch-prioridade').checked = false;
         document.getElementById('select-convenio').value = '';
+        document.getElementById('select-unidade').value = '';
+        document.getElementById('input-nome-operador').value = nomeUsuarioOriginal;
         valorAtual = 0.0;
+        resetarBotoesPlanilhas();
         atualizarTotais();
 
         limparConferencia(false);
@@ -2494,8 +2682,124 @@
         document.getElementById('input-protocolo').value = '';
         document.getElementById('input-data-fechamento').value = '';
         document.getElementById('switch-prioridade').checked = false;
+        normalizarNomeOperador();
+        resetarBotoesPlanilhas();
         atualizarTotais();
         limparConferencia(false);
+      }
+    }
+
+    function obterResumoLote() {
+      normalizarNomeOperador();
+      const idxConv = document.getElementById('select-convenio').value;
+      const convenio = idxConv !== '' ? dados.convenios[tipoAtual]?.[Number(idxConv)] : null;
+      const quantidade = Object.values(contadores).reduce((a, b) => a + Number(b || 0), 0);
+      return {
+        usuario: document.getElementById('input-nome-operador').value.trim(),
+        protocolo: document.getElementById('input-protocolo').value.trim(),
+        lote: document.getElementById('input-lote').value.trim(),
+        unidade: document.getElementById('select-unidade').value,
+        tipoGuia: tipoAtual === 'consulta' ? 'Consulta' : 'SADT',
+        convenio: convenio?.nome || '',
+        valorGuia: Number(valorAtual || 0),
+        quantidade,
+        valorTotal: quantidade * Number(valorAtual || 0),
+        profissionais: Object.entries(contadores)
+          .filter(([, qtd]) => Number(qtd) > 0)
+          .map(([nome, qtd]) => ({ nome: formatarNomeCompleto(nome), quantidade: Number(qtd) }))
+      };
+    }
+
+    function moedaPlanilhaCF(valor) {
+      return Number(valor || 0).toFixed(2).replace('.', ',');
+    }
+
+    function validarCopiaPlanilha(tipo, r) {
+      const faltando = [];
+      if (!r.usuario) faltando.push('Nome');
+      if (!r.protocolo) faltando.push('Protocolo');
+      if (tipo !== 'envio') {
+        if (!r.lote) faltando.push('Lote');
+        if (!r.unidade) faltando.push('Unidade');
+        if (!r.convenio) faltando.push('Convênio');
+      }
+      if (r.quantidade <= 0) faltando.push('Quantidade de guias');
+      if (tipo === 'envio' && !r.profissionais.length) faltando.push('Profissionais com atendimento');
+      if (faltando.length) {
+        mostrarStatusCopia(`⚠ Preencha: ${faltando.join(', ')}.`, 'erro');
+        return false;
+      }
+      return true;
+    }
+
+    async function escreverClipboardCF(texto) {
+      if (navigator.clipboard?.writeText && window.isSecureContext) {
+        await navigator.clipboard.writeText(texto);
+        return;
+      }
+      const ta = document.createElement('textarea');
+      ta.value = texto;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      const ok = document.execCommand('copy');
+      ta.remove();
+      if (!ok) throw new Error('Falha ao copiar');
+    }
+
+    function mostrarStatusCopia(texto, tipo = 'ok') {
+      const el = document.getElementById('cf-copy-status');
+      if (!el) return;
+      el.textContent = texto;
+      el.className = `cf-copy-toast min-h-[18px] text-[10px] font-label-sm ${tipo === 'erro' ? 'text-error' : 'text-secondary'}`;
+    }
+
+    function marcarBotaoCopiado(tipo) {
+      const ids = {
+        recebimento: 'btn-copy-recebimento',
+        convenios: 'btn-copy-convenios',
+        envio: 'btn-copy-envio'
+      };
+      document.getElementById(ids[tipo])?.classList.add('is-copied');
+    }
+
+    function resetarBotoesPlanilhas() {
+      ['btn-copy-recebimento','btn-copy-convenios','btn-copy-envio']
+        .forEach(id => document.getElementById(id)?.classList.remove('is-copied'));
+      const status = document.getElementById('cf-copy-status');
+      if (status) status.textContent = '';
+    }
+
+    async function copiarParaPlanilha(tipo) {
+      const r = obterResumoLote();
+      if (!validarCopiaPlanilha(tipo, r)) return;
+
+      let texto = '';
+      let mensagem = '';
+      if (tipo === 'recebimento' || tipo === 'convenios') {
+        texto = [
+          r.usuario, r.protocolo, r.lote, r.unidade, r.tipoGuia,
+          r.convenio, moedaPlanilhaCF(r.valorGuia), r.quantidade, moedaPlanilhaCF(r.valorTotal)
+        ].join('\t');
+        mensagem = tipo === 'recebimento'
+          ? '✓ Controle de Recebimento copiado.'
+          : `✓ Convênios copiado — ${r.convenio}.`;
+      } else {
+        texto = r.profissionais.map(p => [
+          r.usuario, r.protocolo, '', '', '', '', p.nome, '', p.quantidade
+        ].join('\t')).join('\n');
+        mensagem = `✓ Controle de Envio copiado — ${r.profissionais.length} profissional(is).`;
+      }
+
+      try {
+        await escreverClipboardCF(texto);
+        marcarBotaoCopiado(tipo);
+        mostrarStatusCopia(mensagem);
+      } catch (err) {
+        console.error(err);
+        mostrarStatusCopia('⚠ Não foi possível copiar para a área de transferência.', 'erro');
       }
     }
 
@@ -3197,12 +3501,14 @@
     let gc2Profissionais = [];
 
     async function renderizarConfiguracoesPrincipal() {
-      const [profRes, convRes] = await Promise.all([
+      const [profRes, convRes, unidRes] = await Promise.all([
         _supabase.from('clinifat_profissionais').select('*').order('tipo').order('ordem').order('nome'),
-        _supabase.from('clinifat_convenios').select('*').order('tipo').order('ordem').order('nome')
+        _supabase.from('clinifat_convenios').select('*').order('tipo').order('ordem').order('nome'),
+        _supabase.from('clinifat_unidades').select('*').order('ordem').order('nome')
       ]);
       if (profRes.error) throw profRes.error;
       if (convRes.error) throw convRes.error;
+      if (unidRes.error) console.warn('Não foi possível carregar clinifat_unidades nas configurações.', unidRes.error);
 
       const consulta = (profRes.data || []).filter(p => p.tipo === 'consulta');
       const sadt = (profRes.data || []).filter(p => p.tipo === 'sadt');
@@ -3221,6 +3527,12 @@
       document.getElementById('cfg-conv-consulta-count').textContent = `${cc.length} item(ns)`;
       document.getElementById('cfg-conv-sadt-count').textContent = `${cs.length} item(ns)`;
       document.getElementById('cfg-conv-total-count').textContent = `${(convRes.data || []).length} item(ns)`;
+
+      const unidades = unidRes.error ? [] : (unidRes.data || []);
+      const listaUnidades = document.getElementById('cfg-unidades-lista');
+      if (listaUnidades) listaUnidades.innerHTML = unidades.map(linhaUnidade).join('') || '<div class="cf-list-empty">Nenhuma unidade cadastrada.</div>';
+      const countUnidades = document.getElementById('cfg-unidade-count');
+      if (countUnidades) countUnidades.textContent = `${unidades.length} item(ns)`;
     }
 
     renderizarConfiguracoes = renderizarConfiguracoesPrincipal;
