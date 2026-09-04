@@ -437,7 +437,7 @@
   <header class="flex justify-between items-center px-6 py-4 w-full bg-surface-container-low border-b border-outline-variant sticky top-0 z-50">
     <div class="flex items-center gap-4 cursor-pointer" onclick="navegar('tela-inicio')">
       <span class="text-xl font-bold text-primary font-headline-md">CliniFat</span>
-      <span class="text-xs px-2 py-1 bg-surface-container-highest rounded text-on-surface-variant font-label-sm hidden sm:inline-block">CliniTool • v12.4</span>
+      <span class="text-xs px-2 py-1 bg-surface-container-highest rounded text-on-surface-variant font-label-sm hidden sm:inline-block">CliniTool • v12.5</span>
     </div>
 
     <!-- Controles de Colunas (Tela Contador) -->
@@ -1068,6 +1068,52 @@
               Selecionar PDF do Lote
               <input type="file" id="pdf-file-input" accept="application/pdf" class="hidden" onchange="carregarPDFLote(event)">
             </label>
+          </div>
+        </div>
+
+        <!-- Configuração do filtro de identificadores -->
+        <div class="bg-surface-container p-5 rounded-2xl border border-outline-variant flex flex-col gap-4">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div>
+              <h3 class="font-bold text-on-surface text-sm flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-lg">filter_alt</span>
+                Filtro de números do PDF
+              </h3>
+              <p class="text-xs text-on-surface-variant mt-1">O padrão procura números entre 8 e 12 dígitos. Ative o modo personalizado quando o convênio usar outro identificador.</p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3">
+              <div class="flex items-center gap-3 bg-surface-container-high px-3 py-2 rounded-xl border border-outline-variant">
+                <div>
+                  <span class="text-xs font-bold text-on-surface block" id="lbl-modo-filtro">Padrão · 8–12 dígitos</span>
+                  <span class="text-[11px] text-on-surface-variant">Filtro personalizado</span>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" id="switch-filtro-personalizado" class="sr-only peer" onchange="toggleFiltroPersonalizado(this.checked)">
+                  <div class="w-11 h-6 bg-surface-container-highest rounded-full peer peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:border-outline-variant after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                </label>
+              </div>
+
+              <div class="flex items-center gap-3 bg-surface-container-high px-3 py-2 rounded-xl border border-outline-variant">
+                <div>
+                  <span class="text-xs font-bold text-on-surface block">Permitir repetição</span>
+                  <span class="text-[11px] text-on-surface-variant">Controla quantas vezes cada número deve ser conferido</span>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" id="switch-permitir-repeticao" class="sr-only peer">
+                  <div class="w-11 h-6 bg-surface-container-highest rounded-full peer peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:border-outline-variant after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"></div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div id="container-filtro-personalizado" class="hidden items-center gap-2 flex-wrap bg-surface-container-high px-4 py-3 rounded-xl border border-outline-variant">
+            <span class="text-xs text-on-surface-variant font-label-sm">Entre</span>
+            <input type="number" id="filtro-digitos-min" min="1" max="30" value="14" class="w-20 h-9 px-2 bg-surface-container border border-outline-variant rounded-lg text-sm font-mono text-center text-primary font-bold focus:border-primary focus:ring-0">
+            <span class="text-xs text-on-surface-variant font-label-sm">e</span>
+            <input type="number" id="filtro-digitos-max" min="1" max="30" value="14" class="w-20 h-9 px-2 bg-surface-container border border-outline-variant rounded-lg text-sm font-mono text-center text-primary font-bold focus:border-primary focus:ring-0">
+            <span class="text-xs text-on-surface-variant font-label-sm">dígitos</span>
+            <span class="text-[11px] text-outline ml-1">Ex.: 14 e 14 para carteirinhas com exatamente 14 dígitos.</span>
           </div>
         </div>
 
@@ -2933,6 +2979,37 @@
       }
     }
 
+    function toggleFiltroPersonalizado(ativo) {
+      const container = document.getElementById('container-filtro-personalizado');
+      const label = document.getElementById('lbl-modo-filtro');
+      if (ativo) {
+        container.classList.remove('hidden');
+        container.classList.add('flex');
+        label.textContent = 'Personalizado';
+      } else {
+        container.classList.add('hidden');
+        container.classList.remove('flex');
+        label.textContent = 'Padrão · 8–12 dígitos';
+      }
+    }
+
+    function obterConfiguracaoFiltroLote() {
+      const personalizado = document.getElementById('switch-filtro-personalizado')?.checked || false;
+      const permitirRepeticao = document.getElementById('switch-permitir-repeticao')?.checked || false;
+      let minimo = 8;
+      let maximo = 12;
+
+      if (personalizado) {
+        minimo = Number.parseInt(document.getElementById('filtro-digitos-min')?.value, 10);
+        maximo = Number.parseInt(document.getElementById('filtro-digitos-max')?.value, 10);
+        if (!Number.isInteger(minimo) || !Number.isInteger(maximo) || minimo < 1 || maximo < 1 || minimo > 30 || maximo > 30 || minimo > maximo) {
+          return null;
+        }
+      }
+
+      return { personalizado, minimo, maximo, permitirRepeticao };
+    }
+
     async function carregarPDFLote(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -2961,19 +3038,40 @@
           textoCompleto += strings.join(" ") + "\n";
         }
 
-        const regexNumeros = /\b\d{8,12}\b/g;
-        const matches = textoCompleto.match(regexNumeros) || [];
-        const numerosUnicos = [...new Set(matches)];
-
-        if (numerosUnicos.length === 0) {
-          alert("Nenhum número de guia foi encontrado no PDF. Certifique-se de que o arquivo possui OCR/Texto.");
-          descEl.innerText = "❌ Falha: Nenhuma guia identificada.";
+        const configFiltro = obterConfiguracaoFiltroLote();
+        if (!configFiltro) {
+          descEl.innerText = "❌ Filtro personalizado inválido. Verifique a quantidade mínima e máxima de dígitos.";
+          document.getElementById('pdf-file-input').value = "";
           return;
         }
 
-        guiasLote = numerosUnicos.map(num => ({ numero: num, conferida: false }));
+        const regexNumeros = new RegExp(`\\b\\d{${configFiltro.minimo},${configFiltro.maximo}}\\b`, 'g');
+        const matches = textoCompleto.match(regexNumeros) || [];
 
-        descEl.innerText = `🟢 Guias encontradas: ${guiasLote.length}`;
+        if (matches.length === 0) {
+          alert(`Nenhum número entre ${configFiltro.minimo} e ${configFiltro.maximo} dígitos foi encontrado no PDF. Certifique-se de que o arquivo possui OCR/Texto.`);
+          descEl.innerText = "❌ Falha: Nenhum identificador encontrado com o filtro atual.";
+          return;
+        }
+
+        const contagem = new Map();
+        matches.forEach(num => contagem.set(num, (contagem.get(num) || 0) + 1));
+
+        guiasLote = Array.from(contagem.entries()).map(([numero, ocorrencias]) => ({
+          numero,
+          quantidadeTotal: configFiltro.permitirRepeticao ? ocorrencias : 1,
+          quantidadeConferida: 0,
+          ocorrenciasPdf: ocorrencias,
+          conferida: false
+        }));
+
+        const unicos = contagem.size;
+        const repeticoes = matches.length - unicos;
+        if (configFiltro.permitirRepeticao) {
+          descEl.innerText = `🟢 ${matches.length} ocorrência(s) • ${unicos} número(s) único(s)${repeticoes ? ` • ${repeticoes} repetição(ões)` : ''}`;
+        } else {
+          descEl.innerText = `🟢 ${unicos} número(s) único(s)${repeticoes ? ` • ${repeticoes} repetição(ões) ignorada(s)` : ''}`;
+        }
         document.getElementById('area-verificacao').classList.remove('hidden');
         document.getElementById('area-verificacao').classList.add('flex');
 
@@ -3053,9 +3151,9 @@
     }
 
     function atualizarDashboardConferencia() {
-      const total = guiasLote.length;
-      const conferidas = guiasLote.filter(g => g.conferida).length;
-      const pendentes = total - conferidas;
+      const total = guiasLote.reduce((soma, g) => soma + (g.quantidadeTotal || 1), 0);
+      const conferidas = guiasLote.reduce((soma, g) => soma + (g.quantidadeConferida ?? (g.conferida ? 1 : 0)), 0);
+      const pendentes = Math.max(0, total - conferidas);
 
       document.getElementById('lbl-total-pdf').innerText = total;
       document.getElementById('lbl-conferidas-pdf').innerText = conferidas;
@@ -3066,27 +3164,37 @@
       const grid = document.getElementById('grid-guias-pdf');
       grid.innerHTML = '';
 
+      const concluida = g => (g.quantidadeConferida ?? (g.conferida ? 1 : 0)) >= (g.quantidadeTotal || 1);
       let listaFiltrada = guiasLote;
-      if (filtroGuiaAtual === 'pendentes') listaFiltrada = guiasLote.filter(g => !g.conferida);
-      if (filtroGuiaAtual === 'conferidas') listaFiltrada = guiasLote.filter(g => g.conferida);
+      if (filtroGuiaAtual === 'pendentes') listaFiltrada = guiasLote.filter(g => !concluida(g));
+      if (filtroGuiaAtual === 'conferidas') listaFiltrada = guiasLote.filter(g => concluida(g));
 
       listaFiltrada.forEach(g => {
         const item = document.createElement('div');
-        const statusClass = g.conferida 
-          ? 'bg-secondary-container/20 border-secondary text-secondary' 
+        const total = g.quantidadeTotal || 1;
+        const feitas = g.quantidadeConferida ?? (g.conferida ? 1 : 0);
+        const finalizada = feitas >= total;
+        const statusClass = finalizada
+          ? 'bg-secondary-container/20 border-secondary text-secondary'
           : 'bg-surface-container-high border-outline-variant text-on-surface-variant';
-        
-        const icon = g.conferida ? 'check_circle' : 'pending';
+        const icon = finalizada ? 'check_circle' : 'pending';
+        const mostrarContador = total > 1 || (g.ocorrenciasPdf || 1) > 1;
 
-        item.className = `p-3 rounded-xl border font-mono text-sm flex items-center justify-between font-bold transition-all ${statusClass}`;
+        item.className = `p-3 rounded-xl border font-mono text-sm flex flex-col gap-2 font-bold transition-all ${statusClass}`;
         item.innerHTML = `
-          <span>${g.numero}</span>
-          <span class="material-symbols-outlined text-base">${icon}</span>
+          <div class="flex items-center justify-between gap-2">
+            <span class="truncate" title="${g.numero}">${g.numero}</span>
+            <span class="material-symbols-outlined text-base shrink-0">${icon}</span>
+          </div>
+          ${mostrarContador ? `
+            <div class="flex items-center justify-between gap-2 text-[11px] font-sans font-medium">
+              <span class="text-on-surface-variant">Encontrado: <strong>${g.ocorrenciasPdf || total}x</strong></span>
+              <span class="${finalizada ? 'text-secondary' : 'text-primary'}"><strong>${feitas} / ${total}</strong> conferido(s)</span>
+            </div>` : ''}
         `;
         grid.appendChild(item);
       });
     }
-
     function filtrarListaGuias(tipo) {
       filtroGuiaAtual = tipo;
       
@@ -3135,12 +3243,22 @@
       }
 
       if (idx !== -1) {
-        if (guiasLote[idx].conferida) {
-          msg.innerText = `⚠️ Guia ${guiasLote[idx].numero} JÁ FOI CONFERIDA anteriormente!`;
+        const guia = guiasLote[idx];
+        const totalNecessario = guia.quantidadeTotal || 1;
+        const jaConferidas = guia.quantidadeConferida ?? (guia.conferida ? 1 : 0);
+
+        if (jaConferidas >= totalNecessario) {
+          msg.innerText = `⚠️ ${guia.numero} JÁ FOI CONFERIDO ${totalNecessario}/${totalNecessario}!`;
           msg.className = "text-xs font-label-sm text-tertiary font-bold";
         } else {
-          guiasLote[idx].conferida = true;
-          msg.innerText = `✅ Guia ${guiasLote[idx].numero} CONFERIDA com sucesso!`;
+          guia.quantidadeConferida = jaConferidas + 1;
+          guia.conferida = guia.quantidadeConferida >= totalNecessario;
+
+          if (totalNecessario > 1) {
+            msg.innerText = `✅ ${guia.numero}: ${guia.quantidadeConferida} de ${totalNecessario} ocorrência(s) conferida(s).`;
+          } else {
+            msg.innerText = `✅ Guia ${guia.numero} CONFERIDA com sucesso!`;
+          }
           msg.className = "text-xs font-label-sm text-secondary font-bold";
           
           atualizarDashboardConferencia();
