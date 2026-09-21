@@ -200,7 +200,7 @@
         font-family: 'Courier New', Courier, monospace;
         font-size: 8pt;
         font-weight: 700;
-        line-height: 1.15;
+        line-height: 1;
         white-space: pre;
         color: #000000 !important;
         background: #ffffff;
@@ -211,13 +211,6 @@
         width: 100%;
         text-align: center;
         display: block;
-      }
-
-      .qrcode-label {
-        font-size: 8pt;
-        margin-bottom: 4px;
-        text-align: center;
-        width: 100%;
       }
 
       #qrcode-target {
@@ -2855,6 +2848,7 @@
       const agora = new Date().toLocaleString('pt-BR');
       const lote = document.getElementById('input-lote').value.trim();
       const protocolo = document.getElementById('input-protocolo').value.trim();
+      const unidade = document.getElementById('select-unidade').value.trim();
       const dataFechamento = document.getElementById('input-data-fechamento').value.trim();
       const prioridade = document.getElementById('switch-prioridade').checked;
       const idxConv = document.getElementById('select-convenio').value;
@@ -2863,6 +2857,7 @@
       linhas.push("RESUMO ATENDIMENTOS");
       linhas.push(`Data: ${agora}`);
       linhas.push(`Tipo: ${tipoAtual.toUpperCase()}`);
+      if (unidade) linhas.push(`Unidade: ${unidade}`);
       if (protocolo) linhas.push(`Protocolo: ${protocolo}`);
       if (lote) linhas.push(`Lote: ${lote}`);
       if (dataFechamento) linhas.push(`Fechamento: ${dataFechamento}`);
@@ -2911,9 +2906,9 @@
       }
 
       linhas.push("─".repeat(28));
-      linhas.push("     STATUS DO LOTE\n");
-      linhas.push("►PLANILHA - ►DIGITALIZADO\n");
-      linhas.push("►ENVIADO - ►ARQUIVADO\n");
+      linhas.push("     STATUS DO LOTE");
+      linhas.push("►PLANILHA - ►DIGITALIZADO");
+      linhas.push("►ENVIADO - ►ARQUIVADO");
       linhas.push("Ver 10.4 WebServer");
       linhas.push("Dev. GB - Since 02/2026");
 
@@ -2932,12 +2927,10 @@
       // 1) Protocolo, quando preenchido (mesmo que o lote também esteja preenchido).
       // 2) Lote, somente quando não houver protocolo.
       const valorQR = protocolo || lote;
-      const rotuloQR = protocolo ? 'PROTOCOLO' : 'LOTE';
-
       if (valorQR) {
         const qrDiv = document.createElement('div');
         qrDiv.className = 'qrcode-container';
-        qrDiv.innerHTML = `<div class="qrcode-label">${rotuloQR}: ${valorQR}</div><div id="qrcode-target"></div>`;
+        qrDiv.innerHTML = '<div id="qrcode-target"></div>';
         container.appendChild(qrDiv);
 
         new QRCode(document.getElementById("qrcode-target"), {
