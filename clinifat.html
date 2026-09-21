@@ -224,29 +224,49 @@
         background: #ffffff;
       }
 
-      .qrcode-container {
-        margin-top: 8px;
+      .comprovante-footer {
+        display: flex;
+        align-items: flex-start;
+        justify-content: flex-start;
+        gap: 5mm;
+        margin-top: 5px;
         margin-bottom: 0;
-        padding-bottom: 0;
+        padding: 0;
         width: 100%;
-        text-align: center;
-        display: block;
+        white-space: normal;
       }
 
-      #qrcode-target {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
-        margin-bottom: 0;
-        padding-bottom: 0;
+      .qrcode-container {
+        flex: 0 0 65px;
+        width: 65px;
+        margin: 0;
+        padding: 0;
         line-height: 0;
       }
 
-      #qrcode-target img {
-        margin: 0 auto !important;
+      #qrcode-target {
+        width: 65px;
+        height: 65px;
+        margin: 0;
+        padding: 0;
+        line-height: 0;
+      }
+
+      #qrcode-target img,
+      #qrcode-target canvas {
+        margin: 0 !important;
         display: block !important;
       }
+
+      .lote-status {
+        flex: 1;
+        font-size: 8pt;
+        line-height: 1.08;
+        text-align: left;
+      }
+
+      .lote-status div { margin: 0 0 2px; }
+      .lote-status-meta { margin-top: 3px !important; font-size: 6pt; line-height: 1.1; }
     }
 
     /* Componentes de formulário do CliniFat / GuideCheck */
@@ -2970,11 +2990,6 @@
       }
 
       linhas.push("─".repeat(28));
-      linhas.push("     STATUS DO LOTE");
-      linhas.push("►PLANILHA - ►DIGITALIZADO");
-      linhas.push("►ENVIADO - ►ARQUIVADO");
-      linhas.push("Ver 10.4 WebServer");
-      linhas.push("Dev. GB - Since 02/2026");
 
       return linhas.join("\n");
     }
@@ -2991,12 +3006,20 @@
       // 1) Protocolo, quando preenchido (mesmo que o lote também esteja preenchido).
       // 2) Lote, somente quando não houver protocolo.
       const valorQR = protocolo || lote;
-      if (valorQR) {
-        const qrDiv = document.createElement('div');
-        qrDiv.className = 'qrcode-container';
-        qrDiv.innerHTML = '<div id="qrcode-target"></div>';
-        container.appendChild(qrDiv);
+      const rodape = document.createElement('div');
+      rodape.className = 'comprovante-footer';
+      rodape.innerHTML = `
+        <div class="qrcode-container"><div id="qrcode-target"></div></div>
+        <div class="lote-status">
+          <div>- Planilha</div>
+          <div>- Scan</div>
+          <div>- Enviado</div>
+          <div>- Arquivado</div>
+          <div class="lote-status-meta">Ver 10.4 WebServer<br>Dev. GB - Since 02/2026</div>
+        </div>`;
+      container.appendChild(rodape);
 
+      if (valorQR) {
         new QRCode(document.getElementById("qrcode-target"), {
           text: valorQR,
           width: 65,
@@ -3005,6 +3028,8 @@
           colorLight: "#ffffff",
           correctLevel: QRCode.CorrectLevel.H
         });
+      } else {
+        rodape.querySelector('.qrcode-container').style.display = 'none';
       }
 
       setTimeout(() => {
