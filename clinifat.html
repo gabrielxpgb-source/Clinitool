@@ -127,6 +127,15 @@
       color: #4de082 !important;
     }
 
+    @keyframes countBlink {
+      0% { transform: scale(1); }
+      45% { transform: scale(1.025); border-color: #a9c7ff; box-shadow: 0 0 0 3px rgba(169,199,255,.16); }
+      100% { transform: scale(1); }
+    }
+    .professional-card { cursor: pointer; user-select: none; min-height: 150px; }
+    .professional-card.count-blink { animation: countBlink .22s ease-out; }
+    .professional-name { font-size: .875rem; line-height: 1.15; overflow-wrap: anywhere; }
+
     .glass-summary {
       background: rgba(30, 32, 34, 0.85);
       backdrop-filter: blur(12px);
@@ -482,17 +491,10 @@
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <button onclick="escolherTipo('consulta')" class="cf-module-card" style="--cf-accent:#a9c7ff;--cf-glow:rgba(77,150,255,.16)">
+          <button onclick="abrirContador()" class="cf-module-card" style="--cf-accent:#a9c7ff;--cf-glow:rgba(77,150,255,.16)">
             <span class="cf-module-icon"><span class="material-symbols-outlined">medical_services</span></span>
-            <span class="cf-module-title">Guias de Consulta</span>
-            <span class="cf-module-desc">Contagem e gerenciamento das guias de consulta médica.</span>
-            <span class="cf-module-arrow">Acessar <span class="material-symbols-outlined text-base">arrow_forward</span></span>
-          </button>
-
-          <button onclick="escolherTipo('sadt')" class="cf-module-card" style="--cf-accent:#ffb873;--cf-glow:rgba(255,184,115,.14)">
-            <span class="cf-module-icon"><span class="material-symbols-outlined">psychology</span></span>
-            <span class="cf-module-title">Guias SADT</span>
-            <span class="cf-module-desc">Contagem e gerenciamento de guias SADT e atendimentos terapêuticos.</span>
+            <span class="cf-module-title">Contador de Atendimento</span>
+            <span class="cf-module-desc">Contagem de atendimentos de Consulta e SADT em uma única tela.</span>
             <span class="cf-module-arrow">Acessar <span class="material-symbols-outlined text-base">arrow_forward</span></span>
           </button>
 
@@ -960,7 +962,18 @@
     <!-- TELA CONTADOR -->
     <div id="tela-contador" class="screen">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-        <h2 id="titulo-tipo" class="text-2xl font-bold text-primary font-headline-md">Contador</h2>
+        <div class="flex flex-wrap items-center gap-4">
+          <h2 id="titulo-tipo" class="text-2xl font-bold text-primary font-headline-md">Contador de Atendimento</h2>
+          <label class="flex items-center gap-3 px-3 py-2 rounded-xl bg-surface-container border border-outline-variant cursor-pointer select-none">
+            <span id="rotulo-consulta" class="text-xs font-bold text-primary">Consulta</span>
+            <span class="relative inline-flex items-center w-12 h-7">
+              <input type="checkbox" id="switch-procedimento" class="sr-only peer" onchange="trocarTipoContador(this.checked ? 'sadt' : 'consulta')">
+              <span class="absolute inset-0 rounded-full bg-primary peer-checked:bg-tertiary transition-colors"></span>
+              <span class="absolute left-1 w-5 h-5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5"></span>
+            </span>
+            <span id="rotulo-sadt" class="text-xs font-bold text-on-surface-variant">SADT</span>
+          </label>
+        </div>
         <div class="flex items-center gap-3">
           <span id="status-leitor-qr" class="text-xs font-label-sm text-on-surface-variant hidden sm:inline">--/--/---- --:--:--</span>
           <button id="btn-ler-qr" onclick="ativarLeituraQRCode()" class="h-11 px-4 rounded-xl bg-surface-container-high border border-outline-variant hover:border-primary hover:text-primary text-on-surface font-label-sm transition-all flex items-center gap-2">
@@ -2455,14 +2468,33 @@
       }
     }
 
+    function sincronizarChaveProcedimento() {
+      const chave = document.getElementById('switch-procedimento');
+      if (chave) chave.checked = tipoAtual === 'sadt';
+      document.getElementById('rotulo-consulta')?.classList.toggle('text-primary', tipoAtual === 'consulta');
+      document.getElementById('rotulo-consulta')?.classList.toggle('text-on-surface-variant', tipoAtual !== 'consulta');
+      document.getElementById('rotulo-sadt')?.classList.toggle('text-tertiary', tipoAtual === 'sadt');
+      document.getElementById('rotulo-sadt')?.classList.toggle('text-on-surface-variant', tipoAtual !== 'sadt');
+    }
+
+    function abrirContador() {
+      escolherTipo('consulta');
+    }
+
+    function trocarTipoContador(tipo) {
+      if (tipo === tipoAtual) return;
+      escolherTipo(tipo);
+    }
+
     function escolherTipo(tipo) {
+      const unidadeAtual = document.getElementById('select-unidade')?.value || '';
       tipoAtual = tipo;
-      document.getElementById('titulo-tipo').innerText = `Contador - ${tipo.toUpperCase()}`;
+      sincronizarChaveProcedimento();
       carregarDropdownConvenios();
-      carregarDropdownUnidades();
+      carregarDropdownUnidades(unidadeAtual);
       iniciarContadores();
       const nomeInput = document.getElementById('input-nome-operador');
-      if (nomeInput) nomeInput.value = nomeUsuarioOriginal;
+      if (nomeInput && !nomeInput.value.trim()) nomeInput.value = nomeUsuarioOriginal;
       resetarBotoesPlanilhas();
       navegar('tela-contador');
     }
@@ -2519,21 +2551,33 @@
         card.className = 'bg-surface-container-high border border-outline-variant rounded-xl p-4 flex flex-col gap-3 transition-all hover:border-primary hover:shadow-lg professional-card';
         card.id = `card-${nome}`;
         card.setAttribute('data-count', '0');
-        
+        card.setAttribute('role', 'button');
+        card.setAttribute('tabindex', '0');
+        card.setAttribute('aria-label', `Adicionar atendimento para ${nome}`);
+
         card.innerHTML = `
-          <span class="font-label-md text-xs text-on-surface-variant truncate font-bold text-center">${nome}</span>
+          <span class="professional-name font-label-md text-on-surface-variant font-bold text-center">${escapeHtmlCF(nome)}</span>
           <div class="flex-grow flex items-center justify-center py-2">
             <span class="font-headline-xl text-3xl font-bold counter-value" id="qtd-${nome}">0</span>
           </div>
-          <div class="flex justify-between items-center bg-surface-container-highest rounded-xl p-1 gap-1">
-            <button onclick="alterarQtd('${nome}', -1)" class="w-10 h-10 flex items-center justify-center rounded-lg bg-surface-container-high text-on-surface-variant hover:bg-outline-variant transition-colors">
+          <div class="flex justify-center items-center mt-auto">
+            <button type="button" class="btn-remover-contagem w-11 h-9 flex items-center justify-center rounded-lg border border-error/60 bg-error-container/30 text-error hover:bg-error hover:text-on-error transition-colors" aria-label="Remover um atendimento de ${escapeHtmlCF(nome)}">
               <span class="material-symbols-outlined">remove</span>
-            </button>
-            <button onclick="alterarQtd('${nome}', 1)" class="w-10 h-10 flex items-center justify-center rounded-lg bg-primary-container text-on-primary-container hover:opacity-90 transition-colors shadow-sm">
-              <span class="material-symbols-outlined">add</span>
             </button>
           </div>
         `;
+
+        card.addEventListener('click', () => alterarQtd(nome, 1));
+        card.addEventListener('keydown', event => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            alterarQtd(nome, 1);
+          }
+        });
+        card.querySelector('.btn-remover-contagem').addEventListener('click', event => {
+          event.stopPropagation();
+          alterarQtd(nome, -1);
+        });
         grid.appendChild(card);
       });
       atualizarTotais();
@@ -2548,6 +2592,12 @@
         
         qtdEl.innerText = contadores[nome];
         cardEl.setAttribute('data-count', contadores[nome]);
+
+        if (delta > 0) {
+          cardEl.classList.remove('count-blink');
+          void cardEl.offsetWidth;
+          cardEl.classList.add('count-blink');
+        }
 
         if (contadores[nome] > 0) {
           cardEl.classList.add('card-active');
