@@ -184,6 +184,13 @@
         margin: 0mm 0mm 0mm 1mm;
       }
 
+      html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        height: auto !important;
+        min-height: 0 !important;
+      }
+
       body * { visibility: hidden; }
       #comprovante-print, #comprovante-print * { visibility: visible; }
 
@@ -194,7 +201,9 @@
         top: 0;
         width: 100%;
         max-width: 80mm;
-        padding: 2mm 4mm;
+        padding: 2mm 4mm 0;
+        height: auto !important;
+        min-height: 0 !important;
         zoom: 150%;
         transform-origin: top left;
         font-family: 'Courier New', Courier, monospace;
@@ -208,6 +217,8 @@
 
       .qrcode-container {
         margin-top: 8px;
+        margin-bottom: 0;
+        padding-bottom: 0;
         width: 100%;
         text-align: center;
         display: block;
@@ -218,6 +229,9 @@
         justify-content: center;
         align-items: center;
         width: 100%;
+        margin-bottom: 0;
+        padding-bottom: 0;
+        line-height: 0;
       }
 
       #qrcode-target img {
