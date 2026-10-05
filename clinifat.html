@@ -1313,6 +1313,9 @@
           <button onclick="zerar()" class="h-12 px-6 rounded-xl border border-error text-error font-label-md hover:bg-error-container hover:text-on-error-container transition-all flex items-center gap-2">
             <span class="material-symbols-outlined text-sm">refresh</span>Zerar
           </button>
+          <button onclick="zerarCards()" class="h-12 px-6 rounded-xl border border-primary text-primary font-label-md hover:bg-primary-container hover:text-on-primary-container transition-all flex items-center gap-2" title="Zerar somente as contagens, preservando todos os dados do lote">
+            <span class="material-symbols-outlined text-sm">filter_none</span>ZC
+          </button>
           <button onclick="ce()" class="h-12 px-6 rounded-xl border border-tertiary text-tertiary font-label-md hover:bg-tertiary-container hover:text-on-tertiary-container transition-all flex items-center gap-2" title="Zerar contadores mantendo convênio, unidade e nome operacional">
             <span class="material-symbols-outlined text-sm">restart_alt</span>CE
           </button>
@@ -2784,6 +2787,27 @@
       }
     }
 
+    function zerarCards() {
+      if (!confirm('Deseja zerar somente as contagens dos profissionais e preservar todos os dados do lote?')) return;
+
+      for (const nome in contadores) {
+        contadores[nome] = 0;
+        const qtdEl = document.getElementById(`qtd-${nome}`);
+        const cardEl = document.getElementById(`card-${nome}`);
+
+        if (qtdEl) {
+          qtdEl.innerText = '0';
+          qtdEl.classList.remove('text-active');
+        }
+        if (cardEl) {
+          cardEl.classList.remove('card-active', 'count-blink');
+          cardEl.setAttribute('data-count', '0');
+        }
+      }
+
+      resetarBotoesPlanilhas();
+      atualizarTotais();
+    }
     function ce() {
       if(confirm('Deseja zerar todos os contadores mantendo o convênio selecionado?')) {
         resetarEstadoLeitorQR();
