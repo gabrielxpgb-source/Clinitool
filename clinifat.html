@@ -517,6 +517,12 @@
             <span class="cf-module-arrow">Acessar <span class="material-symbols-outlined text-base">arrow_forward</span></span>
           </button>
 
+          <button onclick="navegar('tela-xml-edit')" class="cf-module-card" style="--cf-accent:#c4b5fd;--cf-glow:rgba(196,181,253,.15)">
+            <span class="cf-module-icon"><span class="material-symbols-outlined">code_blocks</span></span>
+            <span class="cf-module-title">XML Edit</span>
+            <span class="cf-module-desc">Auditoria, correção assistida e exportação segura de lotes XML TISS.</span>
+            <span class="cf-module-arrow">Acessar <span class="material-symbols-outlined text-base">arrow_forward</span></span>
+          </button>
           <button onclick="abrirConferenciaGuia()" class="cf-module-card" style="--cf-accent:#4de082;--cf-glow:rgba(77,224,130,.14)">
             <span class="cf-module-icon"><span class="material-symbols-outlined">fact_check</span></span>
             <span class="cf-module-title">GuideCheck</span>
@@ -1251,6 +1257,77 @@
       </div>
     </div>
 
+    <!-- TELA XML EDIT -->
+    <div id="tela-xml-edit" class="screen">
+      <div class="max-w-7xl mx-auto flex flex-col gap-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div class="text-xs uppercase tracking-wider font-bold text-tertiary font-label-sm mb-2">CliniFat • TISS</div>
+            <h2 class="text-3xl font-bold text-on-surface font-headline-lg">XML Edit</h2>
+            <p class="text-sm text-on-surface-variant mt-1">Auditoria e correção assistida sem alterar o arquivo original.</p>
+          </div>
+          <button onclick="navegar('tela-inicio')" class="h-11 px-5 rounded-xl bg-surface-container-high border border-outline-variant text-on-surface font-label-sm">Voltar</button>
+        </div>
+
+        <section id="xml-drop-zone" class="border-2 border-dashed border-outline-variant hover:border-tertiary rounded-2xl bg-surface-container p-8 text-center transition-colors">
+          <input id="xml-file-input" type="file" accept=".xml,text/xml,application/xml" class="hidden">
+          <span class="material-symbols-outlined text-5xl text-tertiary">upload_file</span>
+          <h3 class="text-lg font-bold mt-3">Carregar XML TISS</h3>
+          <p class="text-sm text-on-surface-variant mt-1">Arraste o arquivo aqui ou selecione no computador.</p>
+          <button type="button" id="xml-select-btn" class="mt-5 h-11 px-6 rounded-xl bg-tertiary-container text-on-tertiary-container font-bold">Selecionar XML</button>
+          <p class="text-[11px] text-outline mt-4">O processamento acontece localmente no navegador.</p>
+        </section>
+
+        <div id="xml-workspace" class="hidden flex flex-col gap-6">
+          <section class="bg-surface-container rounded-2xl border border-outline-variant p-5 flex flex-col gap-4">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div class="min-w-0">
+                <div id="xml-file-name" class="font-bold text-on-surface truncate"></div>
+                <div id="xml-file-meta" class="text-xs text-on-surface-variant mt-1"></div>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <button type="button" onclick="xmlRevalidar()" class="h-10 px-4 rounded-xl border border-primary text-primary font-bold text-xs">Revalidar</button>
+                <button type="button" onclick="xmlExportar()" class="h-10 px-4 rounded-xl bg-secondary text-on-secondary font-bold text-xs flex items-center gap-2"><span class="material-symbols-outlined text-sm">download</span>Exportar cópia</button>
+                <button type="button" onclick="xmlLimpar()" class="h-10 px-4 rounded-xl border border-error text-error font-bold text-xs">Fechar XML</button>
+              </div>
+            </div>
+            <div id="xml-summary" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3"></div>
+          </section>
+
+          <section class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <div class="xl:col-span-2 bg-surface-container rounded-2xl border border-outline-variant overflow-hidden">
+              <div class="p-5 border-b border-outline-variant flex items-center justify-between gap-3">
+                <div><h3 class="font-bold">Guias do lote</h3><p class="text-xs text-on-surface-variant mt-1">Carteiras e senhas aparecem mascaradas.</p></div>
+                <span id="xml-guide-count" class="text-xs px-3 py-1.5 rounded-full bg-surface-container-highest"></span>
+              </div>
+              <div class="overflow-x-auto max-h-[520px]">
+                <table class="w-full text-left text-xs">
+                  <thead class="sticky top-0 bg-surface-container-high text-on-surface-variant"><tr><th class="p-3">#</th><th class="p-3">Guia</th><th class="p-3">Carteira</th><th class="p-3">Execução</th><th class="p-3">Procedimento</th><th class="p-3 text-right">Valor</th><th class="p-3">Status</th></tr></thead>
+                  <tbody id="xml-guides-body"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="flex flex-col gap-6">
+              <section class="bg-surface-container rounded-2xl border border-outline-variant p-5">
+                <h3 class="font-bold mb-3">Auditoria</h3>
+                <div id="xml-audit-list" class="flex flex-col gap-2 text-xs"></div>
+              </section>
+              <section class="bg-surface-container rounded-2xl border border-outline-variant p-5">
+                <h3 class="font-bold mb-3">Alterações</h3>
+                <div id="xml-change-log" class="text-xs text-on-surface-variant">Nenhuma alteração realizada.</div>
+              </section>
+            </div>
+          </section>
+
+          <section id="xml-editor" class="hidden bg-surface-container rounded-2xl border border-tertiary/50 p-6">
+            <div class="flex items-center justify-between gap-3 mb-5"><div><h3 id="xml-editor-title" class="text-lg font-bold">Editar guia</h3><p class="text-xs text-on-surface-variant">Os totais relacionados serão recalculados ao salvar.</p></div><button type="button" onclick="xmlFecharEditor()" class="p-2 rounded-lg hover:bg-surface-container-highest"><span class="material-symbols-outlined">close</span></button></div>
+            <form id="xml-guide-form" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4"></form>
+            <div class="flex justify-end gap-3 mt-6"><button type="button" onclick="xmlFecharEditor()" class="h-11 px-5 rounded-xl border border-outline-variant">Cancelar</button><button type="button" onclick="xmlSalvarGuia()" class="h-11 px-6 rounded-xl bg-tertiary text-on-tertiary font-bold">Salvar correções</button></div>
+          </section>
+        </div>
+      </div>
+    </div>
   </main>
 
   <!-- MODAL DE SELEÇÃO TIPO LOTE (CONSULTA / SADT) -->
@@ -4456,5 +4533,6 @@
     setInterval(atualizarRelogioQR, 1000);
     verificarSessaoCliniFat();
   </script>
+  <script src="./xml-edit.js"></script>
 </body>
 </html>
