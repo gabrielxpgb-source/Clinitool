@@ -56,20 +56,29 @@
   function md5Latin1(s){return md51(s).map(rhex).join('').toUpperCase();}
   function calcularHash(doc=state.doc){return md5Latin1(leafValues(doc.documentElement).join(''));}
 
+  function guideType(node) { return local(node) === 'guiaConsulta' ? 'consulta' : 'sadt'; }
+  function guideHeader(node) { return first(node, 'cabecalhoGuia') || first(node, 'cabecalhoConsulta') || node; }
+  function guideItem(node) { return first(node, 'procedimentoExecutado') || first(node, 'dadosAtendimento') || node; }
+
   function parseGuide(node, index) {
-    const item=first(node,'procedimentoExecutado');
-    return { index,node,item, guia:value(first(node,'cabecalhoGuia'),'numeroGuiaPrestador'), principal:value(first(node,'cabecalhoGuia'),'guiaPrincipal'), operadora:value(first(node,'dadosAutorizacao'),'numeroGuiaOperadora'), carteira:value(first(node,'dadosBeneficiario'),'numeroCarteira'), senha:value(first(node,'dadosAutorizacao'),'senha'), autorizacao:value(first(node,'dadosAutorizacao'),'dataAutorizacao'), solicitacao:value(first(node,'dadosSolicitacao'),'dataSolicitacao'), execucao:value(item,'dataExecucao'), codigo:value(first(item,'procedimento'),'codigoProcedimento'), descricao:value(first(item,'procedimento'),'descricaoProcedimento'), quantidade:Number(value(item,'quantidadeExecutada')||0), unitario:Number(value(item,'valorUnitario')||0), totalItem:Number(value(item,'valorTotal')||0), totalProc:Number(value(first(node,'valorTotal'),'valorProcedimentos')||0), totalGeral:Number(value(first(node,'valorTotal'),'valorTotalGeral')||0), solicitante:value(first(node,'profissionalSolicitante'),'nomeProfissional'), executor:value(first(node,'equipeSadt'),'nomeProf'), conselhoSolic:value(first(node,'profissionalSolicitante'),'numeroConselhoProfissional'), ufSolic:value(first(node,'profissionalSolicitante'),'UF'), cbosSolic:value(first(node,'profissionalSolicitante'),'CBOS'), conselhoExec:value(first(node,'equipeSadt'),'numeroConselhoProfissional'), ufExec:value(first(node,'equipeSadt'),'UF'), cbosExec:value(first(node,'equipeSadt'),'CBOS'), observacao:value(node,'observacao') };
+    const tipo=guideType(node), item=guideItem(node), atendimento=first(node,'dadosAtendimento') || item;
+    const procedimento=first(item,'procedimento') || item;
+    const totalItem=tipo==='consulta' ? Number(value(atendimento,'valorProcedimento')||0) : Number(value(item,'valorTotal')||0);
+    const totalGeral=tipo==='consulta' ? totalItem : Number(value(first(node,'valorTotal'),'valorTotalGeral')||0);
+    return { index,node,item,tipo, guia:value(guideHeader(node),'numeroGuiaPrestador'), principal:value(guideHeader(node),'guiaPrincipal'), operadora:value(node,'numeroGuiaOperadora'), carteira:value(first(node,'dadosBeneficiario'),'numeroCarteira'), senha:value(first(node,'dadosAutorizacao'),'senha'), autorizacao:value(first(node,'dadosAutorizacao'),'dataAutorizacao'), solicitacao:value(first(node,'dadosSolicitacao'),'dataSolicitacao'), execucao:tipo==='consulta'?value(atendimento,'dataAtendimento'):value(item,'dataExecucao'), codigo:value(procedimento,'codigoProcedimento'), descricao:value(procedimento,'descricaoProcedimento'), quantidade:tipo==='consulta'?1:Number(value(item,'quantidadeExecutada')||0), unitario:tipo==='consulta'?totalItem:Number(value(item,'valorUnitario')||0), totalItem, totalProc:tipo==='consulta'?totalItem:Number(value(first(node,'valorTotal'),'valorProcedimentos')||0), totalGeral, solicitante:value(first(node,'profissionalSolicitante'),'nomeProfissional'), executor:tipo==='consulta'?value(first(node,'profissionalExecutante'),'nomeProfissional'):value(first(node,'equipeSadt'),'nomeProf'), conselhoSolic:value(first(node,'profissionalSolicitante'),'numeroConselhoProfissional'), ufSolic:value(first(node,'profissionalSolicitante'),'UF'), cbosSolic:value(first(node,'profissionalSolicitante'),'CBOS'), conselhoExec:tipo==='consulta'?value(first(node,'profissionalExecutante'),'numeroConselhoProfissional'):value(first(node,'equipeSadt'),'numeroConselhoProfissional'), ufExec:tipo==='consulta'?value(first(node,'profissionalExecutante'),'UF'):value(first(node,'equipeSadt'),'UF'), cbosExec:tipo==='consulta'?value(first(node,'profissionalExecutante'),'CBOS'):value(first(node,'equipeSadt'),'CBOS'), observacao:value(node,'observacao'), indicacaoClinica:value(first(node,'dadosSolicitacao'),'indicacaoClinica'), indicacaoAcidente:value(node,'indicacaoAcidente'), tecnica:value(item,'tecnicaUtilizada') };
   }
 
   function auditar() {
     const guides=state.guides.map(parseGuide); const issues=[]; const per=guides.map(()=>[]);
     const add=(level,msg,index=null)=>{issues.push({level,msg,index});if(index!==null)per[index].push(level);};
-    const required=[['guia','Número da guia'],['carteira','Carteira'],['senha','Senha'],['execucao','Data de execução'],['codigo','Procedimento'],['executor','Profissional executante']];
     guides.forEach((g,i)=>{
+      const required=[['guia','Número da guia'],['carteira','Carteira'],['execucao',g.tipo==='consulta'?'Data de atendimento':'Data de execução'],['codigo','Procedimento'],['executor','Profissional executante']];
+      if(g.tipo==='sadt') required.push(['senha','Senha']);
       required.forEach(([k,label])=>{if(!g[k])add('erro',`${label} não informado.`,i);});
-      if(g.guia && (g.guia!==g.principal || g.guia!==g.operadora)) add('alerta','Os três números de guia são diferentes.',i);
+      if(g.tipo==='sadt' && g.guia && (g.guia!==g.principal || g.guia!==g.operadora)) add('alerta','Os três números de guia são diferentes.',i);
+      if(g.tipo==='consulta' && g.guia && g.operadora && g.guia!==g.operadora) add('alerta','Número da guia difere do número da guia da operadora.',i);
       if(g.autorizacao && g.solicitacao && g.autorizacao!==g.solicitacao) add('alerta','Data de autorização diferente da solicitação.',i);
-      if(g.execucao && g.autorizacao && g.execucao<g.autorizacao) add('erro','Execução anterior à autorização.',i);
+      if(g.execucao && g.autorizacao && g.execucao<g.autorizacao) add('erro','Data de atendimento/execução anterior à autorização.',i);
       const calc=Math.round(g.quantidade*g.unitario*100)/100;
       if(Math.abs(calc-g.totalItem)>.009) add('erro',`Total do item deveria ser ${money(calc)}.`,i);
       if(Math.abs(g.totalItem-g.totalProc)>.009 || Math.abs(g.totalProc-g.totalGeral)>.009) add('erro','Totais do item e da guia não conferem.',i);
@@ -92,21 +101,107 @@
     byId('xml-change-log').innerHTML=state.changes.length?state.changes.slice().reverse().map(c=>`<div class="py-2 border-b border-outline-variant"><b>Guia ${c.guide}</b> — ${esc(c.field)}<br><span class="text-outline">${esc(c.before)} → ${esc(c.after)}</span></div>`).join(''):'Nenhuma alteração realizada.';
   }
 
-  const fieldDefs=[
-    ['Número guia prestador','cabecalhoGuia','numeroGuiaPrestador','text'],['Guia principal','cabecalhoGuia','guiaPrincipal','text'],['Guia operadora','dadosAutorizacao','numeroGuiaOperadora','text'],['Carteira','dadosBeneficiario','numeroCarteira','text'],['Senha','dadosAutorizacao','senha','text'],['Data autorização','dadosAutorizacao','dataAutorizacao','date'],['Data solicitação','dadosSolicitacao','dataSolicitacao','date'],['Data execução','procedimentoExecutado','dataExecucao','date'],['Solicitante','profissionalSolicitante','nomeProfissional','text'],['Conselho solicitante','profissionalSolicitante','numeroConselhoProfissional','text'],['UF solicitante','profissionalSolicitante','UF','text'],['CBOS solicitante','profissionalSolicitante','CBOS','text'],['Executor','equipeSadt','nomeProf','text'],['Conselho executor','equipeSadt','numeroConselhoProfissional','text'],['UF executor','equipeSadt','UF','text'],['CBOS executor','equipeSadt','CBOS','text'],['Código procedimento','procedimento','codigoProcedimento','text'],['Descrição procedimento','procedimento','descricaoProcedimento','text'],['Quantidade','procedimentoExecutado','quantidadeExecutada','number'],['Valor unitário','procedimentoExecutado','valorUnitario','number'],['Observação','guiaSP-SADT','observacao','text']
-  ];
+  function ensureChild(parent, tag, beforeTag='') {
+    if(!parent) return null;
+    let node=first(parent,tag); if(node) return node;
+    const ns=state.doc.documentElement.namespaceURI, prefix=state.doc.documentElement.prefix || 'ans';
+    node=state.doc.createElementNS(ns, `${prefix}:${tag}`);
+    const before=beforeTag ? children(parent).find(n=>local(n)===beforeTag) : null;
+    parent.insertBefore(node,before || null); return node;
+  }
+  function operatorCodeNode(guide) {
+    if(guideType(guide)==='consulta') return first(first(guide,'contratadoExecutante'),'codigoPrestadorNaOperadora');
+    return first(first(guide,'codProfissional'),'codigoPrestadorNaOperadora');
+  }
+  function def(label,scope,tag,type='text',opts={}) { return {label,scope,tag,type,...opts}; }
+  function fieldDefsForGuide(guide) {
+    const common=[
+      def('Registro ANS','header','registroANS','text',{key:'ans',apply:'ans'}),
+      def('Número guia prestador','header','numeroGuiaPrestador'),
+      def('Número guia operadora','custom','numeroGuiaOperadora','text',{finder:g=>first(g,'numeroGuiaOperadora')}),
+      def('Carteira','dadosBeneficiario','numeroCarteira'),
+      def('Indicação de acidente','guide','indicacaoAcidente'),
+      def('Observação','guide','observacao','textarea')
+    ];
+    if(guideType(guide)==='consulta') return [...common,
+      def('Código na operadora','custom','codigoPrestadorNaOperadora','text',{key:'operatorCode',apply:'operatorCode',finder:operatorCodeNode}),
+      def('CNES','contratadoExecutante','CNES'),
+      def('Profissional executante','profissionalExecutante','nomeProfissional'),
+      def('Conselho profissional','profissionalExecutante','conselhoProfissional'),
+      def('Número do conselho','profissionalExecutante','numeroConselhoProfissional'),
+      def('UF do executante','profissionalExecutante','UF'),
+      def('CBO do executante','profissionalExecutante','CBOS'),
+      def('Data de atendimento','dadosAtendimento','dataAtendimento','date',{key:'execucao'}),
+      def('Código da tabela','procedimento','codigoTabela'),
+      def('Código do procedimento','procedimento','codigoProcedimento'),
+      def('Valor do procedimento','procedimento','valorProcedimento','number'),
+      def('Regime de atendimento','dadosAtendimento','regimeAtendimento'),
+      def('Tipo de consulta','dadosAtendimento','tipoConsulta'),
+      def('Tipo de saída','dadosAtendimento','tipoSaida')
+    ];
+    return [...common.slice(0,2),
+      def('Guia principal','header','guiaPrincipal'),common[2],
+      def('Data de autorização','dadosAutorizacao','dataAutorizacao','date',{key:'autorizacao'}),
+      def('Senha','dadosAutorizacao','senha'),common[3],
+      def('Data da solicitação','dadosSolicitacao','dataSolicitacao','date'),
+      def('Caráter do atendimento','dadosSolicitacao','caraterAtendimento'),
+      def('Indicação clínica','dadosSolicitacao','indicacaoClinica','textarea',{create:true}),
+      def('Profissional solicitante','profissionalSolicitante','nomeProfissional'),
+      def('Conselho do solicitante','profissionalSolicitante','conselhoProfissional'),
+      def('Número conselho solicitante','profissionalSolicitante','numeroConselhoProfissional'),
+      def('UF do solicitante','profissionalSolicitante','UF'),
+      def('CBO do solicitante','profissionalSolicitante','CBOS'),
+      def('Código contratado executante','contratadoExecutante','codigoPrestadorNaOperadora'),
+      def('CNES','dadosExecutante','CNES'),
+      def('Código individual na operadora','custom','codigoPrestadorNaOperadora','text',{key:'operatorCode',apply:'operatorCode',finder:operatorCodeNode}),
+      def('Profissional executante','equipeSadt','nomeProf'),
+      def('Conselho do executante','equipeSadt','conselho'),
+      def('Número conselho executante','equipeSadt','numeroConselhoProfissional'),
+      def('UF do executante','equipeSadt','UF'),
+      def('CBO do executante','equipeSadt','CBOS'),
+      def('Grau de participação','equipeSadt','grauPart'),
+      common[4],
+      def('Tipo de atendimento','dadosAtendimento','tipoAtendimento'),
+      def('Regime de atendimento','dadosAtendimento','regimeAtendimento'),
+      def('Tipo de consulta','dadosAtendimento','tipoConsulta'),
+      def('Data de execução','procedimentoExecutado','dataExecucao','date',{key:'execucao'}),
+      def('Código da tabela','procedimento','codigoTabela'),
+      def('Código do procedimento','procedimento','codigoProcedimento'),
+      def('Descrição do procedimento','procedimento','descricaoProcedimento'),
+      def('Quantidade','procedimentoExecutado','quantidadeExecutada','number'),
+      def('Técnica utilizada','procedimentoExecutado','tecnicaUtilizada','text',{create:true,before:'reducaoAcrescimo'}),
+      def('Valor unitário','procedimentoExecutado','valorUnitario','number'),
+      common[5]
+    ];
+  }
+  function fieldNode(definition,guide,create=false) {
+    if(definition.scope==='header') return first(guideHeader(guide),definition.tag);
+    if(definition.scope==='guide') return first(guide,definition.tag);
+    if(definition.scope==='custom') return definition.finder?.(guide) || null;
+    const scope=first(guide,definition.scope); let node=first(scope,definition.tag);
+    if(!node && create && definition.create) node=ensureChild(scope,definition.tag,definition.before);
+    return node;
+  }
+  function applyEverywhere(group,newValue,currentGuideNo) {
+    if(group==='ans') {
+      descendants(state.doc,'registroANS').forEach(node=>{const before=node.textContent;if(before!==newValue){node.textContent=newValue;state.changes.push({guide:'todas',field:'Registro ANS',before,after:newValue});}}); return;
+    }
+    if(group==='operatorCode') state.guides.forEach((guide,index)=>{const node=operatorCodeNode(guide);if(node&&node.textContent!==newValue){const before=node.textContent;node.textContent=newValue;state.changes.push({guide:index+1,field:'Código na operadora',before,after:newValue});}});
+  }
 
   window.xmlAbrirGuia=index=>{
-    state.selected=index; const guide=state.guides[index]; const fields=[];
-    byId('xml-editor-title').textContent=`Editar guia ${index+1} — ${value(first(guide,'cabecalhoGuia'),'numeroGuiaPrestador')}`;
-    byId('xml-guide-form').innerHTML=fieldDefs.map((d,i)=>{const scope=d[1]==='guiaSP-SADT'?guide:first(guide,d[1]);const node=first(scope,d[2]);fields.push({label:d[0],node});const step=d[3]==='number'?'step="0.01"':'';return `<label class="flex flex-col gap-1.5"><span class="text-xs font-bold text-on-surface-variant">${esc(d[0])}</span><input data-xml-index="${i}" type="${d[3]}" ${step} value="${esc(node?.textContent?.trim()||'')}" class="sa-input"></label>`;}).join('');
+    state.selected=index; const guide=state.guides[index],fields=[],defs=fieldDefsForGuide(guide).filter(d=>fieldNode(d,guide,false)||d.create);
+    byId('xml-editor-title').textContent=`Editar guia ${index+1} — ${value(guideHeader(guide),'numeroGuiaPrestador')} (${guideType(guide)==='consulta'?'Consulta':'SP/SADT'})`;
+    byId('xml-guide-form').innerHTML=defs.map((d,i)=>{const node=fieldNode(d,guide,false);fields.push({definition:d,node});const step=d.type==='number'?'step="0.01"':'';const control=d.type==='textarea'?`<textarea data-xml-index="${i}" class="sa-input min-h-[88px] py-3">${esc(node?.textContent?.trim()||'')}</textarea>`:`<input data-xml-index="${i}" type="${d.type}" ${step} value="${esc(node?.textContent?.trim()||'')}" class="sa-input">`;const apply=d.apply?`<label class="flex items-center gap-2 mt-2 text-[11px] text-tertiary cursor-pointer"><input type="checkbox" data-xml-apply="${i}" class="rounded border-outline-variant bg-surface-container-highest">Aplicar a todas as guias</label>`:'';return `<label class="flex flex-col gap-1.5 ${d.type==='textarea'?'md:col-span-2':''}"><span class="text-xs font-bold text-on-surface-variant">${esc(d.label)}</span>${control}${apply}</label>`;}).join('');
     state.editFields=fields; byId('xml-editor').classList.remove('hidden'); byId('xml-editor').scrollIntoView({behavior:'smooth',block:'start'});
   };
   window.xmlFecharEditor=()=>{byId('xml-editor').classList.add('hidden');state.selected=-1;};
   window.xmlSalvarGuia=()=>{
-    if(state.selected<0)return; const guideNo=state.selected+1;
-    byId('xml-guide-form').querySelectorAll('[data-xml-index]').forEach(input=>{const f=state.editFields[Number(input.dataset.xmlIndex)];if(!f?.node)return;const before=f.node.textContent;const after=input.value.trim();if(before!==after){f.node.textContent=after;state.changes.push({guide:guideNo,field:f.label,before,after});}});
-    const guide=state.guides[state.selected],item=first(guide,'procedimentoExecutado');const qtd=Number(value(item,'quantidadeExecutada')||0),unit=Number(value(item,'valorUnitario')||0),total=(Math.round(qtd*unit*100)/100).toFixed(2);const itemTotal=first(item,'valorTotal'),guideTotal=first(guide,'valorTotal');if(itemTotal)itemTotal.textContent=total;const vp=first(guideTotal,'valorProcedimentos'),vg=first(guideTotal,'valorTotalGeral');if(vp)vp.textContent=total;if(vg)vg.textContent=total;
+    if(state.selected<0)return; const guideNo=state.selected+1,guide=state.guides[state.selected],inputs=Array.from(byId('xml-guide-form').querySelectorAll('[data-xml-index]'));
+    const prospective={};inputs.forEach(input=>{const f=state.editFields[Number(input.dataset.xmlIndex)];if(f?.definition.key)prospective[f.definition.key]=input.value.trim();});
+    if(prospective.autorizacao&&prospective.execucao&&prospective.execucao<prospective.autorizacao){alert('A data de atendimento/execução não pode ser anterior à data de autorização.');return;}
+    inputs.forEach(input=>{const i=Number(input.dataset.xmlIndex),f=state.editFields[i],d=f.definition;let node=f.node||fieldNode(d,guide,true);if(!node)return;const before=node.textContent,after=input.value.trim();const apply=byId('xml-guide-form').querySelector(`[data-xml-apply="${i}"]`)?.checked;if(apply){applyEverywhere(d.apply,after,guideNo);return;}if(before!==after){node.textContent=after;state.changes.push({guide:guideNo,field:d.label,before,after});}});
+    if(guideType(guide)==='sadt') {const item=first(guide,'procedimentoExecutado'),qtd=Number(value(item,'quantidadeExecutada')||0),unit=Number(value(item,'valorUnitario')||0),total=(Math.round(qtd*unit*100)/100).toFixed(2),itemTotal=first(item,'valorTotal'),guideTotal=first(guide,'valorTotal');if(itemTotal)itemTotal.textContent=total;const vp=first(guideTotal,'valorProcedimentos'),vg=first(guideTotal,'valorTotalGeral');if(vp)vp.textContent=total;if(vg)vg.textContent=total;}
     const hashNode=first(state.doc,'hash');if(hashNode)hashNode.textContent=calcularHash(); render(); xmlFecharEditor();
   };
 
@@ -121,7 +216,7 @@
   window.xmlLimpar=()=>{state.doc=null;state.file=null;state.guides=[];state.changes=[];byId('xml-workspace').classList.add('hidden');byId('xml-file-input').value='';xmlFecharEditor();};
 
   async function loadFile(file){
-    if(!file)return; const buffer=await file.arrayBuffer(); let text; try{text=new TextDecoder('iso-8859-1').decode(buffer);}catch{text=new TextDecoder().decode(buffer);} const doc=new DOMParser().parseFromString(text,'application/xml');const err=doc.querySelector('parsererror');if(err){alert('XML inválido: '+err.textContent.slice(0,220));return;}const guides=descendants(doc,'guiaSP-SADT');if(!guides.length){alert('Este protótipo suporta inicialmente lotes com guias SP/SADT.');return;}state.doc=doc;state.file=file;state.guides=guides;state.changes=[];byId('xml-file-name').textContent=file.name;byId('xml-file-meta').textContent=`${(file.size/1024).toFixed(1)} KB • XML local • original preservado`;byId('xml-workspace').classList.remove('hidden');render();byId('xml-workspace').scrollIntoView({behavior:'smooth',block:'start'});
+    if(!file)return; const buffer=await file.arrayBuffer(); let text; try{text=new TextDecoder('iso-8859-1').decode(buffer);}catch{text=new TextDecoder().decode(buffer);} const doc=new DOMParser().parseFromString(text,'application/xml');const err=doc.querySelector('parsererror');if(err){alert('XML inválido: '+err.textContent.slice(0,220));return;}const guides=[...descendants(doc,'guiaSP-SADT'),...descendants(doc,'guiaConsulta')];if(!guides.length){alert('Nenhuma guia SP/SADT ou Consulta foi encontrada neste XML.');return;}state.doc=doc;state.file=file;state.guides=guides;state.changes=[];byId('xml-file-name').textContent=file.name;byId('xml-file-meta').textContent=`${(file.size/1024).toFixed(1)} KB • XML local • original preservado`;byId('xml-workspace').classList.remove('hidden');render();byId('xml-workspace').scrollIntoView({behavior:'smooth',block:'start'});
   }
 
   document.addEventListener('DOMContentLoaded',()=>{
