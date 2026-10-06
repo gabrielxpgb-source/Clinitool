@@ -276,6 +276,22 @@
     .sa-check { display:flex; gap:10px; align-items:center; padding:12px 14px; border:1px solid #414753; border-radius:.75rem; background:#282a2c; font-size:.8rem; cursor:pointer; }
     .sa-check input { width:18px; height:18px; accent-color:#4de082; }
 
+    /* XML Edit — campos com contraste reforçado */
+    #xml-guide-form .xml-edit-control {
+      width: 100%; min-height: 44px; padding: 10px 12px;
+      background: #282a2c !important; color: #f2f2f5 !important;
+      border: 1px solid #717784 !important; border-radius: .65rem;
+      font-size: .875rem; font-weight: 600; outline: none;
+      color-scheme: dark;
+    }
+    #xml-guide-form .xml-edit-control:hover { border-color: #8b919e !important; }
+    #xml-guide-form .xml-edit-control:focus {
+      border-color: #c4b5fd !important;
+      box-shadow: 0 0 0 2px rgba(196,181,253,.22) !important;
+      background: #303236 !important;
+    }
+    #xml-guide-form .xml-edit-control::placeholder { color: #8b919e !important; }
+
     /* CliniFat v10.8 — Hub de módulos e listas administrativas */
     .cf-module-card {
       position: relative; min-height: 190px; overflow: hidden;
