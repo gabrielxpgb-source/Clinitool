@@ -170,7 +170,7 @@
       def('Número conselho executante','equipeSadt','numeroConselhoProfissional'),
       def('UF do executante','equipeSadt','UF','text',{list:'uf'}),
       def('CBO do executante','equipeSadt','CBOS'),
-      def('Grau de participação','equipeSadt','grauPart','text',{list:'grau'}),
+      def('Grau de participação','equipeSadt','grauPart','text',{list:'grau',apply:'grauPart'}),
       common[4],
       def('Tipo de atendimento','dadosAtendimento','tipoAtendimento','text',{list:'atendimento'}),
       def('Regime de atendimento','dadosAtendimento','regimeAtendimento','text',{list:'regime'}),
@@ -198,6 +198,7 @@
       descendants(state.doc,'registroANS').forEach(node=>{const before=node.textContent;if(before!==newValue){node.textContent=newValue;state.changes.push({guide:'todas',field:'Registro ANS',before,after:newValue});}}); return;
     }
     if(group==='operatorCode') state.guides.forEach((guide,index)=>{const node=operatorCodeNode(guide);if(node&&node.textContent!==newValue){const before=node.textContent;node.textContent=newValue;state.changes.push({guide:index+1,field:'Código na operadora',before,after:newValue});}});
+    if(group==='grauPart') state.guides.forEach((guide,index)=>{if(guideType(guide)!=='sadt')return;const node=first(first(guide,'equipeSadt'),'grauPart');if(node&&node.textContent!==newValue){const before=node.textContent;node.textContent=newValue;state.changes.push({guide:index+1,field:'Grau de participação',before,after:newValue});}});
   }
 
   window.xmlAbrirGuia=index=>{
