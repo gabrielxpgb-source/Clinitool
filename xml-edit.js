@@ -61,11 +61,11 @@
   function guideItem(node) { return first(node, 'procedimentoExecutado') || first(node, 'dadosAtendimento') || node; }
 
   function parseGuide(node, index) {
-    const tipo=guideType(node), item=guideItem(node), atendimento=first(node,'dadosAtendimento') || item;
+    const tipo=guideType(node), item=guideItem(node), atendimento=first(node,'dadosAtendimento') || item, totalBlock=descendants(node,'valorTotal').find(n=>children(n).length) || null;
     const procedimento=first(item,'procedimento') || item;
     const totalItem=tipo==='consulta' ? Number(value(atendimento,'valorProcedimento')||0) : Number(value(item,'valorTotal')||0);
-    const totalGeral=tipo==='consulta' ? totalItem : Number(value(first(node,'valorTotal'),'valorTotalGeral')||0);
-    return { index,node,item,tipo, guia:value(guideHeader(node),'numeroGuiaPrestador'), principal:value(guideHeader(node),'guiaPrincipal'), operadora:value(node,'numeroGuiaOperadora'), carteira:value(first(node,'dadosBeneficiario'),'numeroCarteira'), senha:value(first(node,'dadosAutorizacao'),'senha'), autorizacao:value(first(node,'dadosAutorizacao'),'dataAutorizacao'), solicitacao:value(first(node,'dadosSolicitacao'),'dataSolicitacao'), execucao:tipo==='consulta'?value(atendimento,'dataAtendimento'):value(item,'dataExecucao'), codigo:value(procedimento,'codigoProcedimento'), descricao:value(procedimento,'descricaoProcedimento'), quantidade:tipo==='consulta'?1:Number(value(item,'quantidadeExecutada')||0), unitario:tipo==='consulta'?totalItem:Number(value(item,'valorUnitario')||0), totalItem, totalProc:tipo==='consulta'?totalItem:Number(value(first(node,'valorTotal'),'valorProcedimentos')||0), totalGeral, solicitante:value(first(node,'profissionalSolicitante'),'nomeProfissional'), executor:tipo==='consulta'?value(first(node,'profissionalExecutante'),'nomeProfissional'):value(first(node,'equipeSadt'),'nomeProf'), conselhoSolic:value(first(node,'profissionalSolicitante'),'numeroConselhoProfissional'), ufSolic:value(first(node,'profissionalSolicitante'),'UF'), cbosSolic:value(first(node,'profissionalSolicitante'),'CBOS'), conselhoExec:tipo==='consulta'?value(first(node,'profissionalExecutante'),'numeroConselhoProfissional'):value(first(node,'equipeSadt'),'numeroConselhoProfissional'), ufExec:tipo==='consulta'?value(first(node,'profissionalExecutante'),'UF'):value(first(node,'equipeSadt'),'UF'), cbosExec:tipo==='consulta'?value(first(node,'profissionalExecutante'),'CBOS'):value(first(node,'equipeSadt'),'CBOS'), observacao:value(node,'observacao'), indicacaoClinica:value(first(node,'dadosSolicitacao'),'indicacaoClinica'), indicacaoAcidente:value(node,'indicacaoAcidente'), tecnica:value(item,'tecnicaUtilizada') };
+    const totalGeral=tipo==='consulta' ? totalItem : Number(value(totalBlock,'valorTotalGeral')||0);
+    return { index,node,item,tipo, guia:value(guideHeader(node),'numeroGuiaPrestador'), principal:value(guideHeader(node),'guiaPrincipal'), operadora:value(node,'numeroGuiaOperadora'), carteira:value(first(node,'dadosBeneficiario'),'numeroCarteira'), senha:value(first(node,'dadosAutorizacao'),'senha'), autorizacao:value(first(node,'dadosAutorizacao'),'dataAutorizacao'), solicitacao:value(first(node,'dadosSolicitacao'),'dataSolicitacao'), execucao:tipo==='consulta'?value(atendimento,'dataAtendimento'):value(item,'dataExecucao'), codigo:value(procedimento,'codigoProcedimento'), descricao:value(procedimento,'descricaoProcedimento'), quantidade:tipo==='consulta'?1:Number(value(item,'quantidadeExecutada')||0), unitario:tipo==='consulta'?totalItem:Number(value(item,'valorUnitario')||0), totalItem, totalProc:tipo==='consulta'?totalItem:Number(value(totalBlock,'valorProcedimentos')||0), totalGeral, solicitante:value(first(node,'profissionalSolicitante'),'nomeProfissional'), executor:tipo==='consulta'?value(first(node,'profissionalExecutante'),'nomeProfissional'):value(first(node,'equipeSadt'),'nomeProf'), conselhoSolic:value(first(node,'profissionalSolicitante'),'numeroConselhoProfissional'), ufSolic:value(first(node,'profissionalSolicitante'),'UF'), cbosSolic:value(first(node,'profissionalSolicitante'),'CBOS'), conselhoExec:tipo==='consulta'?value(first(node,'profissionalExecutante'),'numeroConselhoProfissional'):value(first(node,'equipeSadt'),'numeroConselhoProfissional'), ufExec:tipo==='consulta'?value(first(node,'profissionalExecutante'),'UF'):value(first(node,'equipeSadt'),'UF'), cbosExec:tipo==='consulta'?value(first(node,'profissionalExecutante'),'CBOS'):value(first(node,'equipeSadt'),'CBOS'), observacao:value(node,'observacao'), indicacaoClinica:value(first(node,'dadosSolicitacao'),'indicacaoClinica'), indicacaoAcidente:value(node,'indicacaoAcidente'), tecnica:value(item,'tecnicaUtilizada') };
   }
 
   function auditar() {
@@ -79,10 +79,10 @@
       if(g.tipo==='consulta' && g.guia && g.operadora && g.guia!==g.operadora) add('alerta','Número da guia difere do número da guia da operadora.',i);
       if(g.autorizacao && g.solicitacao && g.autorizacao!==g.solicitacao) add('alerta','Data de autorização diferente da solicitação.',i);
       if(g.execucao && g.autorizacao && g.execucao<g.autorizacao) add('erro','Data de atendimento/execução anterior à autorização.',i);
+      if(g.tipo==='sadt' && !Number.isInteger(g.quantidade)) add('erro','Quantidade deve ser um número inteiro.',i);
       const calc=Math.round(g.quantidade*g.unitario*100)/100;
       if(Math.abs(calc-g.totalItem)>.009) add('erro',`Total do item deveria ser ${money(calc)}.`,i);
       if(Math.abs(g.totalItem-g.totalProc)>.009 || Math.abs(g.totalProc-g.totalGeral)>.009) add('erro','Totais do item e da guia não conferem.',i);
-      if(g.ufSolic && g.ufExec && g.ufSolic!==g.ufExec) add('alerta','UF do solicitante difere da UF do executante; conferir cadastro.',i);
     });
     [['guia','Número da guia'],['carteira','Carteira'],['senha','Senha'],['observacao','Observação/conta']].forEach(([k,label])=>{const seen=new Map();guides.forEach((g,i)=>{if(!g[k])return;if(seen.has(g[k])){add('erro',`${label} duplicado entre as guias ${seen.get(g[k])+1} e ${i+1}.`,i);}else seen.set(g[k],i);});});
     const informed=value(state.doc,'hash').toUpperCase(); const calculated=calcularHash();
@@ -95,7 +95,7 @@
     const a=auditar(); const total=a.guides.reduce((n,g)=>n+g.totalGeral,0); const lote=value(state.doc,'numeroLote'); const padrao=value(state.doc,'Padrao'); const ans=value(state.doc,'registroANS'); const prest=value(state.doc,'codigoPrestadorNaOperadora');
     byId('xml-summary').innerHTML=[['Lote',lote],['Padrão',padrao],['Guias',a.guides.length],['Total',money(total)],['Registro ANS',ans],['Prestador',prest]].map(([k,v])=>`<div class="p-3 rounded-xl bg-surface-container-high border border-outline-variant"><div class="text-[10px] uppercase text-outline">${esc(k)}</div><div class="font-bold mt-1 truncate">${esc(v)}</div></div>`).join('');
     byId('xml-guide-count').textContent=`${a.guides.length} guia(s)`;
-    byId('xml-guides-body').innerHTML=a.guides.map((g,i)=>{const levels=a.per[i];const st=levels.includes('erro')?'erro':levels.includes('alerta')?'alerta':'ok';return `<tr class="border-b border-outline-variant hover:bg-surface-container-high cursor-pointer" onclick="xmlAbrirGuia(${i})"><td class="p-3">${i+1}</td><td class="p-3 font-bold text-primary">${esc(g.guia)}</td><td class="p-3">${esc(mask(g.carteira))}</td><td class="p-3">${esc(g.execucao)}</td><td class="p-3"><div>${esc(g.codigo)}</div><div class="text-[10px] text-outline">${esc(g.descricao)}</div></td><td class="p-3 text-right font-bold">${esc(money(g.totalGeral))}</td><td class="p-3"><span class="px-2 py-1 rounded-full ${st==='ok'?'bg-secondary-container text-on-secondary-container':badge(st)}">${st==='ok'?'OK':st.toUpperCase()}</span></td></tr>`;}).join('');
+    byId('xml-guides-body').innerHTML=a.guides.map((g,i)=>{const levels=a.per[i];const st=levels.includes('erro')?'erro':levels.includes('alerta')?'alerta':'ok';return `<tr class="border-b border-outline-variant hover:bg-surface-container-high cursor-pointer" onclick="xmlAbrirGuia(${i})"><td class="p-3">${i+1}</td><td class="p-3 font-bold text-primary">${esc(g.guia)}</td><td class="p-3">${esc(g.carteira)}</td><td class="p-3">${esc(g.execucao)}</td><td class="p-3"><div>${esc(g.codigo)}</div><div class="text-[10px] text-outline">${esc(g.descricao)}</div></td><td class="p-3 text-right font-bold">${esc(money(g.totalGeral))}</td><td class="p-3"><span class="px-2 py-1 rounded-full ${st==='ok'?'bg-secondary-container text-on-secondary-container':badge(st)}">${st==='ok'?'OK':st.toUpperCase()}</span></td></tr>`;}).join('');
     const hashOk=a.informed===a.calculated; const general=[{level:hashOk?'ok':'erro',msg:hashOk?'Hash confere com o conteúdo do arquivo.':'Hash inválido para o conteúdo atual.'},{level:a.issues.some(x=>x.level==='erro')?'erro':a.issues.some(x=>x.level==='alerta')?'alerta':'ok',msg:a.issues.length?`${a.issues.length} ocorrência(s) encontrada(s).`:'Nenhuma inconsistência interna encontrada.'}];
     byId('xml-audit-list').innerHTML=[...general,...a.issues.slice(0,20)].map(x=>`<button type="button" ${x.index!=null?`onclick="xmlAbrirGuia(${x.index})"`:''} class="text-left p-3 rounded-xl ${badge(x.level)}">${x.index!=null?`Guia ${x.index+1}: `:''}${esc(x.msg)}</button>`).join('');
     byId('xml-change-log').innerHTML=state.changes.length?state.changes.slice().reverse().map(c=>`<div class="py-2 border-b border-outline-variant"><b>Guia ${c.guide}</b> — ${esc(c.field)}<br><span class="text-outline">${esc(c.before)} → ${esc(c.after)}</span></div>`).join(''):'Nenhuma alteração realizada.';
@@ -113,6 +113,17 @@
     if(guideType(guide)==='consulta') return first(first(guide,'contratadoExecutante'),'codigoPrestadorNaOperadora');
     return first(first(guide,'codProfissional'),'codigoPrestadorNaOperadora');
   }
+  const domainOptions={
+    uf:[['11','RO - Rondônia'],['12','AC - Acre'],['13','AM - Amazonas'],['14','RR - Roraima'],['15','PA - Pará'],['16','AP - Amapá'],['17','TO - Tocantins'],['21','MA - Maranhão'],['22','PI - Piauí'],['23','CE - Ceará'],['24','RN - Rio Grande do Norte'],['25','PB - Paraíba'],['26','PE - Pernambuco'],['27','AL - Alagoas'],['28','SE - Sergipe'],['29','BA - Bahia'],['31','MG - Minas Gerais'],['32','ES - Espírito Santo'],['33','RJ - Rio de Janeiro'],['35','SP - São Paulo'],['41','PR - Paraná'],['42','SC - Santa Catarina'],['43','RS - Rio Grande do Sul'],['50','MS - Mato Grosso do Sul'],['51','MT - Mato Grosso'],['52','GO - Goiás'],['53','DF - Distrito Federal'],['98','EX - Países Estrangeiros']],
+    conselho:[['01','CRESS - Serviço Social'],['02','COREN - Enfermagem'],['03','CRF - Farmácia'],['04','CREFONO - Fonoaudiologia'],['05','CREFITO - Fisioterapia e Terapia Ocupacional'],['06','CRM - Medicina'],['07','CRN - Nutrição'],['08','CRO - Odontologia'],['09','CRP - Psicologia'],['10','Outros Conselhos'],['11','CRBio - Biologia'],['12','CRBM - Biomedicina'],['13','CREF - Educação Física'],['14','CRMV - Medicina Veterinária'],['15','CRTR - Técnicos em Radiologia']],
+    grau:[['00','Cirurgião'],['01','Primeiro Auxiliar'],['02','Segundo Auxiliar'],['03','Terceiro Auxiliar'],['04','Quarto Auxiliar'],['05','Instrumentador'],['06','Anestesista'],['07','Auxiliar de Anestesista'],['08','Consultor'],['09','Perfusionista'],['10','Pediatra na sala de parto'],['11','Auxiliar SADT'],['12','Clínico'],['13','Intensivista']],
+    acidente:[['0','Trabalho'],['1','Trânsito'],['2','Outros'],['9','Não Acidente']],
+    atendimento:[['01','Remoção'],['02','Pequena Cirurgia'],['03','Outras Terapias'],['04','Consulta'],['05','Exame Ambulatorial'],['06','Atendimento Domiciliar'],['07','Internação'],['08','Quimioterapia'],['09','Radioterapia'],['10','Terapia Renal Substitutiva'],['11','Pronto Socorro'],['13','Pequeno atendimento'],['14','Saúde Ocupacional - Admissional'],['15','Saúde Ocupacional - Demissional'],['16','Saúde Ocupacional - Periódico'],['17','Saúde Ocupacional - Retorno ao trabalho'],['18','Saúde Ocupacional - Mudança de função'],['19','Saúde Ocupacional - Promoção à saúde'],['20','Saúde Ocupacional - Beneficiário novo'],['21','Saúde Ocupacional - Assistência a demitidos'],['22','Telessaúde'],['23','Exame']],
+    regime:[['01','Ambulatorial'],['02','Domiciliar'],['03','Internação'],['04','Pronto-socorro'],['05','Telessaúde']],
+    consulta:[['1','Primeira Consulta'],['2','Retorno / Seguimento'],['3','Pré-natal'],['4','Por encaminhamento']],
+    tecnica:[['1','Convencional'],['2','Vídeo'],['3','Robótica']],
+    tabela:[['00','Tabela própria das operadoras'],['18','Diárias, taxas e gases medicinais'],['19','Materiais e OPME'],['20','Medicamentos'],['22','Procedimentos e eventos em saúde'],['23','Caráter do atendimento'],['24','CBO'],['25','Código da despesa'],['26','Conselho profissional'],['35','Grau de participação'],['36','Indicador de acidente'],['48','Técnica utilizada'],['50','Tipo de atendimento'],['52','Tipo de consulta'],['59','Unidade da federação'],['76','Regime de atendimento'],['87','Tabelas de domínio'],['98','Tabela própria de pacotes']]
+  };
   function def(label,scope,tag,type='text',opts={}) { return {label,scope,tag,type,...opts}; }
   function fieldDefsForGuide(guide) {
     const common=[
@@ -120,23 +131,23 @@
       def('Número guia prestador','header','numeroGuiaPrestador'),
       def('Número guia operadora','custom','numeroGuiaOperadora','text',{finder:g=>first(g,'numeroGuiaOperadora')}),
       def('Carteira','dadosBeneficiario','numeroCarteira'),
-      def('Indicação de acidente','guide','indicacaoAcidente'),
+      def('Indicação de acidente','guide','indicacaoAcidente','text',{list:'acidente'}),
       def('Observação','guide','observacao','textarea')
     ];
     if(guideType(guide)==='consulta') return [...common,
       def('Código na operadora','custom','codigoPrestadorNaOperadora','text',{key:'operatorCode',apply:'operatorCode',finder:operatorCodeNode}),
       def('CNES','contratadoExecutante','CNES'),
       def('Profissional executante','profissionalExecutante','nomeProfissional'),
-      def('Conselho profissional','profissionalExecutante','conselhoProfissional'),
+      def('Conselho do executante','profissionalExecutante','conselhoProfissional','text',{list:'conselho'}),
       def('Número do conselho','profissionalExecutante','numeroConselhoProfissional'),
-      def('UF do executante','profissionalExecutante','UF'),
+      def('UF do executante','profissionalExecutante','UF','text',{list:'uf'}),
       def('CBO do executante','profissionalExecutante','CBOS'),
       def('Data de atendimento','dadosAtendimento','dataAtendimento','date',{key:'execucao'}),
-      def('Código da tabela','procedimento','codigoTabela'),
+      def('Código da tabela','procedimento','codigoTabela','text',{list:'tabela'}),
       def('Código do procedimento','procedimento','codigoProcedimento'),
       def('Valor do procedimento','procedimento','valorProcedimento','number'),
-      def('Regime de atendimento','dadosAtendimento','regimeAtendimento'),
-      def('Tipo de consulta','dadosAtendimento','tipoConsulta'),
+      def('Regime de atendimento','dadosAtendimento','regimeAtendimento','text',{list:'regime'}),
+      def('Tipo de consulta','dadosAtendimento','tipoConsulta','text',{list:'consulta'}),
       def('Tipo de saída','dadosAtendimento','tipoSaida')
     ];
     return [...common.slice(0,2),
@@ -147,29 +158,29 @@
       def('Caráter do atendimento','dadosSolicitacao','caraterAtendimento'),
       def('Indicação clínica','dadosSolicitacao','indicacaoClinica','textarea',{create:true}),
       def('Profissional solicitante','profissionalSolicitante','nomeProfissional'),
-      def('Conselho do solicitante','profissionalSolicitante','conselhoProfissional'),
+      def('Conselho do solicitante','profissionalSolicitante','conselhoProfissional','text',{list:'conselho'}),
       def('Número conselho solicitante','profissionalSolicitante','numeroConselhoProfissional'),
-      def('UF do solicitante','profissionalSolicitante','UF'),
+      def('UF do solicitante','profissionalSolicitante','UF','text',{list:'uf'}),
       def('CBO do solicitante','profissionalSolicitante','CBOS'),
       def('Código contratado executante','contratadoExecutante','codigoPrestadorNaOperadora'),
       def('CNES','dadosExecutante','CNES'),
       def('Código individual na operadora','custom','codigoPrestadorNaOperadora','text',{key:'operatorCode',apply:'operatorCode',finder:operatorCodeNode}),
       def('Profissional executante','equipeSadt','nomeProf'),
-      def('Conselho do executante','equipeSadt','conselho'),
+      def('Conselho do executante','equipeSadt','conselho','text',{list:'conselho'}),
       def('Número conselho executante','equipeSadt','numeroConselhoProfissional'),
-      def('UF do executante','equipeSadt','UF'),
+      def('UF do executante','equipeSadt','UF','text',{list:'uf'}),
       def('CBO do executante','equipeSadt','CBOS'),
-      def('Grau de participação','equipeSadt','grauPart'),
+      def('Grau de participação','equipeSadt','grauPart','text',{list:'grau'}),
       common[4],
-      def('Tipo de atendimento','dadosAtendimento','tipoAtendimento'),
-      def('Regime de atendimento','dadosAtendimento','regimeAtendimento'),
-      def('Tipo de consulta','dadosAtendimento','tipoConsulta'),
+      def('Tipo de atendimento','dadosAtendimento','tipoAtendimento','text',{list:'atendimento'}),
+      def('Regime de atendimento','dadosAtendimento','regimeAtendimento','text',{list:'regime'}),
+      def('Tipo de consulta','dadosAtendimento','tipoConsulta','text',{list:'consulta'}),
       def('Data de execução','procedimentoExecutado','dataExecucao','date',{key:'execucao'}),
-      def('Código da tabela','procedimento','codigoTabela'),
+      def('Código da tabela','procedimento','codigoTabela','text',{list:'tabela'}),
       def('Código do procedimento','procedimento','codigoProcedimento'),
       def('Descrição do procedimento','procedimento','descricaoProcedimento'),
-      def('Quantidade','procedimentoExecutado','quantidadeExecutada','number'),
-      def('Técnica utilizada','procedimentoExecutado','tecnicaUtilizada','text',{create:true,before:'reducaoAcrescimo'}),
+      def('Quantidade','procedimentoExecutado','quantidadeExecutada','number',{step:'1'}),
+      def('Técnica utilizada','procedimentoExecutado','tecnicaUtilizada','text',{create:true,before:'reducaoAcrescimo',list:'tecnica'}),
       def('Valor unitário','procedimentoExecutado','valorUnitario','number'),
       common[5]
     ];
@@ -192,7 +203,18 @@
   window.xmlAbrirGuia=index=>{
     state.selected=index; const guide=state.guides[index],fields=[],defs=fieldDefsForGuide(guide).filter(d=>fieldNode(d,guide,false)||d.create);
     byId('xml-editor-title').textContent=`Editar guia ${index+1} — ${value(guideHeader(guide),'numeroGuiaPrestador')} (${guideType(guide)==='consulta'?'Consulta':'SP/SADT'})`;
-    byId('xml-guide-form').innerHTML=defs.map((d,i)=>{const node=fieldNode(d,guide,false);fields.push({definition:d,node});const step=d.type==='number'?'step="0.01"':'';const control=d.type==='textarea'?`<textarea data-xml-index="${i}" class="sa-input min-h-[88px] py-3">${esc(node?.textContent?.trim()||'')}</textarea>`:`<input data-xml-index="${i}" type="${d.type}" ${step} value="${esc(node?.textContent?.trim()||'')}" class="sa-input">`;const apply=d.apply?`<label class="flex items-center gap-2 mt-2 text-[11px] text-tertiary cursor-pointer"><input type="checkbox" data-xml-apply="${i}" class="rounded border-outline-variant bg-surface-container-highest">Aplicar a todas as guias</label>`:'';return `<label class="flex flex-col gap-1.5 ${d.type==='textarea'?'md:col-span-2':''}"><span class="text-xs font-bold text-on-surface-variant">${esc(d.label)}</span>${control}${apply}</label>`;}).join('');
+    byId('xml-guide-form').innerHTML=defs.map((d,i)=>{
+      const node=fieldNode(d,guide,false); fields.push({definition:d,node});
+      const current=node?.textContent?.trim()||'', step=d.type==='number'?`step="${d.step||'0.01'}"`:'';
+      const listId=d.list?`xml-list-${d.list}-${i}`:'';
+      const dataList=d.list?`<datalist id="${listId}">${domainOptions[d.list].map(([code,label])=>`<option value="${esc(code)}">${esc(label)} - ${esc(code)}</option>`).join('')}</datalist>`:'';
+      const control=d.type==='textarea'
+        ? `<textarea data-xml-index="${i}" class="xml-edit-control min-h-[88px] py-3">${esc(current)}</textarea>`
+        : `<input data-xml-index="${i}" type="${d.type}" ${step} ${d.list?`list="${listId}" autocomplete="off"`:''} value="${esc(current)}" class="xml-edit-control">${dataList}`;
+      const hint=d.list?`<span class="text-[10px] text-outline">Digite o código, sigla ou descrição para pesquisar.</span>`:'';
+      const apply=d.apply?`<label class="flex items-center gap-2 mt-2 text-[11px] text-tertiary cursor-pointer"><input type="checkbox" data-xml-apply="${i}" class="rounded border-outline-variant bg-surface-container-highest">Aplicar a todas as guias</label>`:'';
+      return `<label class="flex flex-col gap-1.5 ${d.type==='textarea'?'md:col-span-2':''}"><span class="text-xs font-bold text-on-surface-variant">${esc(d.label)}</span>${control}${hint}${apply}</label>`;
+    }).join('');
     state.editFields=fields; byId('xml-editor').classList.remove('hidden'); byId('xml-editor').scrollIntoView({behavior:'smooth',block:'start'});
   };
   window.xmlFecharEditor=()=>{byId('xml-editor').classList.add('hidden');state.selected=-1;};
@@ -201,7 +223,7 @@
     const prospective={};inputs.forEach(input=>{const f=state.editFields[Number(input.dataset.xmlIndex)];if(f?.definition.key)prospective[f.definition.key]=input.value.trim();});
     if(prospective.autorizacao&&prospective.execucao&&prospective.execucao<prospective.autorizacao){alert('A data de atendimento/execução não pode ser anterior à data de autorização.');return;}
     inputs.forEach(input=>{const i=Number(input.dataset.xmlIndex),f=state.editFields[i],d=f.definition;let node=f.node||fieldNode(d,guide,true);if(!node)return;const before=node.textContent,after=input.value.trim();const apply=byId('xml-guide-form').querySelector(`[data-xml-apply="${i}"]`)?.checked;if(apply){applyEverywhere(d.apply,after,guideNo);return;}if(before!==after){node.textContent=after;state.changes.push({guide:guideNo,field:d.label,before,after});}});
-    if(guideType(guide)==='sadt') {const item=first(guide,'procedimentoExecutado'),qtd=Number(value(item,'quantidadeExecutada')||0),unit=Number(value(item,'valorUnitario')||0),total=(Math.round(qtd*unit*100)/100).toFixed(2),itemTotal=first(item,'valorTotal'),guideTotal=first(guide,'valorTotal');if(itemTotal)itemTotal.textContent=total;const vp=first(guideTotal,'valorProcedimentos'),vg=first(guideTotal,'valorTotalGeral');if(vp)vp.textContent=total;if(vg)vg.textContent=total;}
+    if(guideType(guide)==='sadt') {const item=first(guide,'procedimentoExecutado'),qtd=Number(value(item,'quantidadeExecutada')||0),unit=Number(value(item,'valorUnitario')||0),total=(Math.round(qtd*unit*100)/100).toFixed(2),itemTotal=first(item,'valorTotal'),guideTotal=descendants(guide,'valorTotal').find(n=>children(n).length)||null;if(itemTotal)itemTotal.textContent=total;const vp=first(guideTotal,'valorProcedimentos'),vg=first(guideTotal,'valorTotalGeral');if(vp)vp.textContent=total;if(vg)vg.textContent=total;}
     const hashNode=first(state.doc,'hash');if(hashNode)hashNode.textContent=calcularHash(); render(); xmlFecharEditor();
   };
 
