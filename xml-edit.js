@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const state = { doc: null, file: null, guides: [], selected: -1, audit: null, changes: [] };
+  const state = { doc: null, file: null, guides: [], selected: -1, audit: null, changes: [], conversion: null };
   const byId = id => document.getElementById(id);
   const local = node => node?.localName || node?.nodeName?.split(':').pop() || '';
   const children = node => Array.from(node?.childNodes || []).filter(n => n.nodeType === 1);
@@ -66,6 +66,12 @@
     const hashNode=first(state.doc,'hash');
     if(hashNode) hashNode.textContent=calcularHash();
   }
+  const supportedVersions=['4.01.00','4.02.00','4.03.00'];
+  function normalizeVersion(raw) {
+    const match=String(raw||'').trim().match(/^0?4\.(0?[123])\.0?0$/);
+    return match?`4.0${Number(match[1])}.00`:String(raw||'').trim();
+  }
+  function currentVersion() { return normalizeVersion(value(state.doc,'Padrao')); }
 
   function parseGuide(node, index) {
     const tipo=guideType(node), item=guideItem(node), atendimento=first(node,'dadosAtendimento') || item, totalBlock=descendants(node,'valorTotal').find(n=>children(n).length) || null;
@@ -102,6 +108,9 @@
     const a=auditar(); const total=a.guides.reduce((n,g)=>n+g.totalGeral,0); const lote=value(state.doc,'numeroLote'); const padrao=value(state.doc,'Padrao'); const ans=value(state.doc,'registroANS'); const prest=value(state.doc,'codigoPrestadorNaOperadora');
     byId('xml-summary').innerHTML=[['Lote',lote],['Padrão',padrao],['Guias',a.guides.length],['Total',money(total)],['Registro ANS',ans],['Prestador',prest]].map(([k,v])=>`<div class="p-3 rounded-xl bg-surface-container-high border border-outline-variant"><div class="text-[10px] uppercase text-outline">${esc(k)}</div><div class="font-bold mt-1 truncate">${esc(v)}</div></div>`).join('');
     byId('xml-guide-count').textContent=`${a.guides.length} guia(s)`;
+    const version=currentVersion(),versionBadge=byId('xml-current-version'),target=byId('xml-target-version');
+    if(versionBadge)versionBadge.textContent=`Arquivo atual: ${version||'não identificada'}`;
+    if(target&&supportedVersions.includes(version)) Array.from(target.options).forEach(option=>option.disabled=option.value===version);
     byId('xml-guides-body').innerHTML=a.guides.map((g,i)=>{const levels=a.per[i];const st=levels.includes('erro')?'erro':levels.includes('alerta')?'alerta':'ok';return `<tr class="border-b border-outline-variant hover:bg-surface-container-high cursor-pointer" onclick="xmlAbrirGuia(${i})"><td class="p-3">${i+1}</td><td class="p-3 font-bold text-primary">${esc(g.guia)}</td><td class="p-3">${esc(g.carteira)}</td><td class="p-3">${esc(g.execucao)}</td><td class="p-3"><div>${esc(g.codigo)}</div><div class="text-[10px] text-outline">${esc(g.descricao)}</div></td><td class="p-3 text-right font-bold">${esc(money(g.totalGeral))}</td><td class="p-3"><span class="px-2 py-1 rounded-full ${st==='ok'?'bg-secondary-container text-on-secondary-container':badge(st)}">${st==='ok'?'OK':st.toUpperCase()}</span></td><td class="p-3 text-right"><button type="button" onclick="event.stopPropagation();xmlRemoverGuia(${i})" class="p-2 rounded-lg text-error hover:bg-error-container" title="Remover guia ${i+1}" aria-label="Remover guia ${i+1}"><span class="material-symbols-outlined text-lg">delete</span></button></td></tr>`;}).join('');
     const hashOk=a.informed===a.calculated; const general=[{level:hashOk?'ok':'erro',msg:hashOk?'Hash confere com o conteúdo do arquivo.':'Hash inválido para o conteúdo atual.'},{level:a.issues.some(x=>x.level==='erro')?'erro':a.issues.some(x=>x.level==='alerta')?'alerta':'ok',msg:a.issues.length?`${a.issues.length} ocorrência(s) encontrada(s).`:'Nenhuma inconsistência interna encontrada.'}];
     byId('xml-audit-list').innerHTML=[...general,...a.issues.slice(0,20)].map(x=>`<button type="button" ${x.index!=null?`onclick="xmlAbrirGuia(${x.index})"`:''} class="text-left p-3 rounded-xl ${badge(x.level)}">${x.index!=null?`Guia ${x.index+1}: `:''}${esc(x.msg)}</button>`).join('');
@@ -247,6 +256,54 @@
     if(button){button.classList.add('bg-secondary-container','text-on-secondary-container','border-secondary');button.classList.remove('text-tertiary','border-tertiary');}
     if(status)status.textContent='Aplicação realizada ✓';
   };
+
+  function analyzeConversion(targetVersion) {
+    const source=currentVersion(),target=normalizeVersion(targetVersion),errors=[],warnings=[],actions=[];
+    if(!supportedVersions.includes(source))errors.push(`A versão de origem “${source||'não identificada'}” não é suportada.`);
+    if(!supportedVersions.includes(target))errors.push(`A versão de destino “${target||'não identificada'}” não é suportada.`);
+    if(source===target)errors.push('Selecione uma versão diferente da versão atual.');
+    const signatures=[...descendants(state.doc,'assinaturaDigitalGuia'),...descendants(state.doc,'Signature')];
+    if(signatures.length)errors.push('O arquivo possui assinatura digital. A conversão exigiria uma nova assinatura, que o CliniTool ainda não realiza.');
+    if(target==='4.01.00') {
+      const largeValues=['valorUnitario','valorTotal','valorProcedimento'].flatMap(tag=>descendants(state.doc,tag)).filter(node=>Math.abs(Number(node.textContent||0))>999999.99);
+      if(largeValues.length)errors.push(`${largeValues.length} valor(es) excedem o limite de 999.999,99 da versão 04.01.00.`);
+      const incompatibleCbos=descendants(state.doc,'CBOS').filter(node=>node.textContent.trim()==='223575');
+      if(incompatibleCbos.length)errors.push(`O CBOS 223575 não existe no domínio da versão 04.01.00 (${incompatibleCbos.length} ocorrência(s)).`);
+    }
+    if(target!=='4.03.00') {
+      const alphaCnpj=descendants(state.doc,'CNPJ').filter(node=>!/^[0-9]{14}$/.test(node.textContent.trim()));
+      if(alphaCnpj.length)errors.push(`${alphaCnpj.length} CNPJ(s) alfanumérico(s) não são aceitos antes da versão 04.03.00.`);
+      const centers=descendants(state.doc,'centroConsumo');
+      if(centers.length){warnings.push(`${centers.length} campo(s) centroConsumo serão removidos, pois não existem na versão de destino.`);actions.push({type:'remove',nodes:centers,label:'Centro de consumo removido'});}
+    }
+    actions.push({type:'version',from:source,to:target});
+    return {source,target,errors,warnings,actions};
+  }
+  function renderConversionReport(result) {
+    const report=byId('xml-conversion-report'),button=byId('xml-convert-btn');if(!report||!button)return;
+    const cards=[
+      {title:'Transformações',items:[`Padrão ${result.source||'desconhecido'} → ${result.target}`,...result.actions.filter(a=>a.type==='remove').map(a=>a.label)],tone:'bg-primary-container text-on-primary-container'},
+      {title:'Atenções',items:result.warnings.length?result.warnings:['Nenhuma perda de campo identificada.'],tone:'bg-tertiary-container text-on-tertiary-container'},
+      {title:'Bloqueios',items:result.errors.length?result.errors:['Conversão liberada.'],tone:result.errors.length?'bg-error-container text-on-error-container':'bg-secondary-container text-on-secondary-container'}
+    ];
+    report.innerHTML=cards.map(card=>`<div class="rounded-xl p-4 ${card.tone}"><div class="font-bold mb-2">${esc(card.title)}</div>${card.items.map(item=>`<div class="py-1">• ${esc(item)}</div>`).join('')}</div>`).join('');
+    report.classList.remove('hidden');button.disabled=!!result.errors.length;
+  }
+  window.xmlAnalisarConversao=()=>{
+    if(!state.doc)return;state.conversion=analyzeConversion(byId('xml-target-version').value);renderConversionReport(state.conversion);
+  };
+  window.xmlConverterVersao=()=>{
+    if(!state.doc)return;
+    const target=byId('xml-target-version').value,result=analyzeConversion(target);state.conversion=result;renderConversionReport(result);if(result.errors.length)return;
+    if(result.warnings.length&&!confirm('A conversão removerá campos sem equivalente na versão de destino. Deseja continuar?'))return;
+    result.actions.filter(action=>action.type==='remove').forEach(action=>action.nodes.forEach(node=>node.parentNode?.removeChild(node)));
+    const padrao=first(state.doc,'Padrao');if(padrao)padrao.textContent=result.target;
+    const schemaFile=`tissV${result.target.replaceAll('.','_')}.xsd`,root=state.doc.documentElement,xsi='http://www.w3.org/2001/XMLSchema-instance';
+    root.setAttributeNS(xsi,'xsi:schemaLocation',`http://www.ans.gov.br/padroes/tiss/schemas http://www.ans.gov.br/padroes/tiss/schemas/${schemaFile}`);
+    state.changes.push({guide:'todas',field:'Versão TISS',before:result.source,after:result.target});
+    refreshHash();state.conversion=null;byId('xml-conversion-report').classList.add('hidden');byId('xml-convert-btn').disabled=true;render();
+    alert(`XML convertido para TISS ${result.target}. Revise a auditoria antes de exportar.`);
+  };
   window.xmlSalvarGuia=()=>{
     if(state.selected<0)return; const guideNo=state.selected+1,guide=state.guides[state.selected],inputs=Array.from(byId('xml-guide-form').querySelectorAll('[data-xml-index]'));
     const prospective={};inputs.forEach(input=>{const f=state.editFields[Number(input.dataset.xmlIndex)];if(f?.definition.key)prospective[f.definition.key]=input.value.trim();});
@@ -284,10 +341,10 @@
     const bytes=new Uint8Array(xml.length);for(let i=0;i<xml.length;i++){const code=xml.charCodeAt(i);bytes[i]=code<=255?code:63;}
     const blob=new Blob([bytes],{type:'application/xml'});const aTag=document.createElement('a');aTag.href=URL.createObjectURL(blob);const original=state.file?.name||'lote.xml';const oldHash=state.audit?.informed||'';aTag.download=oldHash&&original.includes(oldHash)?original.replace(oldHash,newHash):original.replace(/\.xml$/i,`_EDIT_${newHash}.xml`);aTag.click();setTimeout(()=>URL.revokeObjectURL(aTag.href),1000);render();
   };
-  window.xmlLimpar=()=>{state.doc=null;state.file=null;state.guides=[];state.changes=[];byId('xml-workspace').classList.add('hidden');byId('xml-file-input').value='';xmlFecharEditor();};
+  window.xmlLimpar=()=>{state.doc=null;state.file=null;state.guides=[];state.changes=[];state.conversion=null;byId('xml-workspace').classList.add('hidden');byId('xml-file-input').value='';xmlFecharEditor();};
 
   async function loadFile(file){
-    if(!file)return; const buffer=await file.arrayBuffer(); let text; try{text=new TextDecoder('iso-8859-1').decode(buffer);}catch{text=new TextDecoder().decode(buffer);} const doc=new DOMParser().parseFromString(text,'application/xml');const err=doc.querySelector('parsererror');if(err){alert('XML inválido: '+err.textContent.slice(0,220));return;}const guides=[...descendants(doc,'guiaSP-SADT'),...descendants(doc,'guiaConsulta')];if(!guides.length){alert('Nenhuma guia SP/SADT ou Consulta foi encontrada neste XML.');return;}state.doc=doc;state.file=file;refreshGuides();state.changes=[];byId('xml-file-name').textContent=file.name;byId('xml-file-meta').textContent=`${(file.size/1024).toFixed(1)} KB • XML local • original preservado`;byId('xml-workspace').classList.remove('hidden');render();byId('xml-workspace').scrollIntoView({behavior:'smooth',block:'start'});
+    if(!file)return; const buffer=await file.arrayBuffer(); let text; try{text=new TextDecoder('iso-8859-1').decode(buffer);}catch{text=new TextDecoder().decode(buffer);} const doc=new DOMParser().parseFromString(text,'application/xml');const err=doc.querySelector('parsererror');if(err){alert('XML inválido: '+err.textContent.slice(0,220));return;}const guides=[...descendants(doc,'guiaSP-SADT'),...descendants(doc,'guiaConsulta')];if(!guides.length){alert('Nenhuma guia SP/SADT ou Consulta foi encontrada neste XML.');return;}state.doc=doc;state.file=file;refreshGuides();state.changes=[];state.conversion=null;byId('xml-file-name').textContent=file.name;byId('xml-file-meta').textContent=`${(file.size/1024).toFixed(1)} KB • XML local • original preservado`;byId('xml-conversion-report').classList.add('hidden');byId('xml-convert-btn').disabled=true;byId('xml-workspace').classList.remove('hidden');render();byId('xml-workspace').scrollIntoView({behavior:'smooth',block:'start'});
   }
 
   document.addEventListener('DOMContentLoaded',()=>{
