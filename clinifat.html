@@ -1310,6 +1310,21 @@
             <div id="xml-summary" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3"></div>
           </section>
 
+          <section class="bg-surface-container rounded-2xl border border-outline-variant p-5 flex flex-col gap-4">
+            <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+              <div>
+                <div class="flex flex-wrap items-center gap-2"><h3 class="font-bold">Conversão de versão TISS</h3><span id="xml-current-version" class="text-xs px-2.5 py-1 rounded-full bg-primary-container text-on-primary-container"></span></div>
+                <p class="text-xs text-on-surface-variant mt-1">Conversão assistida para lotes de guias Consulta e SP/SADT, baseada nos schemas oficiais da ANS.</p>
+              </div>
+              <div class="flex flex-col sm:flex-row sm:items-end gap-2">
+                <label class="flex flex-col gap-1"><span class="text-[10px] uppercase font-bold text-outline">Converter para</span><select id="xml-target-version" class="xml-edit-control min-w-40"><option value="4.01.00">TISS 04.01.00</option><option value="4.02.00">TISS 04.02.00</option><option value="4.03.00">TISS 04.03.00</option></select></label>
+                <button type="button" onclick="xmlAnalisarConversao()" class="h-11 px-4 rounded-xl border border-tertiary text-tertiary font-bold text-xs">Analisar conversão</button>
+                <button id="xml-convert-btn" type="button" onclick="xmlConverterVersao()" disabled class="h-11 px-4 rounded-xl bg-tertiary text-on-tertiary font-bold text-xs disabled:opacity-40 disabled:cursor-not-allowed">Converter XML</button>
+              </div>
+            </div>
+            <div id="xml-conversion-report" class="hidden grid grid-cols-1 md:grid-cols-3 gap-3 text-xs"></div>
+          </section>
+
           <section class="grid grid-cols-1 xl:grid-cols-3 gap-6">
             <div class="xl:col-span-2 bg-surface-container rounded-2xl border border-outline-variant overflow-hidden">
               <div class="p-5 border-b border-outline-variant flex items-center justify-between gap-3">
