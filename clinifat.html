@@ -1314,11 +1314,14 @@
             <div class="xl:col-span-2 bg-surface-container rounded-2xl border border-outline-variant overflow-hidden">
               <div class="p-5 border-b border-outline-variant flex items-center justify-between gap-3">
                 <div><h3 class="font-bold">Guias do lote</h3><p class="text-xs text-on-surface-variant mt-1">Carteiras e senhas aparecem mascaradas.</p></div>
-                <span id="xml-guide-count" class="text-xs px-3 py-1.5 rounded-full bg-surface-container-highest"></span>
+                <div class="flex items-center gap-2">
+                  <span id="xml-guide-count" class="text-xs px-3 py-1.5 rounded-full bg-surface-container-highest"></span>
+                  <button type="button" onclick="xmlInserirGuia()" class="h-10 px-4 rounded-xl bg-tertiary text-on-tertiary font-bold text-xs flex items-center gap-2" title="Cria uma cópia da guia aberta ou da última guia do lote"><span class="material-symbols-outlined text-lg">note_add</span>Inserir guia</button>
+                </div>
               </div>
               <div class="overflow-x-auto max-h-[520px]">
                 <table class="w-full text-left text-xs">
-                  <thead class="sticky top-0 bg-surface-container-high text-on-surface-variant"><tr><th class="p-3">#</th><th class="p-3">Guia</th><th class="p-3">Carteira</th><th class="p-3">Execução</th><th class="p-3">Procedimento</th><th class="p-3 text-right">Valor</th><th class="p-3">Status</th></tr></thead>
+                  <thead class="sticky top-0 bg-surface-container-high text-on-surface-variant"><tr><th class="p-3">#</th><th class="p-3">Guia</th><th class="p-3">Carteira</th><th class="p-3">Execução</th><th class="p-3">Procedimento</th><th class="p-3 text-right">Valor</th><th class="p-3">Status</th><th class="p-3 text-right">Ações</th></tr></thead>
                   <tbody id="xml-guides-body"></tbody>
                 </table>
               </div>
@@ -1339,7 +1342,10 @@
           <section id="xml-editor" class="hidden bg-surface-container rounded-2xl border border-tertiary/50 p-6">
             <div class="flex items-center justify-between gap-3 mb-5"><div><h3 id="xml-editor-title" class="text-lg font-bold">Editar guia</h3><p class="text-xs text-on-surface-variant">Os totais relacionados serão recalculados ao salvar.</p></div><button type="button" onclick="xmlFecharEditor()" class="p-2 rounded-lg hover:bg-surface-container-highest"><span class="material-symbols-outlined">close</span></button></div>
             <form id="xml-guide-form" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4"></form>
-            <div class="flex justify-end gap-3 mt-6"><button type="button" onclick="xmlFecharEditor()" class="h-11 px-5 rounded-xl border border-outline-variant">Cancelar</button><button type="button" onclick="xmlSalvarGuia()" class="h-11 px-6 rounded-xl bg-tertiary text-on-tertiary font-bold">Salvar correções</button></div>
+            <div class="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3 mt-6">
+              <button type="button" onclick="xmlRemoverGuia()" class="h-11 px-5 rounded-xl border border-error text-error font-bold flex items-center justify-center gap-2"><span class="material-symbols-outlined text-lg">delete</span>Remover guia</button>
+              <div class="flex justify-end gap-3"><button type="button" onclick="xmlFecharEditor()" class="h-11 px-5 rounded-xl border border-outline-variant">Cancelar</button><button type="button" onclick="xmlSalvarGuia()" class="h-11 px-6 rounded-xl bg-tertiary text-on-tertiary font-bold">Salvar correções</button></div>
+            </div>
           </section>
         </div>
       </div>
