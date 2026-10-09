@@ -230,17 +230,28 @@
         ? `<textarea data-xml-index="${i}" class="xml-edit-control min-h-[88px] py-3">${esc(current)}</textarea>`
         : `<input data-xml-index="${i}" type="${d.type}" ${step} value="${esc(current)}" class="xml-edit-control">`;
       const hint=d.list?`<span class="text-[10px] text-outline">A descrição é apenas visual; o XML recebe somente o código.</span>`:'';
-      const apply=d.apply?`<label class="flex items-center gap-2 mt-2 text-[11px] text-tertiary cursor-pointer"><input type="checkbox" data-xml-apply="${i}" class="rounded border-outline-variant bg-surface-container-highest">Aplicar a todas as guias</label>`:'';
-      return `<label class="flex flex-col gap-1.5 ${d.type==='textarea'?'md:col-span-2':''}"><span class="text-xs font-bold text-on-surface-variant">${esc(d.label)}</span>${control}${hint}${apply}</label>`;
+      const apply=d.apply?`<div class="flex flex-wrap items-center gap-2 mt-2"><button type="button" data-xml-apply-button="${i}" onclick="xmlAplicarTodas(${i})" class="h-8 px-3 rounded-lg border border-tertiary text-tertiary hover:bg-tertiary-container hover:text-on-tertiary-container text-[11px] font-bold flex items-center gap-1.5"><span class="material-symbols-outlined text-sm">done_all</span>Aplicar a todas as guias</button><span data-xml-apply-status="${i}" role="status" aria-live="polite" class="text-[11px] font-bold text-secondary"></span></div>`:'';
+      return `<div class="flex flex-col gap-1.5 ${d.type==='textarea'?'md:col-span-2':''}"><span class="text-xs font-bold text-on-surface-variant">${esc(d.label)}</span>${control}${hint}${apply}</div>`;
     }).join('');
     state.editFields=fields; byId('xml-editor').classList.remove('hidden'); byId('xml-editor').scrollIntoView({behavior:'smooth',block:'start'});
   };
   window.xmlFecharEditor=()=>{byId('xml-editor').classList.add('hidden');state.selected=-1;};
+  window.xmlAplicarTodas=i=>{
+    if(state.selected<0)return;
+    const field=state.editFields?.[i],input=byId('xml-guide-form').querySelector(`[data-xml-index="${i}"]`);
+    if(!field?.definition.apply||!input)return;
+    const newValue=input.value.trim();
+    applyEverywhere(field.definition.apply,newValue,state.selected+1);
+    refreshHash();render();
+    const button=byId('xml-guide-form').querySelector(`[data-xml-apply-button="${i}"]`),status=byId('xml-guide-form').querySelector(`[data-xml-apply-status="${i}"]`);
+    if(button){button.classList.add('bg-secondary-container','text-on-secondary-container','border-secondary');button.classList.remove('text-tertiary','border-tertiary');}
+    if(status)status.textContent='Aplicação realizada ✓';
+  };
   window.xmlSalvarGuia=()=>{
     if(state.selected<0)return; const guideNo=state.selected+1,guide=state.guides[state.selected],inputs=Array.from(byId('xml-guide-form').querySelectorAll('[data-xml-index]'));
     const prospective={};inputs.forEach(input=>{const f=state.editFields[Number(input.dataset.xmlIndex)];if(f?.definition.key)prospective[f.definition.key]=input.value.trim();});
     if(prospective.autorizacao&&prospective.execucao&&prospective.execucao<prospective.autorizacao){alert('A data de atendimento/execução não pode ser anterior à data de autorização.');return;}
-    inputs.forEach(input=>{const i=Number(input.dataset.xmlIndex),f=state.editFields[i],d=f.definition;let node=f.node||fieldNode(d,guide,true);if(!node)return;const before=node.textContent,after=input.value.trim();const apply=byId('xml-guide-form').querySelector(`[data-xml-apply="${i}"]`)?.checked;if(apply){applyEverywhere(d.apply,after,guideNo);return;}if(before!==after){node.textContent=after;state.changes.push({guide:guideNo,field:d.label,before,after});}});
+    inputs.forEach(input=>{const i=Number(input.dataset.xmlIndex),f=state.editFields[i],d=f.definition;let node=f.node||fieldNode(d,guide,true);if(!node)return;const before=node.textContent,after=input.value.trim();if(before!==after){node.textContent=after;state.changes.push({guide:guideNo,field:d.label,before,after});}});
     if(guideType(guide)==='sadt') {const item=first(guide,'procedimentoExecutado'),qtd=Number(value(item,'quantidadeExecutada')||0),unit=Number(value(item,'valorUnitario')||0),total=(Math.round(qtd*unit*100)/100).toFixed(2),itemTotal=first(item,'valorTotal'),guideTotal=descendants(guide,'valorTotal').find(n=>children(n).length)||null;if(itemTotal)itemTotal.textContent=total;const vp=first(guideTotal,'valorProcedimentos'),vg=first(guideTotal,'valorTotalGeral');if(vp)vp.textContent=total;if(vg)vg.textContent=total;}
     const hashNode=first(state.doc,'hash');if(hashNode)hashNode.textContent=calcularHash(); render(); xmlFecharEditor();
   };
