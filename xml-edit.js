@@ -59,6 +59,14 @@
   function guideType(node) { return local(node) === 'guiaConsulta' ? 'consulta' : 'sadt'; }
   function guideHeader(node) { return first(node, 'cabecalhoGuia') || first(node, 'cabecalhoConsulta') || node; }
   function guideItem(node) { return first(node, 'procedimentoExecutado') || first(node, 'dadosAtendimento') || node; }
+  function refreshGuides() {
+    const container=first(state.doc,'guiasTISS');
+    state.guides=children(container).filter(node=>['guiaSP-SADT','guiaConsulta'].includes(local(node)));
+  }
+  function refreshHash() {
+    const hashNode=first(state.doc,'hash');
+    if(hashNode) hashNode.textContent=calcularHash();
+  }
 
   function parseGuide(node, index) {
     const tipo=guideType(node), item=guideItem(node), atendimento=first(node,'dadosAtendimento') || item, totalBlock=descendants(node,'valorTotal').find(n=>children(n).length) || null;
@@ -95,7 +103,7 @@
     const a=auditar(); const total=a.guides.reduce((n,g)=>n+g.totalGeral,0); const lote=value(state.doc,'numeroLote'); const padrao=value(state.doc,'Padrao'); const ans=value(state.doc,'registroANS'); const prest=value(state.doc,'codigoPrestadorNaOperadora');
     byId('xml-summary').innerHTML=[['Lote',lote],['Padrão',padrao],['Guias',a.guides.length],['Total',money(total)],['Registro ANS',ans],['Prestador',prest]].map(([k,v])=>`<div class="p-3 rounded-xl bg-surface-container-high border border-outline-variant"><div class="text-[10px] uppercase text-outline">${esc(k)}</div><div class="font-bold mt-1 truncate">${esc(v)}</div></div>`).join('');
     byId('xml-guide-count').textContent=`${a.guides.length} guia(s)`;
-    byId('xml-guides-body').innerHTML=a.guides.map((g,i)=>{const levels=a.per[i];const st=levels.includes('erro')?'erro':levels.includes('alerta')?'alerta':'ok';return `<tr class="border-b border-outline-variant hover:bg-surface-container-high cursor-pointer" onclick="xmlAbrirGuia(${i})"><td class="p-3">${i+1}</td><td class="p-3 font-bold text-primary">${esc(g.guia)}</td><td class="p-3">${esc(g.carteira)}</td><td class="p-3">${esc(g.execucao)}</td><td class="p-3"><div>${esc(g.codigo)}</div><div class="text-[10px] text-outline">${esc(g.descricao)}</div></td><td class="p-3 text-right font-bold">${esc(money(g.totalGeral))}</td><td class="p-3"><span class="px-2 py-1 rounded-full ${st==='ok'?'bg-secondary-container text-on-secondary-container':badge(st)}">${st==='ok'?'OK':st.toUpperCase()}</span></td></tr>`;}).join('');
+    byId('xml-guides-body').innerHTML=a.guides.map((g,i)=>{const levels=a.per[i];const st=levels.includes('erro')?'erro':levels.includes('alerta')?'alerta':'ok';return `<tr class="border-b border-outline-variant hover:bg-surface-container-high cursor-pointer" onclick="xmlAbrirGuia(${i})"><td class="p-3">${i+1}</td><td class="p-3 font-bold text-primary">${esc(g.guia)}</td><td class="p-3">${esc(mask(g.carteira))}</td><td class="p-3">${esc(g.execucao)}</td><td class="p-3"><div>${esc(g.codigo)}</div><div class="text-[10px] text-outline">${esc(g.descricao)}</div></td><td class="p-3 text-right font-bold">${esc(money(g.totalGeral))}</td><td class="p-3"><span class="px-2 py-1 rounded-full ${st==='ok'?'bg-secondary-container text-on-secondary-container':badge(st)}">${st==='ok'?'OK':st.toUpperCase()}</span></td><td class="p-3 text-right"><button type="button" onclick="event.stopPropagation();xmlRemoverGuia(${i})" class="p-2 rounded-lg text-error hover:bg-error-container" title="Remover guia ${i+1}" aria-label="Remover guia ${i+1}"><span class="material-symbols-outlined text-lg">delete</span></button></td></tr>`;}).join('');
     const hashOk=a.informed===a.calculated; const general=[{level:hashOk?'ok':'erro',msg:hashOk?'Hash confere com o conteúdo do arquivo.':'Hash inválido para o conteúdo atual.'},{level:a.issues.some(x=>x.level==='erro')?'erro':a.issues.some(x=>x.level==='alerta')?'alerta':'ok',msg:a.issues.length?`${a.issues.length} ocorrência(s) encontrada(s).`:'Nenhuma inconsistência interna encontrada.'}];
     byId('xml-audit-list').innerHTML=[...general,...a.issues.slice(0,20)].map(x=>`<button type="button" ${x.index!=null?`onclick="xmlAbrirGuia(${x.index})"`:''} class="text-left p-3 rounded-xl ${badge(x.level)}">${x.index!=null?`Guia ${x.index+1}: `:''}${esc(x.msg)}</button>`).join('');
     byId('xml-change-log').innerHTML=state.changes.length?state.changes.slice().reverse().map(c=>`<div class="py-2 border-b border-outline-variant"><b>Guia ${c.guide}</b> — ${esc(c.field)}<br><span class="text-outline">${esc(c.before)} → ${esc(c.after)}</span></div>`).join(''):'Nenhuma alteração realizada.';
@@ -228,6 +236,26 @@
     const hashNode=first(state.doc,'hash');if(hashNode)hashNode.textContent=calcularHash(); render(); xmlFecharEditor();
   };
 
+  window.xmlInserirGuia=()=>{
+    if(!state.doc||!state.guides.length)return;
+    const sourceIndex=state.selected>=0?state.selected:state.guides.length-1;
+    const source=state.guides[sourceIndex],clone=source.cloneNode(true);
+    source.parentNode.insertBefore(clone,source.nextSibling);
+    refreshGuides();
+    const newIndex=state.guides.indexOf(clone);
+    state.changes.push({guide:newIndex+1,field:'Guia inserida',before:'—',after:`cópia da guia ${sourceIndex+1}`});
+    refreshHash();render();xmlAbrirGuia(newIndex);
+  };
+  window.xmlRemoverGuia=(index=state.selected)=>{
+    if(!state.doc||index<0||index>=state.guides.length)return;
+    if(state.guides.length===1){alert('O lote precisa manter pelo menos uma guia.');return;}
+    const guide=state.guides[index],number=value(guideHeader(guide),'numeroGuiaPrestador')||`guia ${index+1}`;
+    if(!confirm(`Remover a guia ${number} do lote? Esta ação afeta apenas a cópia em edição.`))return;
+    guide.parentNode.removeChild(guide);
+    state.changes.push({guide:index+1,field:'Guia removida',before:number,after:'—'});
+    refreshGuides();refreshHash();xmlFecharEditor();render();
+  };
+
   window.xmlRevalidar=()=>render();
   window.xmlExportar=()=>{
     if(!state.doc)return; const a=auditar(); if(a.issues.some(x=>x.level==='erro')&&!confirm('Ainda existem erros na auditoria. Deseja exportar mesmo assim?'))return;
@@ -239,7 +267,7 @@
   window.xmlLimpar=()=>{state.doc=null;state.file=null;state.guides=[];state.changes=[];byId('xml-workspace').classList.add('hidden');byId('xml-file-input').value='';xmlFecharEditor();};
 
   async function loadFile(file){
-    if(!file)return; const buffer=await file.arrayBuffer(); let text; try{text=new TextDecoder('iso-8859-1').decode(buffer);}catch{text=new TextDecoder().decode(buffer);} const doc=new DOMParser().parseFromString(text,'application/xml');const err=doc.querySelector('parsererror');if(err){alert('XML inválido: '+err.textContent.slice(0,220));return;}const guides=[...descendants(doc,'guiaSP-SADT'),...descendants(doc,'guiaConsulta')];if(!guides.length){alert('Nenhuma guia SP/SADT ou Consulta foi encontrada neste XML.');return;}state.doc=doc;state.file=file;state.guides=guides;state.changes=[];byId('xml-file-name').textContent=file.name;byId('xml-file-meta').textContent=`${(file.size/1024).toFixed(1)} KB • XML local • original preservado`;byId('xml-workspace').classList.remove('hidden');render();byId('xml-workspace').scrollIntoView({behavior:'smooth',block:'start'});
+    if(!file)return; const buffer=await file.arrayBuffer(); let text; try{text=new TextDecoder('iso-8859-1').decode(buffer);}catch{text=new TextDecoder().decode(buffer);} const doc=new DOMParser().parseFromString(text,'application/xml');const err=doc.querySelector('parsererror');if(err){alert('XML inválido: '+err.textContent.slice(0,220));return;}const guides=[...descendants(doc,'guiaSP-SADT'),...descendants(doc,'guiaConsulta')];if(!guides.length){alert('Nenhuma guia SP/SADT ou Consulta foi encontrada neste XML.');return;}state.doc=doc;state.file=file;refreshGuides();state.changes=[];byId('xml-file-name').textContent=file.name;byId('xml-file-meta').textContent=`${(file.size/1024).toFixed(1)} KB • XML local • original preservado`;byId('xml-workspace').classList.remove('hidden');render();byId('xml-workspace').scrollIntoView({behavior:'smooth',block:'start'});
   }
 
   document.addEventListener('DOMContentLoaded',()=>{
