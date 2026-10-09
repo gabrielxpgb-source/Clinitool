@@ -10,7 +10,6 @@
   const value = (node, name) => first(node, name)?.textContent?.trim() || '';
   const money = n => Number(n || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const esc = v => window.escapeHtmlCF ? escapeHtmlCF(v) : String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
-  const mask = (v, left = 3, right = 3) => { const s=String(v||''); return s.length <= left+right ? '••••' : s.slice(0,left)+'•'.repeat(Math.min(7,s.length-left-right))+s.slice(-right); };
 
   function leafValues(node, out = []) {
     if (!node || node.nodeType !== 1) return out;
@@ -103,7 +102,7 @@
     const a=auditar(); const total=a.guides.reduce((n,g)=>n+g.totalGeral,0); const lote=value(state.doc,'numeroLote'); const padrao=value(state.doc,'Padrao'); const ans=value(state.doc,'registroANS'); const prest=value(state.doc,'codigoPrestadorNaOperadora');
     byId('xml-summary').innerHTML=[['Lote',lote],['Padrão',padrao],['Guias',a.guides.length],['Total',money(total)],['Registro ANS',ans],['Prestador',prest]].map(([k,v])=>`<div class="p-3 rounded-xl bg-surface-container-high border border-outline-variant"><div class="text-[10px] uppercase text-outline">${esc(k)}</div><div class="font-bold mt-1 truncate">${esc(v)}</div></div>`).join('');
     byId('xml-guide-count').textContent=`${a.guides.length} guia(s)`;
-    byId('xml-guides-body').innerHTML=a.guides.map((g,i)=>{const levels=a.per[i];const st=levels.includes('erro')?'erro':levels.includes('alerta')?'alerta':'ok';return `<tr class="border-b border-outline-variant hover:bg-surface-container-high cursor-pointer" onclick="xmlAbrirGuia(${i})"><td class="p-3">${i+1}</td><td class="p-3 font-bold text-primary">${esc(g.guia)}</td><td class="p-3">${esc(mask(g.carteira))}</td><td class="p-3">${esc(g.execucao)}</td><td class="p-3"><div>${esc(g.codigo)}</div><div class="text-[10px] text-outline">${esc(g.descricao)}</div></td><td class="p-3 text-right font-bold">${esc(money(g.totalGeral))}</td><td class="p-3"><span class="px-2 py-1 rounded-full ${st==='ok'?'bg-secondary-container text-on-secondary-container':badge(st)}">${st==='ok'?'OK':st.toUpperCase()}</span></td><td class="p-3 text-right"><button type="button" onclick="event.stopPropagation();xmlRemoverGuia(${i})" class="p-2 rounded-lg text-error hover:bg-error-container" title="Remover guia ${i+1}" aria-label="Remover guia ${i+1}"><span class="material-symbols-outlined text-lg">delete</span></button></td></tr>`;}).join('');
+    byId('xml-guides-body').innerHTML=a.guides.map((g,i)=>{const levels=a.per[i];const st=levels.includes('erro')?'erro':levels.includes('alerta')?'alerta':'ok';return `<tr class="border-b border-outline-variant hover:bg-surface-container-high cursor-pointer" onclick="xmlAbrirGuia(${i})"><td class="p-3">${i+1}</td><td class="p-3 font-bold text-primary">${esc(g.guia)}</td><td class="p-3">${esc(g.carteira)}</td><td class="p-3">${esc(g.execucao)}</td><td class="p-3"><div>${esc(g.codigo)}</div><div class="text-[10px] text-outline">${esc(g.descricao)}</div></td><td class="p-3 text-right font-bold">${esc(money(g.totalGeral))}</td><td class="p-3"><span class="px-2 py-1 rounded-full ${st==='ok'?'bg-secondary-container text-on-secondary-container':badge(st)}">${st==='ok'?'OK':st.toUpperCase()}</span></td><td class="p-3 text-right"><button type="button" onclick="event.stopPropagation();xmlRemoverGuia(${i})" class="p-2 rounded-lg text-error hover:bg-error-container" title="Remover guia ${i+1}" aria-label="Remover guia ${i+1}"><span class="material-symbols-outlined text-lg">delete</span></button></td></tr>`;}).join('');
     const hashOk=a.informed===a.calculated; const general=[{level:hashOk?'ok':'erro',msg:hashOk?'Hash confere com o conteúdo do arquivo.':'Hash inválido para o conteúdo atual.'},{level:a.issues.some(x=>x.level==='erro')?'erro':a.issues.some(x=>x.level==='alerta')?'alerta':'ok',msg:a.issues.length?`${a.issues.length} ocorrência(s) encontrada(s).`:'Nenhuma inconsistência interna encontrada.'}];
     byId('xml-audit-list').innerHTML=[...general,...a.issues.slice(0,20)].map(x=>`<button type="button" ${x.index!=null?`onclick="xmlAbrirGuia(${x.index})"`:''} class="text-left p-3 rounded-xl ${badge(x.level)}">${x.index!=null?`Guia ${x.index+1}: `:''}${esc(x.msg)}</button>`).join('');
     byId('xml-change-log').innerHTML=state.changes.length?state.changes.slice().reverse().map(c=>`<div class="py-2 border-b border-outline-variant"><b>Guia ${c.guide}</b> — ${esc(c.field)}<br><span class="text-outline">${esc(c.before)} → ${esc(c.after)}</span></div>`).join(''):'Nenhuma alteração realizada.';
@@ -120,6 +119,10 @@
   function operatorCodeNode(guide) {
     if(guideType(guide)==='consulta') return first(first(guide,'contratadoExecutante'),'codigoPrestadorNaOperadora');
     return first(first(guide,'codProfissional'),'codigoPrestadorNaOperadora');
+  }
+  function cnesNode(guide) {
+    const scope=guideType(guide)==='consulta' ? first(guide,'contratadoExecutante') : first(guide,'dadosExecutante');
+    return first(scope,'CNES');
   }
   const domainOptions={
     uf:[['11','RO - Rondônia'],['12','AC - Acre'],['13','AM - Amazonas'],['14','RR - Roraima'],['15','PA - Pará'],['16','AP - Amapá'],['17','TO - Tocantins'],['21','MA - Maranhão'],['22','PI - Piauí'],['23','CE - Ceará'],['24','RN - Rio Grande do Norte'],['25','PB - Paraíba'],['26','PE - Pernambuco'],['27','AL - Alagoas'],['28','SE - Sergipe'],['29','BA - Bahia'],['31','MG - Minas Gerais'],['32','ES - Espírito Santo'],['33','RJ - Rio de Janeiro'],['35','SP - São Paulo'],['41','PR - Paraná'],['42','SC - Santa Catarina'],['43','RS - Rio Grande do Sul'],['50','MS - Mato Grosso do Sul'],['51','MT - Mato Grosso'],['52','GO - Goiás'],['53','DF - Distrito Federal'],['98','EX - Países Estrangeiros']],
@@ -144,7 +147,7 @@
     ];
     if(guideType(guide)==='consulta') return [...common,
       def('Código na operadora','custom','codigoPrestadorNaOperadora','text',{key:'operatorCode',apply:'operatorCode',finder:operatorCodeNode}),
-      def('CNES','contratadoExecutante','CNES'),
+      def('CNES','contratadoExecutante','CNES','text',{apply:'cnes'}),
       def('Profissional executante','profissionalExecutante','nomeProfissional'),
       def('Conselho do executante','profissionalExecutante','conselhoProfissional','text',{list:'conselho'}),
       def('Número do conselho','profissionalExecutante','numeroConselhoProfissional'),
@@ -171,7 +174,7 @@
       def('UF do solicitante','profissionalSolicitante','UF','text',{list:'uf'}),
       def('CBO do solicitante','profissionalSolicitante','CBOS'),
       def('Código contratado executante','contratadoExecutante','codigoPrestadorNaOperadora'),
-      def('CNES','dadosExecutante','CNES'),
+      def('CNES','dadosExecutante','CNES','text',{apply:'cnes'}),
       def('Código individual na operadora','custom','codigoPrestadorNaOperadora','text',{key:'operatorCode',apply:'operatorCode',finder:operatorCodeNode}),
       def('Profissional executante','equipeSadt','nomeProf'),
       def('Conselho do executante','equipeSadt','conselho','text',{list:'conselho'}),
@@ -206,7 +209,13 @@
       descendants(state.doc,'registroANS').forEach(node=>{const before=node.textContent;if(before!==newValue){node.textContent=newValue;state.changes.push({guide:'todas',field:'Registro ANS',before,after:newValue});}}); return;
     }
     if(group==='operatorCode') state.guides.forEach((guide,index)=>{const node=operatorCodeNode(guide);if(node&&node.textContent!==newValue){const before=node.textContent;node.textContent=newValue;state.changes.push({guide:index+1,field:'Código na operadora',before,after:newValue});}});
+    if(group==='cnes') state.guides.forEach((guide,index)=>{const node=cnesNode(guide);if(node&&node.textContent!==newValue){const before=node.textContent;node.textContent=newValue;state.changes.push({guide:index+1,field:'CNES',before,after:newValue});}});
     if(group==='grauPart') state.guides.forEach((guide,index)=>{if(guideType(guide)!=='sadt')return;const node=first(first(guide,'equipeSadt'),'grauPart');if(node&&node.textContent!==newValue){const before=node.textContent;node.textContent=newValue;state.changes.push({guide:index+1,field:'Grau de participação',before,after:newValue});}});
+  }
+
+  function domainLabel(domain,code,label) {
+    const visual=domain==='uf' ? label.split(' - ')[0] : label;
+    return `${code} - ${visual}`;
   }
 
   window.xmlAbrirGuia=index=>{
@@ -215,12 +224,12 @@
     byId('xml-guide-form').innerHTML=defs.map((d,i)=>{
       const node=fieldNode(d,guide,false); fields.push({definition:d,node});
       const current=node?.textContent?.trim()||'', step=d.type==='number'?`step="${d.step||'0.01'}"`:'';
-      const listId=d.list?`xml-list-${d.list}-${i}`:'';
-      const dataList=d.list?`<datalist id="${listId}">${domainOptions[d.list].map(([code,label])=>`<option value="${esc(code)}">${esc(label)} - ${esc(code)}</option>`).join('')}</datalist>`:'';
-      const control=d.type==='textarea'
+      const knownOption=d.list&&domainOptions[d.list].some(([code])=>code===current);
+      const domainSelect=d.list?`<select data-xml-index="${i}" class="xml-edit-control"><option value="">Selecione...</option>${current&&!knownOption?`<option value="${esc(current)}" selected>${esc(current)} - Código atual</option>`:''}${domainOptions[d.list].map(([code,label])=>`<option value="${esc(code)}" ${code===current?'selected':''}>${esc(domainLabel(d.list,code,label))}</option>`).join('')}</select>`:'';
+      const control=d.list ? domainSelect : d.type==='textarea'
         ? `<textarea data-xml-index="${i}" class="xml-edit-control min-h-[88px] py-3">${esc(current)}</textarea>`
-        : `<input data-xml-index="${i}" type="${d.type}" ${step} ${d.list?`list="${listId}" autocomplete="off"`:''} value="${esc(current)}" class="xml-edit-control">${dataList}`;
-      const hint=d.list?`<span class="text-[10px] text-outline">Digite o código, sigla ou descrição para pesquisar.</span>`:'';
+        : `<input data-xml-index="${i}" type="${d.type}" ${step} value="${esc(current)}" class="xml-edit-control">`;
+      const hint=d.list?`<span class="text-[10px] text-outline">A descrição é apenas visual; o XML recebe somente o código.</span>`:'';
       const apply=d.apply?`<label class="flex items-center gap-2 mt-2 text-[11px] text-tertiary cursor-pointer"><input type="checkbox" data-xml-apply="${i}" class="rounded border-outline-variant bg-surface-container-highest">Aplicar a todas as guias</label>`:'';
       return `<label class="flex flex-col gap-1.5 ${d.type==='textarea'?'md:col-span-2':''}"><span class="text-xs font-bold text-on-surface-variant">${esc(d.label)}</span>${control}${hint}${apply}</label>`;
     }).join('');
