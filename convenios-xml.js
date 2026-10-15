@@ -119,6 +119,7 @@
     state.operadoraId = Number(el('nxml-operadora').value) || 0;
     state.tabelaId = 0;
     el('nxml-workspace').classList.toggle('hidden', !state.operadoraId);
+    el('nxml-excluir-convenio-btn').classList.toggle('hidden', !state.operadoraId || !(typeof isClinifatMaster !== 'undefined' && isClinifatMaster));
     if (!state.operadoraId) return;
     const op = state.operadoras.find(o => o.id === state.operadoraId);
     el('nxml-registro-ans').value = op?.registro_ans || '';
@@ -161,6 +162,40 @@
     if (error) return status(error.message, 'erro');
     const op = state.operadoras.find(o => o.id === state.operadoraId); if (op) op.registro_ans = registro_ans;
     status('Registro ANS salvo.');
+  };
+
+  window.nxmlAbrirExclusaoConvenio = function () {
+    if (!requireMaster() || !state.operadoraId) return;
+    const op = state.operadoras.find(o => o.id === state.operadoraId);
+    el('nxml-excluir-convenio-nome').textContent = op?.nome || 'este convênio';
+    el('nxml-excluir-convenio-confirmacao').value = '';
+    const modal = el('nxml-excluir-convenio-modal');
+    modal.classList.remove('hidden'); modal.classList.add('flex');
+    setTimeout(() => el('nxml-excluir-convenio-confirmacao').focus(), 50);
+  };
+
+  window.nxmlFecharExclusaoConvenio = function () {
+    const modal = el('nxml-excluir-convenio-modal');
+    modal.classList.add('hidden'); modal.classList.remove('flex');
+    el('nxml-excluir-convenio-confirmacao').value = '';
+  };
+
+  window.nxmlConfirmarExclusaoConvenio = async function () {
+    if (!requireMaster() || !state.operadoraId) return;
+    if (el('nxml-excluir-convenio-confirmacao').value.trim().toUpperCase() !== 'EXCLUIR') {
+      return status('Digite EXCLUIR para confirmar a remoção.', 'erro');
+    }
+    const id = state.operadoraId;
+    const {error} = await _supabase.from('clinifat_operadoras').delete().eq('id', id);
+    if (error) return status(error.message, 'erro');
+    window.nxmlFecharExclusaoConvenio();
+    state.operadoraId = 0; state.tabelaId = 0;
+    state.especialidades = []; state.configuracoes = []; state.tabelas = [];
+    el('nxml-workspace').classList.add('hidden');
+    el('nxml-excluir-convenio-btn').classList.add('hidden');
+    el('nxml-registro-ans').value = '';
+    await queryBase(); renderOperadoras(); renderUnidades();
+    status('Convênio excluído da nova estrutura. O cadastro antigo do Contador foi preservado.');
   };
 
   window.nxmlAdicionarEspecialidade = async function () {
