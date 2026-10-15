@@ -704,9 +704,12 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <label class="lg:col-span-2 flex flex-col gap-1">
                 <span class="sa-label">Convênio</span>
-                <select id="nxml-operadora" class="sa-input" onchange="nxmlSelecionarOperadora()">
-                  <option value="">Selecione um convênio</option>
-                </select>
+                <div class="flex gap-2">
+                  <select id="nxml-operadora" class="sa-input min-w-0 flex-1" onchange="nxmlSelecionarOperadora()">
+                    <option value="">Selecione um convênio</option>
+                  </select>
+                  <button id="nxml-novo-convenio-btn" type="button" onclick="nxmlAbrirNovoConvenio()" class="h-11 px-4 rounded-xl border border-tertiary text-tertiary font-bold flex items-center gap-2 whitespace-nowrap"><span class="material-symbols-outlined text-sm">add</span>Novo convênio</button>
+                </div>
               </label>
               <label class="flex flex-col gap-1">
                 <span class="sa-label">Registro ANS</span>
@@ -715,6 +718,15 @@
                   <button type="button" onclick="nxmlSalvarOperadora()" class="h-11 px-4 rounded-xl bg-tertiary text-on-tertiary font-bold" title="Salvar Registro ANS"><span class="material-symbols-outlined text-sm">save</span></button>
                 </div>
               </label>
+            </div>
+
+            <div id="nxml-novo-convenio-form" class="hidden rounded-xl border border-tertiary/50 bg-tertiary-container/10 p-4">
+              <div class="flex items-center justify-between gap-3 mb-3"><div><h4 class="font-bold text-tertiary">Cadastrar convênio</h4><p class="text-xs text-on-surface-variant">Cria o cadastro unificado que será usado pelo Contador e pelo Novo XML.</p></div><button type="button" onclick="nxmlFecharNovoConvenio()" class="p-2 rounded-lg hover:bg-outline-variant" aria-label="Fechar"><span class="material-symbols-outlined">close</span></button></div>
+              <div class="grid grid-cols-1 md:grid-cols-[1fr_220px_auto] gap-3">
+                <label class="flex flex-col gap-1"><span class="sa-label">Nome do convênio</span><input id="nxml-novo-convenio-nome" class="sa-input" placeholder="Ex.: Bradesco Saúde"></label>
+                <label class="flex flex-col gap-1"><span class="sa-label">Registro ANS</span><input id="nxml-novo-convenio-ans" class="sa-input" inputmode="numeric" placeholder="Pode preencher depois"></label>
+                <button type="button" onclick="nxmlCriarConvenio()" class="h-11 md:self-end px-5 rounded-xl bg-tertiary text-on-tertiary font-bold flex items-center justify-center gap-2"><span class="material-symbols-outlined text-sm">save</span>Cadastrar</button>
+              </div>
             </div>
 
             <div id="nxml-workspace" class="hidden flex flex-col gap-6">
