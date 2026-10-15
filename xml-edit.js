@@ -54,6 +54,7 @@
   function rhex(n){let s='';for(let j=0;j<4;j++)s+=hexChr[(n>>(j*8+4))&15]+hexChr[(n>>(j*8))&15];return s;}
   function md5Latin1(s){return md51(s).map(rhex).join('').toUpperCase();}
   function calcularHash(doc=state.doc){return md5Latin1(leafValues(doc.documentElement).join(''));}
+  window.xmlCalcularHashDocumento=calcularHash;
 
   function guideType(node) { return local(node) === 'guiaConsulta' ? 'consulta' : 'sadt'; }
   function guideHeader(node) { return first(node, 'cabecalhoGuia') || first(node, 'cabecalhoConsulta') || node; }
