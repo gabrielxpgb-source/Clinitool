@@ -1658,6 +1658,7 @@
     let tipoAtual = 'consulta';
     let valorAtual = 0.0;
     let contadores = {};
+    let profissionaisMeta = {};
 
     // Estado da Conferência de Lote
     let guiasLote = [];
@@ -1806,7 +1807,7 @@
 
       const [profRes, convRes, unidRes] = await Promise.all([
         _supabase.from('clinifat_profissionais')
-          .select('id,nome,tipo,ativo,ordem')
+          .select('id,nome,tipo,especialidade,ativo,ordem')
           .eq('ativo', true)
           .order('tipo').order('ordem').order('nome'),
         _supabase.from('clinifat_convenios')
@@ -1828,9 +1829,12 @@
         convenios: { consulta: [], sadt: [] },
         unidades: unidRes.error ? [{id:null,nome:'Centro'},{id:null,nome:'Icaraí'}] : (unidRes.data || [])
       };
+      profissionaisMeta = {};
 
       (profRes.data || []).forEach(p => {
-        if (dados.profissionais[p.tipo]) dados.profissionais[p.tipo].push(formatarNomeCompleto(p.nome));
+        const nome = formatarNomeCompleto(p.nome);
+        if (dados.profissionais[p.tipo]) dados.profissionais[p.tipo].push(nome);
+        profissionaisMeta[nome] = { id:p.id, tipo:p.tipo, especialidade:p.especialidade || (p.tipo === 'consulta' ? 'Consulta' : 'SADT') };
       });
 
       (convRes.data || []).forEach(c => {
@@ -2806,6 +2810,8 @@
 
         card.innerHTML = `
           <span class="professional-name font-label-md text-on-surface-variant font-bold text-center">${escapeHtmlCF(nome)}</span>
+          <span class="text-[10px] text-outline text-center -mt-2">${escapeHtmlCF(profissionaisMeta[nome]?.especialidade || (tipoAtual === 'consulta' ? 'Consulta' : 'SADT'))}</span>
+          <span id="valor-prof-${nome}" class="text-[10px] text-secondary text-center font-bold">Valor não selecionado</span>
           <div class="flex-grow flex items-center justify-center py-2">
             <span class="font-headline-xl text-3xl font-bold counter-value" id="qtd-${nome}">0</span>
           </div>
@@ -2829,6 +2835,7 @@
         });
         grid.appendChild(card);
       });
+      if (typeof window.nxmlAtualizarValoresCards === 'function') window.nxmlAtualizarValoresCards();
       atualizarTotais();
     }
 
@@ -2978,7 +2985,9 @@
 
     function atualizarTotais() {
       const qtdTotal = Object.values(contadores).reduce((a, b) => a + b, 0);
-      const valorTotal = qtdTotal * valorAtual;
+      const valorTotal = typeof window.nxmlCalcularTotalContador === 'function'
+        ? window.nxmlCalcularTotalContador(contadores)
+        : qtdTotal * valorAtual;
       
       document.getElementById('lbl-qtd').innerText = qtdTotal;
       document.getElementById('lbl-valor').innerText = `R$ ${valorTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
@@ -3067,6 +3076,9 @@
       const idxConv = document.getElementById('select-convenio').value;
       const convenio = idxConv !== '' ? dados.convenios[tipoAtual]?.[Number(idxConv)] : null;
       const quantidade = Object.values(contadores).reduce((a, b) => a + Number(b || 0), 0);
+      const valorTotalCalculado = typeof window.nxmlCalcularTotalContador === 'function'
+        ? window.nxmlCalcularTotalContador(contadores)
+        : quantidade * Number(valorAtual || 0);
       return {
         usuario: document.getElementById('input-nome-operador').value.trim(),
         protocolo: document.getElementById('input-protocolo').value.trim(),
@@ -3077,10 +3089,13 @@
         convenio: convenio?.nome || '',
         valorGuia: Number(valorAtual || 0),
         quantidade,
-        valorTotal: quantidade * Number(valorAtual || 0),
+        valorTotal: valorTotalCalculado,
         profissionais: Object.entries(contadores)
           .filter(([, qtd]) => Number(qtd) > 0)
-          .map(([nome, qtd]) => ({ nome: formatarNomeCompleto(nome), quantidade: Number(qtd) }))
+          .map(([nome, qtd]) => {
+            const valorUnitario = typeof window.nxmlValorProfissional === 'function' ? window.nxmlValorProfissional(nome) : Number(valorAtual || 0);
+            return { nome: formatarNomeCompleto(nome), especialidade:profissionaisMeta[nome]?.especialidade || '', quantidade:Number(qtd), valorUnitario:Number(valorUnitario || 0), valorTotal:Number(qtd) * Number(valorUnitario || 0) };
+          })
       };
     }
 
@@ -3199,7 +3214,8 @@
       if (idxConv !== "") {
         const conv = dados.convenios[tipoAtual][idxConv];
         linhas.push(`Convênio: ${conv.nome}`);
-        linhas.push(`Valor Un.: R$ ${valorAtual.toFixed(2)}`);
+        if (valorAtual > 0) linhas.push(`Valor Un.: R$ ${valorAtual.toFixed(2)}`);
+        else if (document.getElementById('select-tabela-valores')?.value) linhas.push('Valores conforme especialidade');
       }
 
       if (prioridade) linhas.push("OBS: Prioridade Correios");
@@ -3230,9 +3246,11 @@
       }
 
       linhas.push("─".repeat(28));
-      let totalValor = totalQtd * valorAtual;
+      let totalValor = typeof window.nxmlCalcularTotalContador === 'function'
+        ? window.nxmlCalcularTotalContador(contadores)
+        : totalQtd * valorAtual;
 
-      if (valorAtual > 0) {
+      if (totalValor > 0) {
         linhas.push(`Total: ${totalQtd} atendimentos`);
         linhas.push(`Valor Total: R$ ${totalValor.toFixed(2)}`);
       } else {
