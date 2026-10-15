@@ -5,6 +5,7 @@
     operadoras: [], unidades: [], especialidades: [], configuracoes: [], tabelas: [],
     operadoraId: 0, tabelaId: 0
   };
+  const counter = { loaded:false, operadoras:[], especialidades:[], tabelas:[], itens:[], vinculos:[] };
 
   const el = id => document.getElementById(id);
   const esc = value => String(value ?? '').replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
@@ -308,6 +309,103 @@
       if (saved.error) return status(saved.error.message, 'erro');
     }
     await renderTabelaEditor(); status('Valores da tabela salvos.');
+  };
+
+  async function carregarBaseContador(force = false) {
+    if (counter.loaded && !force) return true;
+    const [ops, esp, tabs, items, links] = await Promise.all([
+      _supabase.from('clinifat_operadoras').select('*').eq('ativo', true).order('ordem').order('nome'),
+      _supabase.from('clinifat_especialidades').select('*').eq('ativo', true).order('ordem').order('nome'),
+      _supabase.from('clinifat_tabelas_valores').select('*').eq('ativo', true).order('vigencia_inicio', {ascending:false}),
+      _supabase.from('clinifat_tabela_valores_itens').select('*'),
+      _supabase.from('clinifat_operadora_unidades').select('*').eq('ativo', true)
+    ]);
+    const error = ops.error || esp.error || tabs.error || items.error || links.error;
+    if (error) { console.warn('Nova estrutura indisponível no Contador:', error.message); return false; }
+    counter.operadoras = ops.data || []; counter.especialidades = esp.data || [];
+    counter.tabelas = tabs.data || []; counter.itens = items.data || []; counter.vinculos = links.data || [];
+    counter.loaded = true; return true;
+  }
+
+  function unidadeSelecionadaId() {
+    const nome = el('select-unidade')?.value || '';
+    const u = (typeof dados !== 'undefined' ? dados.unidades : []).find(x => x.nome === nome);
+    return Number(u?.id) || null;
+  }
+
+  function operadorasDoContexto() {
+    const unidadeId = unidadeSelecionadaId();
+    const especialidadeIds = new Set(counter.especialidades.filter(e => e.modalidade === tipoAtual).map(e => e.operadora_id));
+    return counter.operadoras.filter(o => {
+      if (!especialidadeIds.has(o.id)) return false;
+      const configured = counter.vinculos.filter(v => v.operadora_id === o.id);
+      return !configured.length || !unidadeId || configured.some(v => v.unidade_id === unidadeId);
+    });
+  }
+
+  function tabelaValorAplicavel(tabelaId, operadoraId) {
+    const specialties = counter.especialidades.filter(e => e.operadora_id === operadoraId && e.modalidade === tipoAtual);
+    const ids = new Set(specialties.map(e => e.id));
+    const unitId = unidadeSelecionadaId();
+    const candidates = counter.itens.filter(i => i.tabela_id === tabelaId && ids.has(i.especialidade_id));
+    const resolved = specialties.map(e => candidates.find(i => i.especialidade_id === e.id && i.unidade_id === unitId) || candidates.find(i => i.especialidade_id === e.id && i.unidade_id == null)).filter(Boolean);
+    const values = [...new Set(resolved.map(i => Number(i.valor || 0)))];
+    if (values.length === 1) return {valor:values[0], variado:false};
+    if (values.length > 1) return {valor:0, variado:true};
+    return {valor:0, variado:false};
+  }
+
+  const carregarDropdownConveniosLegado = typeof window.carregarDropdownConvenios === 'function' ? window.carregarDropdownConvenios : null;
+  window.carregarDropdownConvenios = async function () {
+    const select = el('select-convenio'), tableSelect = el('select-tabela-valores');
+    if (!select) return;
+    select.innerHTML = '<option value="">Carregando convênios...</option>';
+    if (tableSelect) { tableSelect.innerHTML = '<option value="">Selecione primeiro o convênio</option>'; tableSelect.disabled = true; }
+    const available = await carregarBaseContador();
+    const list = available ? operadorasDoContexto() : [];
+    if (!list.length) { if (carregarDropdownConveniosLegado) carregarDropdownConveniosLegado(); return; }
+    dados.convenios[tipoAtual] = list.map(o => ({id:o.id, nome:o.nome, valor:0, novaEstrutura:true}));
+    select.innerHTML = '<option value="">Selecione um convênio</option>';
+    dados.convenios[tipoAtual].forEach((c, index) => {
+      const opt = document.createElement('option'); opt.value = index; opt.textContent = c.nome; select.appendChild(opt);
+    });
+    valorAtual = 0; atualizarTotais();
+  };
+
+  window.selecionarConvenio = function () {
+    const idx = el('select-convenio').value, tableSelect = el('select-tabela-valores');
+    valorAtual = 0;
+    if (idx === '') { tableSelect.innerHTML = '<option value="">Selecione primeiro o convênio</option>'; tableSelect.disabled = true; atualizarTotais(); return; }
+    const conv = dados.convenios[tipoAtual][Number(idx)];
+    if (!conv?.novaEstrutura) {
+      valorAtual = Number(conv?.valor || 0); tableSelect.innerHTML = '<option value="">Valor do cadastro antigo</option>'; tableSelect.disabled = true; atualizarTotais(); return;
+    }
+    const tables = counter.tabelas.filter(t => t.operadora_id === conv.id);
+    tableSelect.disabled = false;
+    tableSelect.innerHTML = '<option value="">Selecione uma tabela</option>' + tables.map(t => `<option value="${t.id}">${esc(t.nome)} • ${esc(t.situacao)}</option>`).join('');
+    const current = tables.find(t => t.situacao === 'atual') || tables[0];
+    if (current) { tableSelect.value = String(current.id); window.nxmlContadorSelecionarTabela(); }
+    else atualizarTotais();
+  };
+
+  window.nxmlContadorSelecionarTabela = function () {
+    const idx = el('select-convenio').value, tabelaId = Number(el('select-tabela-valores').value) || 0;
+    const warning = el('contador-tabela-aviso');
+    warning?.classList.add('hidden');
+    if (idx === '' || !tabelaId) { valorAtual = 0; atualizarTotais(); return; }
+    const conv = dados.convenios[tipoAtual][Number(idx)], result = tabelaValorAplicavel(tabelaId, conv.id);
+    valorAtual = result.valor;
+    if (result.variado && warning) {
+      warning.textContent = 'Esta tabela possui valores diferentes por especialidade. Nesta etapa, selecione e revise a tabela; o cálculo individual por profissional será conectado em seguida.';
+      warning.classList.remove('hidden');
+    }
+    atualizarTotais();
+  };
+
+  window.nxmlContadorUnidadeAlterada = async function () {
+    const current = el('select-convenio')?.value || '';
+    await window.carregarDropdownConvenios();
+    if (current && [...el('select-convenio').options].some(o => o.value === current)) { el('select-convenio').value = current; window.selecionarConvenio(); }
   };
 
   document.addEventListener('DOMContentLoaded', () => {
