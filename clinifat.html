@@ -1131,27 +1131,36 @@
       <textarea id="input-captura-qr" aria-label="Captura do leitor QR Code" autocomplete="off" spellcheck="false" style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;"></textarea>
 
       <section class="grid grid-cols-1 md:grid-cols-12 gap-4 mb-4">
-        <div class="md:col-span-3 relative">
+        <div class="md:col-span-2 relative">
           <label class="absolute -top-2.5 left-4 bg-background px-2 text-xs font-label-sm text-secondary z-10">Nome</label>
           <input type="text" id="input-nome-operador" onblur="normalizarNomeOperador()" placeholder="Nome do operador" class="w-full h-14 px-4 bg-surface-container border border-outline-variant rounded-xl focus:border-secondary focus:ring-0 transition-all text-on-surface">
         </div>
 
-        <div class="md:col-span-3 relative">
+        <div class="md:col-span-2 relative">
           <label class="absolute -top-2.5 left-4 bg-background px-2 text-xs font-label-sm text-tertiary z-10">Unidade</label>
           <div class="relative">
-            <select id="select-unidade" class="w-full h-14 pl-4 pr-10 bg-surface-container border border-outline-variant rounded-xl focus:border-tertiary focus:ring-0 transition-all appearance-none text-on-surface"></select>
+            <select id="select-unidade" onchange="nxmlContadorUnidadeAlterada()" class="w-full h-14 pl-4 pr-10 bg-surface-container border border-outline-variant rounded-xl focus:border-tertiary focus:ring-0 transition-all appearance-none text-on-surface"></select>
             <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-outline">expand_more</span>
           </div>
         </div>
 
-        <div class="md:col-span-6 relative">
+        <div class="md:col-span-4 relative">
           <label class="absolute -top-2.5 left-4 bg-background px-2 text-xs font-label-sm text-primary z-10">Convênio</label>
           <div class="relative">
             <select id="select-convenio" onchange="selecionarConvenio()" class="w-full h-14 pl-4 pr-10 bg-surface-container border border-outline-variant rounded-xl focus:border-primary focus:ring-0 transition-all appearance-none text-on-surface"></select>
             <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-outline">expand_more</span>
           </div>
         </div>
+
+        <div class="md:col-span-4 relative">
+          <label class="absolute -top-2.5 left-4 bg-background px-2 text-xs font-label-sm text-secondary z-10">Tabela de valores</label>
+          <div class="relative">
+            <select id="select-tabela-valores" onchange="nxmlContadorSelecionarTabela()" class="w-full h-14 pl-4 pr-10 bg-surface-container border border-outline-variant rounded-xl focus:border-secondary focus:ring-0 transition-all appearance-none text-on-surface disabled:opacity-50" disabled><option value="">Selecione primeiro o convênio</option></select>
+            <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-outline">expand_more</span>
+          </div>
+        </div>
       </section>
+      <div id="contador-tabela-aviso" class="hidden -mt-1 mb-4 p-3 rounded-xl border border-tertiary/50 bg-tertiary-container/10 text-tertiary text-xs"></div>
 
       <section class="grid grid-cols-1 md:grid-cols-12 gap-4 mb-8">
         <div class="md:col-span-3 relative">
