@@ -126,6 +126,34 @@
     try { await carregarOperadora(); } catch (error) { status(error.message, 'erro'); }
   };
 
+  window.nxmlAbrirNovoConvenio = function () {
+    if (!requireMaster()) return;
+    el('nxml-novo-convenio-form').classList.remove('hidden');
+    el('nxml-novo-convenio-nome').focus();
+  };
+
+  window.nxmlFecharNovoConvenio = function () {
+    el('nxml-novo-convenio-form').classList.add('hidden');
+    el('nxml-novo-convenio-nome').value = '';
+    el('nxml-novo-convenio-ans').value = '';
+  };
+
+  window.nxmlCriarConvenio = async function () {
+    if (!requireMaster()) return;
+    const nome = el('nxml-novo-convenio-nome').value.trim();
+    const registro_ans = el('nxml-novo-convenio-ans').value.replace(/\D/g, '') || null;
+    if (!nome) return status('Informe o nome do convênio.', 'erro');
+    const {data, error} = await _supabase.from('clinifat_operadoras').insert({nome, registro_ans}).select('*').single();
+    if (error) return status(error.message, 'erro');
+    window.nxmlFecharNovoConvenio();
+    state.operadoraId = data.id;
+    await queryBase();
+    renderOperadoras(); renderUnidades();
+    el('nxml-operadora').value = String(data.id);
+    await window.nxmlSelecionarOperadora();
+    status('Convênio cadastrado. Agora informe as especialidades, a configuração XML e a tabela de valores.');
+  };
+
   window.nxmlSalvarOperadora = async function () {
     if (!requireMaster() || !state.operadoraId) return;
     const registro_ans = el('nxml-registro-ans').value.replace(/\D/g, '') || null;
@@ -251,5 +279,7 @@
     const details = el('cfg-novo-xml');
     details?.addEventListener('toggle', () => { if (details.open) window.nxmlCarregarBase(); });
     el('nxml-especialidade-nome')?.addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); window.nxmlAdicionarEspecialidade(); } });
+    el('nxml-novo-convenio-nome')?.addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); window.nxmlCriarConvenio(); } });
+    el('nxml-novo-convenio-ans')?.addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); window.nxmlCriarConvenio(); } });
   });
 })();
