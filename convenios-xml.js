@@ -355,6 +355,42 @@
     return {valor:0, variado:false};
   }
 
+  function normalize(value) {
+    return String(value || '').trim().toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
+  }
+
+  function contextoContador() {
+    const idx = el('select-convenio')?.value ?? '', tabelaId = Number(el('select-tabela-valores')?.value) || 0;
+    const convenio = idx !== '' ? dados.convenios[tipoAtual]?.[Number(idx)] : null;
+    return {convenio, tabelaId, unidadeId:unidadeSelecionadaId()};
+  }
+
+  window.nxmlValorProfissional = function (nome) {
+    const {convenio, tabelaId, unidadeId} = contextoContador();
+    if (!convenio?.novaEstrutura || !tabelaId) return Number(valorAtual || 0);
+    const meta = profissionaisMeta?.[nome] || {};
+    const desired = normalize(meta.especialidade || (tipoAtual === 'consulta' ? 'Consulta' : 'SADT'));
+    const specialties = counter.especialidades.filter(e => e.operadora_id === convenio.id && e.modalidade === tipoAtual);
+    const specialty = specialties.find(e => normalize(e.nome) === desired)
+      || specialties.find(e => normalize(e.nome) === normalize(tipoAtual === 'consulta' ? 'Consulta' : 'SADT'))
+      || (specialties.length === 1 ? specialties[0] : null);
+    if (!specialty) return 0;
+    const items = counter.itens.filter(i => i.tabela_id === tabelaId && i.especialidade_id === specialty.id);
+    const item = items.find(i => i.unidade_id === unidadeId) || items.find(i => i.unidade_id == null);
+    return Number(item?.valor || 0);
+  };
+
+  window.nxmlCalcularTotalContador = function (counts) {
+    return Object.entries(counts || {}).reduce((total, [nome, qtd]) => total + Number(qtd || 0) * window.nxmlValorProfissional(nome), 0);
+  };
+
+  window.nxmlAtualizarValoresCards = function () {
+    Object.keys(contadores || {}).forEach(nome => {
+      const label = document.getElementById(`valor-prof-${nome}`), value = window.nxmlValorProfissional(nome);
+      if (label) label.textContent = value > 0 ? `${money(value)} por atendimento` : 'Valor não configurado';
+    });
+  };
+
   const carregarDropdownConveniosLegado = typeof window.carregarDropdownConvenios === 'function' ? window.carregarDropdownConvenios : null;
   window.carregarDropdownConvenios = async function () {
     const select = el('select-convenio'), tableSelect = el('select-tabela-valores');
@@ -395,10 +431,15 @@
     if (idx === '' || !tabelaId) { valorAtual = 0; atualizarTotais(); return; }
     const conv = dados.convenios[tipoAtual][Number(idx)], result = tabelaValorAplicavel(tabelaId, conv.id);
     valorAtual = result.valor;
-    if (result.variado && warning) {
-      warning.textContent = 'Esta tabela possui valores diferentes por especialidade. Nesta etapa, selecione e revise a tabela; o cálculo individual por profissional será conectado em seguida.';
+    const missing = Object.keys(contadores || {}).filter(nome => window.nxmlValorProfissional(nome) <= 0);
+    if (missing.length && warning) {
+      warning.textContent = `Sem valor correspondente na tabela para: ${missing.join(', ')}. Revise a especialidade desses profissionais ou os valores da tabela.`;
+      warning.classList.remove('hidden');
+    } else if (result.variado && warning) {
+      warning.textContent = 'Valores diferentes por especialidade: o total será calculado individualmente conforme cada profissional.';
       warning.classList.remove('hidden');
     }
+    window.nxmlAtualizarValoresCards();
     atualizarTotais();
   };
 
