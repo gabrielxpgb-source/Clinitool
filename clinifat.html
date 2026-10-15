@@ -685,6 +685,82 @@
           </div>
         </details>
 
+        <!-- BASE UNIFICADA PARA NOVO XML -->
+        <details id="cfg-novo-xml" class="bg-surface-container rounded-2xl border border-tertiary/50 overflow-hidden">
+          <summary class="cursor-pointer select-none p-5 bg-surface-container-high hover:bg-surface-container-highest flex items-center justify-between gap-3">
+            <div>
+              <div class="flex flex-wrap items-center gap-2">
+                <h3 class="text-lg font-bold text-tertiary">Convênios e Novo XML</h3>
+                <span class="px-2 py-1 rounded-full bg-tertiary-container text-on-tertiary-container text-[10px] font-bold uppercase">Nova estrutura</span>
+              </div>
+              <p class="text-xs text-on-surface-variant mt-1">Configuração por unidade, especialidades e tabelas históricas de valores.</p>
+            </div>
+            <span class="material-symbols-outlined text-outline">expand_more</span>
+          </summary>
+
+          <div class="p-6 flex flex-col gap-6">
+            <div id="nxml-status" class="hidden p-3 rounded-xl border text-sm" role="status" aria-live="polite"></div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <label class="lg:col-span-2 flex flex-col gap-1">
+                <span class="sa-label">Convênio</span>
+                <select id="nxml-operadora" class="sa-input" onchange="nxmlSelecionarOperadora()">
+                  <option value="">Selecione um convênio</option>
+                </select>
+              </label>
+              <label class="flex flex-col gap-1">
+                <span class="sa-label">Registro ANS</span>
+                <div class="flex gap-2">
+                  <input id="nxml-registro-ans" class="sa-input min-w-0" inputmode="numeric" placeholder="Ex.: 123456">
+                  <button type="button" onclick="nxmlSalvarOperadora()" class="h-11 px-4 rounded-xl bg-tertiary text-on-tertiary font-bold" title="Salvar Registro ANS"><span class="material-symbols-outlined text-sm">save</span></button>
+                </div>
+              </label>
+            </div>
+
+            <div id="nxml-workspace" class="hidden flex flex-col gap-6">
+              <section class="grid grid-cols-1 xl:grid-cols-2 gap-5">
+                <div class="rounded-2xl border border-outline-variant bg-surface-container-low p-5">
+                  <div class="flex items-center justify-between gap-3 mb-4">
+                    <div><h4 class="font-bold text-primary">Especialidades</h4><p class="text-xs text-on-surface-variant">Itens que receberão valores nas tabelas.</p></div>
+                    <span id="nxml-especialidades-count" class="text-[10px] text-outline">0 item(ns)</span>
+                  </div>
+                  <div id="nxml-especialidade-form" class="grid grid-cols-1 sm:grid-cols-[1fr_130px_auto] gap-2 mb-4">
+                    <input id="nxml-especialidade-nome" class="sa-input" placeholder="Ex.: Psiquiatria">
+                    <select id="nxml-especialidade-modalidade" class="sa-input"><option value="consulta">Consulta</option><option value="sadt">SADT</option></select>
+                    <button type="button" onclick="nxmlAdicionarEspecialidade()" class="h-11 px-4 rounded-xl bg-primary-container text-on-primary-container font-bold"><span class="material-symbols-outlined text-sm">add</span></button>
+                  </div>
+                  <div id="nxml-especialidades-lista" class="cf-list"></div>
+                </div>
+
+                <div class="rounded-2xl border border-outline-variant bg-surface-container-low p-5">
+                  <div class="mb-4"><h4 class="font-bold text-primary">Configuração XML</h4><p class="text-xs text-on-surface-variant">A configuração específica da unidade substitui a compartilhada.</p></div>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <label class="flex flex-col gap-1 sm:col-span-2"><span class="sa-label">Aplicar a</span><select id="nxml-config-unidade" class="sa-input" onchange="nxmlCarregarConfiguracao()"></select></label>
+                    <label class="flex flex-col gap-1"><span class="sa-label">Identificação do prestador</span><select id="nxml-identificacao" class="sa-input" onchange="nxmlAtualizarIdentificacao()"><option value="codigo_operadora">Código na operadora</option><option value="cnpj">CNPJ</option></select></label>
+                    <label id="nxml-codigo-wrap" class="flex flex-col gap-1"><span class="sa-label">Código na operadora</span><input id="nxml-codigo-prestador" class="sa-input"></label>
+                    <label id="nxml-cnpj-wrap" class="hidden flex-col gap-1"><span class="sa-label">CNPJ</span><input id="nxml-cnpj" class="sa-input" inputmode="numeric"></label>
+                    <label class="flex flex-col gap-1"><span class="sa-label">CNES</span><input id="nxml-cnes" class="sa-input" inputmode="numeric"></label>
+                    <label class="flex flex-col gap-1"><span class="sa-label">Versão TISS padrão</span><select id="nxml-versao-tiss" class="sa-input"><option value="04.01.00">04.01.00</option><option value="04.02.00">04.02.00</option><option value="04.03.00">04.03.00</option></select></label>
+                    <label class="flex flex-col gap-1 sm:col-span-2"><span class="sa-label">Observação</span><textarea id="nxml-config-observacao" class="sa-input min-h-20" placeholder="Regra ou exceção deste convênio"></textarea></label>
+                  </div>
+                  <div class="flex justify-end mt-4"><button type="button" onclick="nxmlSalvarConfiguracao()" class="h-11 px-5 rounded-xl bg-primary text-on-primary font-bold flex items-center gap-2"><span class="material-symbols-outlined text-sm">save</span>Salvar configuração</button></div>
+                </div>
+              </section>
+
+              <section class="rounded-2xl border border-outline-variant bg-surface-container-low p-5">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+                  <div><h4 class="font-bold text-secondary">Tabelas de valores</h4><p class="text-xs text-on-surface-variant">As tabelas anteriores permanecem disponíveis para contagens retroativas.</p></div>
+                  <button type="button" onclick="nxmlAbrirNovaTabela()" class="h-10 px-4 rounded-xl bg-secondary text-on-secondary font-bold flex items-center justify-center gap-2"><span class="material-symbols-outlined text-sm">library_add</span>Criar nova tabela</button>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-5">
+                  <div id="nxml-tabelas-lista" class="cf-list"></div>
+                  <div id="nxml-tabela-editor" class="rounded-xl border border-outline-variant bg-surface-container p-4"><div class="cf-list-empty">Selecione uma tabela para visualizar os valores.</div></div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </details>
+
         <!-- UNIDADES DE ATENDIMENTO -->
         <details class="bg-surface-container rounded-2xl border border-outline-variant overflow-hidden">
           <summary class="cursor-pointer select-none p-5 bg-surface-container-high hover:bg-surface-container-highest flex items-center justify-between gap-3">
@@ -4570,6 +4646,7 @@
     setInterval(atualizarRelogioQR, 1000);
     verificarSessaoCliniFat();
   </script>
+  <script src="./convenios-xml.js"></script>
   <script src="./xml-edit.js"></script>
 </body>
 </html>
