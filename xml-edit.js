@@ -79,7 +79,7 @@
     const procedimento=first(item,'procedimento') || item;
     const totalItem=tipo==='consulta' ? Number(value(atendimento,'valorProcedimento')||0) : Number(value(item,'valorTotal')||0);
     const totalGeral=tipo==='consulta' ? totalItem : Number(value(totalBlock,'valorTotalGeral')||0);
-    return { index,node,item,tipo, guia:value(guideHeader(node),'numeroGuiaPrestador'), principal:value(guideHeader(node),'guiaPrincipal'), operadora:value(node,'numeroGuiaOperadora'), carteira:value(first(node,'dadosBeneficiario'),'numeroCarteira'), senha:value(first(node,'dadosAutorizacao'),'senha'), autorizacao:value(first(node,'dadosAutorizacao'),'dataAutorizacao'), solicitacao:value(first(node,'dadosSolicitacao'),'dataSolicitacao'), execucao:tipo==='consulta'?value(atendimento,'dataAtendimento'):value(item,'dataExecucao'), codigo:value(procedimento,'codigoProcedimento'), descricao:value(procedimento,'descricaoProcedimento'), quantidade:tipo==='consulta'?1:Number(value(item,'quantidadeExecutada')||0), unitario:tipo==='consulta'?totalItem:Number(value(item,'valorUnitario')||0), totalItem, totalProc:tipo==='consulta'?totalItem:Number(value(totalBlock,'valorProcedimentos')||0), totalGeral, solicitante:value(first(node,'profissionalSolicitante'),'nomeProfissional'), executor:tipo==='consulta'?value(first(node,'profissionalExecutante'),'nomeProfissional'):value(first(node,'equipeSadt'),'nomeProf'), conselhoSolic:value(first(node,'profissionalSolicitante'),'numeroConselhoProfissional'), ufSolic:value(first(node,'profissionalSolicitante'),'UF'), cbosSolic:value(first(node,'profissionalSolicitante'),'CBOS'), conselhoExec:tipo==='consulta'?value(first(node,'profissionalExecutante'),'numeroConselhoProfissional'):value(first(node,'equipeSadt'),'numeroConselhoProfissional'), ufExec:tipo==='consulta'?value(first(node,'profissionalExecutante'),'UF'):value(first(node,'equipeSadt'),'UF'), cbosExec:tipo==='consulta'?value(first(node,'profissionalExecutante'),'CBOS'):value(first(node,'equipeSadt'),'CBOS'), observacao:value(node,'observacao'), indicacaoClinica:value(first(node,'dadosSolicitacao'),'indicacaoClinica'), indicacaoAcidente:value(node,'indicacaoAcidente'), tecnica:value(item,'tecnicaUtilizada') };
+    return { index,node,item,tipo, guia:value(guideHeader(node),'numeroGuiaPrestador'), principal:value(guideHeader(node),'guiaPrincipal'), operadora:value(node,'numeroGuiaOperadora'), carteira:value(first(node,'dadosBeneficiario'),'numeroCarteira'), senha:value(first(node,'dadosAutorizacao'),'senha'), autorizacao:value(first(node,'dadosAutorizacao'),'dataAutorizacao'), solicitacao:value(first(node,'dadosSolicitacao'),'dataSolicitacao'), execucao:tipo==='consulta'?value(atendimento,'dataAtendimento'):value(item,'dataExecucao'), codigo:value(procedimento,'codigoProcedimento'), descricao:value(procedimento,'descricaoProcedimento'), quantidade:tipo==='consulta'?1:Number(value(item,'quantidadeExecutada')||0), unitario:tipo==='consulta'?totalItem:Number(value(item,'valorUnitario')||0), totalItem, totalProc:tipo==='consulta'?totalItem:Number(value(totalBlock,'valorProcedimentos')||0), totalGeral, solicitante:value(first(node,'profissionalSolicitante'),'nomeProfissional'), executor:tipo==='consulta'?value(first(node,'profissionalExecutante'),'nomeProfissional'):value(first(node,'equipeSadt'),'nomeProf'), conselhoSolicTipo:value(first(node,'profissionalSolicitante'),'conselhoProfissional'), conselhoSolicNumero:value(first(node,'profissionalSolicitante'),'numeroConselhoProfissional'), ufSolic:value(first(node,'profissionalSolicitante'),'UF'), cbosSolic:value(first(node,'profissionalSolicitante'),'CBOS'), conselhoExec:tipo==='consulta'?value(first(node,'profissionalExecutante'),'numeroConselhoProfissional'):value(first(node,'equipeSadt'),'numeroConselhoProfissional'), ufExec:tipo==='consulta'?value(first(node,'profissionalExecutante'),'UF'):value(first(node,'equipeSadt'),'UF'), cbosExec:tipo==='consulta'?value(first(node,'profissionalExecutante'),'CBOS'):value(first(node,'equipeSadt'),'CBOS'), grauParticipacao:tipo==='sadt'?value(first(node,'equipeSadt'),'grauPart'):'', observacao:value(node,'observacao'), indicacaoClinica:value(first(node,'dadosSolicitacao'),'indicacaoClinica'), indicacaoAcidente:value(node,'indicacaoAcidente'), tecnica:value(item,'tecnicaUtilizada') };
   }
 
   function auditar() {
@@ -92,13 +92,16 @@
       if(g.tipo==='sadt' && g.guia && (g.guia!==g.principal || g.guia!==g.operadora)) add('alerta','Os três números de guia são diferentes.',i);
       if(g.tipo==='consulta' && g.guia && g.operadora && g.guia!==g.operadora) add('alerta','Número da guia difere do número da guia da operadora.',i);
       if(g.autorizacao && g.solicitacao && g.autorizacao!==g.solicitacao) add('alerta','Data de autorização diferente da solicitação.',i);
+      if(g.tipo==='sadt' && g.conselhoSolicTipo==='09' && g.cbosSolic==='251510') add('alerta','Solicitante identificado como Psicólogo (Conselho 09 e CBO 251510). Verifique se o nome do profissional solicitante é o mesmo que consta no encaminhamento e confirme a regra do convênio, pois alguns exigem médico e outros aceitam psicólogo.',i);
+      if(g.tipo==='sadt' && g.grauParticipacao && g.grauParticipacao!=='00') add('alerta',`Grau de Participação informado como ${g.grauParticipacao}, diferente de 00 - Cirurgião. Verifique se o código está correto antes do envio.`,i);
+      if(g.tipo==='sadt' && g.senha && [g.guia,g.principal,g.operadora].filter(Boolean).includes(g.senha)) add('alerta','A senha é igual ao Número da guia do prestador, Guia principal ou Número da guia da operadora. Verifique se a autorização foi preenchida corretamente.',i);
       if(g.execucao && g.autorizacao && g.execucao<g.autorizacao) add('erro','Data de atendimento/execução anterior à autorização.',i);
       if(g.tipo==='sadt' && !Number.isInteger(g.quantidade)) add('erro','Quantidade deve ser um número inteiro.',i);
       const calc=Math.round(g.quantidade*g.unitario*100)/100;
       if(Math.abs(calc-g.totalItem)>.009) add('erro',`Total do item deveria ser ${money(calc)}.`,i);
       if(Math.abs(g.totalItem-g.totalProc)>.009 || Math.abs(g.totalProc-g.totalGeral)>.009) add('erro','Totais do item e da guia não conferem.',i);
     });
-    [['guia','Número da guia'],['carteira','Carteira'],['senha','Senha'],['observacao','Observação/conta']].forEach(([k,label])=>{const seen=new Map();guides.forEach((g,i)=>{if(!g[k])return;if(seen.has(g[k])){add('erro',`${label} duplicado entre as guias ${seen.get(g[k])+1} e ${i+1}.`,i);}else seen.set(g[k],i);});});
+    [['guia','Número da guia'],['senha','Senha'],['observacao','Observação/conta']].forEach(([k,label])=>{const seen=new Map();guides.forEach((g,i)=>{if(!g[k])return;if(seen.has(g[k])){add('erro',`${label} duplicado entre as guias ${seen.get(g[k])+1} e ${i+1}.`,i);}else seen.set(g[k],i);});});
     const informed=value(state.doc,'hash').toUpperCase(); const calculated=calcularHash();
     if(informed!==calculated)add('erro','Hash do XML não corresponde ao conteúdo atual.');
     state.audit={guides,issues,per,informed,calculated}; return state.audit;
@@ -108,6 +111,7 @@
   function render() {
     const a=auditar(); const total=a.guides.reduce((n,g)=>n+g.totalGeral,0); const lote=value(state.doc,'numeroLote'); const padrao=value(state.doc,'Padrao'); const ans=value(state.doc,'registroANS'); const prest=value(state.doc,'codigoPrestadorNaOperadora');
     byId('xml-summary').innerHTML=[['Lote',lote],['Padrão',padrao],['Guias',a.guides.length],['Total',money(total)],['Registro ANS',ans],['Prestador',prest]].map(([k,v])=>`<div class="p-3 rounded-xl bg-surface-container-high border border-outline-variant"><div class="text-[10px] uppercase text-outline">${esc(k)}</div><div class="font-bold mt-1 truncate">${esc(v)}</div></div>`).join('');
+    const lotInput=byId('xml-lot-number');if(lotInput&&document.activeElement!==lotInput)lotInput.value=lote;
     byId('xml-guide-count').textContent=`${a.guides.length} guia(s)`;
     const version=currentVersion(),versionBadge=byId('xml-current-version'),target=byId('xml-target-version');
     if(versionBadge)versionBadge.textContent=`Arquivo atual: ${version||'não identificada'}`;
@@ -115,7 +119,7 @@
     byId('xml-guides-body').innerHTML=a.guides.map((g,i)=>{const levels=a.per[i];const st=levels.includes('erro')?'erro':levels.includes('alerta')?'alerta':'ok';return `<tr class="border-b border-outline-variant hover:bg-surface-container-high cursor-pointer" onclick="xmlAbrirGuia(${i})"><td class="p-3">${i+1}</td><td class="p-3 font-bold text-primary">${esc(g.guia)}</td><td class="p-3">${esc(g.carteira)}</td><td class="p-3">${esc(g.execucao)}</td><td class="p-3"><div>${esc(g.codigo)}</div><div class="text-[10px] text-outline">${esc(g.descricao)}</div></td><td class="p-3 text-right font-bold">${esc(money(g.totalGeral))}</td><td class="p-3"><span class="px-2 py-1 rounded-full ${st==='ok'?'bg-secondary-container text-on-secondary-container':badge(st)}">${st==='ok'?'OK':st.toUpperCase()}</span></td><td class="p-3 text-right"><button type="button" onclick="event.stopPropagation();xmlRemoverGuia(${i})" class="p-2 rounded-lg text-error hover:bg-error-container" title="Remover guia ${i+1}" aria-label="Remover guia ${i+1}"><span class="material-symbols-outlined text-lg">delete</span></button></td></tr>`;}).join('');
     const hashOk=a.informed===a.calculated; const general=[{level:hashOk?'ok':'erro',msg:hashOk?'Hash confere com o conteúdo do arquivo.':'Hash inválido para o conteúdo atual.'},{level:a.issues.some(x=>x.level==='erro')?'erro':a.issues.some(x=>x.level==='alerta')?'alerta':'ok',msg:a.issues.length?`${a.issues.length} ocorrência(s) encontrada(s).`:'Nenhuma inconsistência interna encontrada.'}];
     byId('xml-audit-list').innerHTML=[...general,...a.issues.slice(0,20)].map(x=>`<button type="button" ${x.index!=null?`onclick="xmlAbrirGuia(${x.index})"`:''} class="text-left p-3 rounded-xl ${badge(x.level)}">${x.index!=null?`Guia ${x.index+1}: `:''}${esc(x.msg)}</button>`).join('');
-    byId('xml-change-log').innerHTML=state.changes.length?state.changes.slice().reverse().map(c=>`<div class="py-2 border-b border-outline-variant"><b>Guia ${c.guide}</b> — ${esc(c.field)}<br><span class="text-outline">${esc(c.before)} → ${esc(c.after)}</span></div>`).join(''):'Nenhuma alteração realizada.';
+    byId('xml-change-log').innerHTML=state.changes.length?state.changes.slice().reverse().map(c=>`<div class="py-2 border-b border-outline-variant"><b>${c.guide==='Lote'?'Lote':`Guia ${c.guide}`}</b> — ${esc(c.field)}<br><span class="text-outline">${esc(c.before)} → ${esc(c.after)}</span></div>`).join(''):'Nenhuma alteração realizada.';
   }
 
   function ensureChild(parent, tag, beforeTag='') {
@@ -332,6 +336,17 @@
     guide.parentNode.removeChild(guide);
     state.changes.push({guide:index+1,field:'Guia removida',before:number,after:'—'});
     refreshGuides();refreshHash();xmlFecharEditor();render();
+  };
+
+  window.xmlSalvarNumeroLote=()=>{
+    if(!state.doc)return;
+    const input=byId('xml-lot-number'),after=String(input?.value||'').trim();
+    if(!/^\d+$/.test(after)){alert('Informe o número do lote usando somente dígitos.');input?.focus();return;}
+    const node=first(state.doc,'numeroLote');
+    if(!node){alert('O campo numeroLote não foi encontrado neste XML.');return;}
+    const before=node.textContent.trim();
+    if(before!==after){node.textContent=after;state.changes.push({guide:'Lote',field:'Número do lote',before,after});refreshHash();}
+    render();
   };
 
   window.xmlRevalidar=()=>render();
