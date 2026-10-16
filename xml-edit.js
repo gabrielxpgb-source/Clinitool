@@ -74,21 +74,35 @@
   }
   function currentVersion() { return normalizeVersion(value(state.doc,'Padrao')); }
 
+  function headerProviderCodeNode() {
+    const header=first(state.doc,'cabecalho');
+    return first(first(first(header,'origem'),'identificacaoPrestador'),'codigoPrestadorNaOperadora');
+  }
+  function executorCodeNodes(guide) {
+    const nodes=[];
+    const add=node=>{if(node&&!nodes.includes(node))nodes.push(node);};
+    add(first(first(guide,'contratadoExecutante'),'codigoPrestadorNaOperadora'));
+    descendants(guide,'codProfissional').forEach(scope=>add(first(scope,'codigoPrestadorNaOperadora')));
+    return nodes;
+  }
+
   function parseGuide(node, index) {
     const tipo=guideType(node), item=guideItem(node), atendimento=first(node,'dadosAtendimento') || item, totalBlock=descendants(node,'valorTotal').find(n=>children(n).length) || null;
     const procedimento=first(item,'procedimento') || item;
     const totalItem=tipo==='consulta' ? Number(value(atendimento,'valorProcedimento')||0) : Number(value(item,'valorTotal')||0);
     const totalGeral=tipo==='consulta' ? totalItem : Number(value(totalBlock,'valorTotalGeral')||0);
-    return { index,node,item,tipo, guia:value(guideHeader(node),'numeroGuiaPrestador'), principal:value(guideHeader(node),'guiaPrincipal'), operadora:value(node,'numeroGuiaOperadora'), carteira:value(first(node,'dadosBeneficiario'),'numeroCarteira'), senha:value(first(node,'dadosAutorizacao'),'senha'), autorizacao:value(first(node,'dadosAutorizacao'),'dataAutorizacao'), solicitacao:value(first(node,'dadosSolicitacao'),'dataSolicitacao'), execucao:tipo==='consulta'?value(atendimento,'dataAtendimento'):value(item,'dataExecucao'), codigo:value(procedimento,'codigoProcedimento'), descricao:value(procedimento,'descricaoProcedimento'), quantidade:tipo==='consulta'?1:Number(value(item,'quantidadeExecutada')||0), unitario:tipo==='consulta'?totalItem:Number(value(item,'valorUnitario')||0), totalItem, totalProc:tipo==='consulta'?totalItem:Number(value(totalBlock,'valorProcedimentos')||0), totalGeral, solicitante:value(first(node,'profissionalSolicitante'),'nomeProfissional'), executor:tipo==='consulta'?value(first(node,'profissionalExecutante'),'nomeProfissional'):value(first(node,'equipeSadt'),'nomeProf'), conselhoSolicTipo:value(first(node,'profissionalSolicitante'),'conselhoProfissional'), conselhoSolicNumero:value(first(node,'profissionalSolicitante'),'numeroConselhoProfissional'), ufSolic:value(first(node,'profissionalSolicitante'),'UF'), cbosSolic:value(first(node,'profissionalSolicitante'),'CBOS'), conselhoExec:tipo==='consulta'?value(first(node,'profissionalExecutante'),'numeroConselhoProfissional'):value(first(node,'equipeSadt'),'numeroConselhoProfissional'), ufExec:tipo==='consulta'?value(first(node,'profissionalExecutante'),'UF'):value(first(node,'equipeSadt'),'UF'), cbosExec:tipo==='consulta'?value(first(node,'profissionalExecutante'),'CBOS'):value(first(node,'equipeSadt'),'CBOS'), grauParticipacao:tipo==='sadt'?value(first(node,'equipeSadt'),'grauPart'):'', observacao:value(node,'observacao'), indicacaoClinica:value(first(node,'dadosSolicitacao'),'indicacaoClinica'), indicacaoAcidente:value(node,'indicacaoAcidente'), tecnica:value(item,'tecnicaUtilizada') };
+    return { index,node,item,tipo, guia:value(guideHeader(node),'numeroGuiaPrestador'), principal:value(guideHeader(node),'guiaPrincipal'), operadora:value(node,'numeroGuiaOperadora'), carteira:value(first(node,'dadosBeneficiario'),'numeroCarteira'), senha:value(first(node,'dadosAutorizacao'),'senha'), autorizacao:value(first(node,'dadosAutorizacao'),'dataAutorizacao'), solicitacao:value(first(node,'dadosSolicitacao'),'dataSolicitacao'), execucao:tipo==='consulta'?value(atendimento,'dataAtendimento'):value(item,'dataExecucao'), codigo:value(procedimento,'codigoProcedimento'), descricao:value(procedimento,'descricaoProcedimento'), quantidade:tipo==='consulta'?1:Number(value(item,'quantidadeExecutada')||0), unitario:tipo==='consulta'?totalItem:Number(value(item,'valorUnitario')||0), totalItem, totalProc:tipo==='consulta'?totalItem:Number(value(totalBlock,'valorProcedimentos')||0), totalGeral, solicitante:value(first(node,'profissionalSolicitante'),'nomeProfissional'), executor:tipo==='consulta'?value(first(node,'profissionalExecutante'),'nomeProfissional'):value(first(node,'equipeSadt'),'nomeProf'), conselhoSolicTipo:value(first(node,'profissionalSolicitante'),'conselhoProfissional'), conselhoSolicNumero:value(first(node,'profissionalSolicitante'),'numeroConselhoProfissional'), ufSolic:value(first(node,'profissionalSolicitante'),'UF'), cbosSolic:value(first(node,'profissionalSolicitante'),'CBOS'), conselhoExec:tipo==='consulta'?value(first(node,'profissionalExecutante'),'numeroConselhoProfissional'):value(first(node,'equipeSadt'),'numeroConselhoProfissional'), ufExec:tipo==='consulta'?value(first(node,'profissionalExecutante'),'UF'):value(first(node,'equipeSadt'),'UF'), cbosExec:tipo==='consulta'?value(first(node,'profissionalExecutante'),'CBOS'):value(first(node,'equipeSadt'),'CBOS'), grauParticipacao:tipo==='sadt'?value(first(node,'equipeSadt'),'grauPart'):'', executorCodes:executorCodeNodes(node).map(codeNode=>codeNode.textContent.trim()), observacao:value(node,'observacao'), indicacaoClinica:value(first(node,'dadosSolicitacao'),'indicacaoClinica'), indicacaoAcidente:value(node,'indicacaoAcidente'), tecnica:value(item,'tecnicaUtilizada') };
   }
 
   function auditar() {
     const guides=state.guides.map(parseGuide); const issues=[]; const per=guides.map(()=>[]);
     const add=(level,msg,index=null,fields=[])=>{issues.push({level,msg,index,fields:Array.isArray(fields)?fields:[fields]});if(index!==null)per[index].push(level);};
+    const headerCode=headerProviderCodeNode()?.textContent?.trim()||'';
     guides.forEach((g,i)=>{
       const required=[['guia','Número da guia','Número guia prestador'],['carteira','Carteira','Carteira'],['execucao',g.tipo==='consulta'?'Data de atendimento':'Data de execução',g.tipo==='consulta'?'Data de atendimento':'Data de execução'],['codigo','Procedimento','Código do procedimento'],['executor','Profissional executante','Profissional executante']];
       if(g.tipo==='sadt') required.push(['senha','Senha','Senha']);
       required.forEach(([k,label,field])=>{if(!g[k])add('erro',`${label} não informado.`,i,field);});
+      if(headerCode && g.executorCodes.some(code=>code!==headerCode)) add('erro',`O código do executante deverá ser idêntico ao código do cabeçalho (${headerCode}).`,i,g.tipo==='sadt'?['Código contratado executante','Código individual na operadora']:['Código na operadora']);
       if(g.tipo==='sadt' && g.guia && (g.guia!==g.principal || g.guia!==g.operadora)) add('alerta','Os três números de guia são diferentes.',i,['Número guia prestador','Guia principal','Número guia operadora']);
       if(g.tipo==='consulta' && g.guia && g.operadora && g.guia!==g.operadora) add('alerta','Número da guia difere do número da guia da operadora.',i,['Número guia prestador','Número guia operadora']);
       if(g.autorizacao && g.solicitacao && g.autorizacao!==g.solicitacao) add('alerta','Data de autorização diferente da solicitação.',i,['Data de autorização','Data da solicitação']);
@@ -110,8 +124,10 @@
   function badge(level){return level==='erro'?'bg-error-container text-on-error-container':level==='alerta'?'bg-tertiary-container text-on-tertiary-container':'bg-secondary-container text-on-secondary-container';}
   function render() {
     const a=auditar(); const total=a.guides.reduce((n,g)=>n+g.totalGeral,0); const lote=value(state.doc,'numeroLote'); const padrao=value(state.doc,'Padrao'); const ans=value(state.doc,'registroANS'); const prest=value(state.doc,'codigoPrestadorNaOperadora');
-    byId('xml-summary').innerHTML=[['Lote',lote],['Padrão',padrao],['Guias',a.guides.length],['Total',money(total)],['Registro ANS',ans],['Prestador',prest]].map(([k,v])=>`<div class="p-3 rounded-xl bg-surface-container-high border border-outline-variant"><div class="text-[10px] uppercase text-outline">${esc(k)}</div><div class="font-bold mt-1 truncate">${esc(v)}</div></div>`).join('');
+    byId('xml-summary').innerHTML=[['Lote',lote],['Padrão',padrao],['Guias',a.guides.length],['Total',money(total)],['Registro ANS',ans],['Prestador',prest]].map(([k,v])=>`<div class="p-3 rounded-xl bg-surface-container-high border border-outline-variant"><div class="text-[10px] uppercase text-outline">${esc(k)}</div><div class="font-bold mt-1 ${k==='Lote'?'break-all font-mono':'truncate'}" title="${esc(v)}">${esc(v)}</div></div>`).join('');
     const lotInput=byId('xml-lot-number');if(lotInput&&document.activeElement!==lotInput)lotInput.value=lote;
+    const lotLength=byId('xml-lot-length');if(lotLength)lotLength.textContent=`${String(lotInput?.value||lote).length} caracteres`;
+    const headerInput=byId('xml-header-provider-code');if(headerInput&&document.activeElement!==headerInput)headerInput.value=headerProviderCodeNode()?.textContent?.trim()||'';
     byId('xml-guide-count').textContent=`${a.guides.length} guia(s)`;
     const version=currentVersion(),versionBadge=byId('xml-current-version'),target=byId('xml-target-version');
     if(versionBadge)versionBadge.textContent=`Arquivo atual: ${version||'não identificada'}`;
@@ -222,7 +238,7 @@
     if(group==='ans') {
       descendants(state.doc,'registroANS').forEach(node=>{const before=node.textContent;if(before!==newValue){node.textContent=newValue;state.changes.push({guide:'todas',field:'Registro ANS',before,after:newValue});}}); return;
     }
-    if(group==='operatorCode') state.guides.forEach((guide,index)=>{const node=operatorCodeNode(guide);if(node&&node.textContent!==newValue){const before=node.textContent;node.textContent=newValue;state.changes.push({guide:index+1,field:'Código na operadora',before,after:newValue});}});
+    if(group==='operatorCode') state.guides.forEach((guide,index)=>executorCodeNodes(guide).forEach(node=>{if(node.textContent!==newValue){const before=node.textContent;node.textContent=newValue;state.changes.push({guide:index+1,field:'Código do executante',before,after:newValue});}}));
     if(group==='cnes') state.guides.forEach((guide,index)=>{const node=cnesNode(guide);if(node&&node.textContent!==newValue){const before=node.textContent;node.textContent=newValue;state.changes.push({guide:index+1,field:'CNES',before,after:newValue});}});
     if(group==='grauPart') state.guides.forEach((guide,index)=>{if(guideType(guide)!=='sadt')return;const node=first(first(guide,'equipeSadt'),'grauPart');if(node&&node.textContent!==newValue){const before=node.textContent;node.textContent=newValue;state.changes.push({guide:index+1,field:'Grau de participação',before,after:newValue});}});
   }
@@ -359,11 +375,33 @@
     render();
   };
 
+  window.xmlSalvarCodigoCabecalho=()=>{
+    if(!state.doc)return;
+    const input=byId('xml-header-provider-code'),after=String(input?.value||'').trim(),node=headerProviderCodeNode();
+    if(!after){alert('Informe o código do prestador no cabeçalho.');input?.focus();return;}
+    if(!node){alert('O código do prestador no cabeçalho não foi encontrado neste XML.');return;}
+    const before=node.textContent.trim();
+    if(before!==after){node.textContent=after;state.changes.push({guide:'Lote',field:'Código do prestador no cabeçalho',before,after});refreshHash();}
+    render();
+  };
+
+  window.xmlAplicarCodigoCabecalhoExecutantes=()=>{
+    if(!state.doc)return;
+    const code=String(byId('xml-header-provider-code')?.value||'').trim();
+    if(!code){alert('Informe e salve primeiro o código do prestador no cabeçalho.');return;}
+    window.xmlSalvarCodigoCabecalho();
+    applyEverywhere('operatorCode',code);
+    refreshHash();render();
+  };
+
   window.xmlRevalidar=()=>render();
   window.xmlExportar=()=>{
     if(!state.doc)return; const a=auditar(); if(a.issues.some(x=>x.level==='erro')&&!confirm('Ainda existem erros na auditoria. Deseja exportar mesmo assim?'))return;
+    const lotNode=first(state.doc,'numeroLote'),lotBefore=lotNode?.textContent??'';
     const hashNode=first(state.doc,'hash');const newHash=calcularHash();if(hashNode)hashNode.textContent=newHash;
     let xml=new XMLSerializer().serializeToString(state.doc);if(!xml.startsWith('<?xml'))xml='<?xml version="1.0" encoding="ISO-8859-1"?>\n'+xml;
+    const checkDoc=new DOMParser().parseFromString(xml,'application/xml'),lotAfter=first(checkDoc,'numeroLote')?.textContent??'';
+    if(lotBefore!==lotAfter){alert('A exportação foi interrompida porque o número do lote não foi preservado integralmente.');return;}
     const bytes=new Uint8Array(xml.length);for(let i=0;i<xml.length;i++){const code=xml.charCodeAt(i);bytes[i]=code<=255?code:63;}
     const blob=new Blob([bytes],{type:'application/xml'});const aTag=document.createElement('a');aTag.href=URL.createObjectURL(blob);const original=state.file?.name||'lote.xml';const oldHash=state.audit?.informed||'';aTag.download=oldHash&&original.includes(oldHash)?original.replace(oldHash,newHash):original.replace(/\.xml$/i,`_EDIT_${newHash}.xml`);aTag.click();setTimeout(()=>URL.revokeObjectURL(aTag.href),1000);render();
   };
@@ -374,7 +412,8 @@
   }
 
   document.addEventListener('DOMContentLoaded',()=>{
-    const input=byId('xml-file-input'),button=byId('xml-select-btn'),drop=byId('xml-drop-zone');if(!input||!button||!drop)return;
+    const input=byId('xml-file-input'),button=byId('xml-select-btn'),drop=byId('xml-drop-zone'),lotInput=byId('xml-lot-number');if(!input||!button||!drop)return;
+    lotInput?.addEventListener('input',()=>{const counter=byId('xml-lot-length');if(counter)counter.textContent=`${lotInput.value.length} caracteres`;});
     button.addEventListener('click',()=>input.click());input.addEventListener('change',()=>loadFile(input.files[0]));
     ['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('border-tertiary');}));
     ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('border-tertiary');}));
