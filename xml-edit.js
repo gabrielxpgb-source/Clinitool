@@ -84,24 +84,24 @@
 
   function auditar() {
     const guides=state.guides.map(parseGuide); const issues=[]; const per=guides.map(()=>[]);
-    const add=(level,msg,index=null)=>{issues.push({level,msg,index});if(index!==null)per[index].push(level);};
+    const add=(level,msg,index=null,fields=[])=>{issues.push({level,msg,index,fields:Array.isArray(fields)?fields:[fields]});if(index!==null)per[index].push(level);};
     guides.forEach((g,i)=>{
-      const required=[['guia','Número da guia'],['carteira','Carteira'],['execucao',g.tipo==='consulta'?'Data de atendimento':'Data de execução'],['codigo','Procedimento'],['executor','Profissional executante']];
-      if(g.tipo==='sadt') required.push(['senha','Senha']);
-      required.forEach(([k,label])=>{if(!g[k])add('erro',`${label} não informado.`,i);});
-      if(g.tipo==='sadt' && g.guia && (g.guia!==g.principal || g.guia!==g.operadora)) add('alerta','Os três números de guia são diferentes.',i);
-      if(g.tipo==='consulta' && g.guia && g.operadora && g.guia!==g.operadora) add('alerta','Número da guia difere do número da guia da operadora.',i);
-      if(g.autorizacao && g.solicitacao && g.autorizacao!==g.solicitacao) add('alerta','Data de autorização diferente da solicitação.',i);
-      if(g.tipo==='sadt' && g.conselhoSolicTipo==='09' && g.cbosSolic==='251510') add('alerta','Solicitante identificado como Psicólogo (Conselho 09 e CBO 251510). Verifique se o nome do profissional solicitante é o mesmo que consta no encaminhamento e confirme a regra do convênio, pois alguns exigem médico e outros aceitam psicólogo.',i);
-      if(g.tipo==='sadt' && g.grauParticipacao && g.grauParticipacao!=='00') add('alerta',`Grau de Participação informado como ${g.grauParticipacao}, diferente de 00 - Cirurgião. Verifique se o código está correto antes do envio.`,i);
-      if(g.tipo==='sadt' && g.senha && [g.guia,g.principal,g.operadora].filter(Boolean).includes(g.senha)) add('alerta','A senha é igual ao Número da guia do prestador, Guia principal ou Número da guia da operadora. Verifique se a autorização foi preenchida corretamente.',i);
-      if(g.execucao && g.autorizacao && g.execucao<g.autorizacao) add('erro','Data de atendimento/execução anterior à autorização.',i);
-      if(g.tipo==='sadt' && !Number.isInteger(g.quantidade)) add('erro','Quantidade deve ser um número inteiro.',i);
+      const required=[['guia','Número da guia','Número guia prestador'],['carteira','Carteira','Carteira'],['execucao',g.tipo==='consulta'?'Data de atendimento':'Data de execução',g.tipo==='consulta'?'Data de atendimento':'Data de execução'],['codigo','Procedimento','Código do procedimento'],['executor','Profissional executante','Profissional executante']];
+      if(g.tipo==='sadt') required.push(['senha','Senha','Senha']);
+      required.forEach(([k,label,field])=>{if(!g[k])add('erro',`${label} não informado.`,i,field);});
+      if(g.tipo==='sadt' && g.guia && (g.guia!==g.principal || g.guia!==g.operadora)) add('alerta','Os três números de guia são diferentes.',i,['Número guia prestador','Guia principal','Número guia operadora']);
+      if(g.tipo==='consulta' && g.guia && g.operadora && g.guia!==g.operadora) add('alerta','Número da guia difere do número da guia da operadora.',i,['Número guia prestador','Número guia operadora']);
+      if(g.autorizacao && g.solicitacao && g.autorizacao!==g.solicitacao) add('alerta','Data de autorização diferente da solicitação.',i,['Data de autorização','Data da solicitação']);
+      if(g.tipo==='sadt' && g.conselhoSolicTipo==='09' && g.cbosSolic==='251510') add('alerta','Solicitante identificado como Psicólogo (Conselho 09 e CBO 251510). Verifique se o nome do profissional solicitante é o mesmo que consta no encaminhamento e confirme a regra do convênio, pois alguns exigem médico e outros aceitam psicólogo.',i,['Profissional solicitante','Conselho do solicitante','CBO do solicitante']);
+      if(g.tipo==='sadt' && g.grauParticipacao && g.grauParticipacao!=='00') add('alerta',`Grau de Participação informado como ${g.grauParticipacao}, diferente de 00 - Cirurgião. Verifique se o código está correto antes do envio.`,i,'Grau de participação');
+      if(g.tipo==='sadt' && g.senha && [g.guia,g.principal,g.operadora].filter(Boolean).includes(g.senha)) add('alerta','A senha é igual ao Número da guia do prestador, Guia principal ou Número da guia da operadora. Verifique se a autorização foi preenchida corretamente.',i,['Senha','Número guia prestador','Guia principal','Número guia operadora']);
+      if(g.execucao && g.autorizacao && g.execucao<g.autorizacao) add('erro','Data de atendimento/execução anterior à autorização.',i,[g.tipo==='consulta'?'Data de atendimento':'Data de execução','Data de autorização']);
+      if(g.tipo==='sadt' && !Number.isInteger(g.quantidade)) add('erro','Quantidade deve ser um número inteiro.',i,'Quantidade');
       const calc=Math.round(g.quantidade*g.unitario*100)/100;
-      if(Math.abs(calc-g.totalItem)>.009) add('erro',`Total do item deveria ser ${money(calc)}.`,i);
-      if(Math.abs(g.totalItem-g.totalProc)>.009 || Math.abs(g.totalProc-g.totalGeral)>.009) add('erro','Totais do item e da guia não conferem.',i);
+      if(Math.abs(calc-g.totalItem)>.009) add('erro',`Total do item deveria ser ${money(calc)}.`,i,g.tipo==='consulta'?['Valor do procedimento']:['Quantidade','Valor unitário']);
+      if(Math.abs(g.totalItem-g.totalProc)>.009 || Math.abs(g.totalProc-g.totalGeral)>.009) add('erro','Totais do item e da guia não conferem.',i,g.tipo==='consulta'?'Valor do procedimento':['Quantidade','Valor unitário']);
     });
-    [['guia','Número da guia'],['senha','Senha'],['observacao','Observação/conta']].forEach(([k,label])=>{const seen=new Map();guides.forEach((g,i)=>{if(!g[k])return;if(seen.has(g[k])){add('erro',`${label} duplicado entre as guias ${seen.get(g[k])+1} e ${i+1}.`,i);}else seen.set(g[k],i);});});
+    [['guia','Número da guia','Número guia prestador'],['senha','Senha','Senha'],['observacao','Observação/conta','Observação']].forEach(([k,label,field])=>{const seen=new Map();guides.forEach((g,i)=>{if(!g[k])return;if(seen.has(g[k])){add('erro',`${label} duplicado entre as guias ${seen.get(g[k])+1} e ${i+1}.`,i,field);}else seen.set(g[k],i);});});
     const informed=value(state.doc,'hash').toUpperCase(); const calculated=calcularHash();
     if(informed!==calculated)add('erro','Hash do XML não corresponde ao conteúdo atual.');
     state.audit={guides,issues,per,informed,calculated}; return state.audit;
@@ -118,7 +118,7 @@
     if(target&&supportedVersions.includes(version)) Array.from(target.options).forEach(option=>option.disabled=option.value===version);
     byId('xml-guides-body').innerHTML=a.guides.map((g,i)=>{const levels=a.per[i];const st=levels.includes('erro')?'erro':levels.includes('alerta')?'alerta':'ok';return `<tr class="border-b border-outline-variant hover:bg-surface-container-high cursor-pointer" onclick="xmlAbrirGuia(${i})"><td class="p-3">${i+1}</td><td class="p-3 font-bold text-primary">${esc(g.guia)}</td><td class="p-3">${esc(g.carteira)}</td><td class="p-3">${esc(g.execucao)}</td><td class="p-3"><div>${esc(g.codigo)}</div><div class="text-[10px] text-outline">${esc(g.descricao)}</div></td><td class="p-3 text-right font-bold">${esc(money(g.totalGeral))}</td><td class="p-3"><span class="px-2 py-1 rounded-full ${st==='ok'?'bg-secondary-container text-on-secondary-container':badge(st)}">${st==='ok'?'OK':st.toUpperCase()}</span></td><td class="p-3 text-right"><button type="button" onclick="event.stopPropagation();xmlRemoverGuia(${i})" class="p-2 rounded-lg text-error hover:bg-error-container" title="Remover guia ${i+1}" aria-label="Remover guia ${i+1}"><span class="material-symbols-outlined text-lg">delete</span></button></td></tr>`;}).join('');
     const hashOk=a.informed===a.calculated; const general=[{level:hashOk?'ok':'erro',msg:hashOk?'Hash confere com o conteúdo do arquivo.':'Hash inválido para o conteúdo atual.'},{level:a.issues.some(x=>x.level==='erro')?'erro':a.issues.some(x=>x.level==='alerta')?'alerta':'ok',msg:a.issues.length?`${a.issues.length} ocorrência(s) encontrada(s).`:'Nenhuma inconsistência interna encontrada.'}];
-    byId('xml-audit-list').innerHTML=[...general,...a.issues.slice(0,20)].map(x=>`<button type="button" ${x.index!=null?`onclick="xmlAbrirGuia(${x.index})"`:''} class="text-left p-3 rounded-xl ${badge(x.level)}">${x.index!=null?`Guia ${x.index+1}: `:''}${esc(x.msg)}</button>`).join('');
+    byId('xml-audit-list').innerHTML=[...general,...a.issues.slice(0,20)].map(x=>`<button type="button" ${x.index!=null?`onclick="xmlAbrirOcorrencia(${a.issues.indexOf(x)})"`:''} class="text-left p-3 rounded-xl ${badge(x.level)}">${x.index!=null?`Guia ${x.index+1}: `:''}${esc(x.msg)}${x.index!=null?'<span class="block mt-1 text-[10px] font-bold opacity-80">Clique para localizar o campo</span>':''}</button>`).join('');
     byId('xml-change-log').innerHTML=state.changes.length?state.changes.slice().reverse().map(c=>`<div class="py-2 border-b border-outline-variant"><b>${c.guide==='Lote'?'Lote':`Guia ${c.guide}`}</b> — ${esc(c.field)}<br><span class="text-outline">${esc(c.before)} → ${esc(c.after)}</span></div>`).join(''):'Nenhuma alteração realizada.';
   }
 
@@ -232,8 +232,16 @@
     return `${code} - ${visual}`;
   }
 
-  window.xmlAbrirGuia=index=>{
+  window.xmlAbrirOcorrencia=issueIndex=>{
+    const issue=state.audit?.issues?.[issueIndex];if(!issue||issue.index==null)return;
+    window.xmlAbrirGuia(issue.index,issue.fields,issue.level);
+  };
+  window.xmlAbrirGuia=(index,attentionFields=null,attentionLevel='')=>{
     state.selected=index; const guide=state.guides[index],fields=[],defs=fieldDefsForGuide(guide).filter(d=>fieldNode(d,guide,false)||d.create);
+    const guideIssues=state.audit?.issues?.filter(x=>x.index===index)||[];
+    const attention=new Map();
+    (attentionFields?guideIssues.filter(x=>x.fields?.some(f=>attentionFields.includes(f))):guideIssues).forEach(issue=>issue.fields?.forEach(field=>attention.set(field,issue.level)));
+    if(attentionFields)attentionFields.forEach(field=>attention.set(field,attentionLevel||attention.get(field)||'alerta'));
     byId('xml-editor-title').textContent=`Editar guia ${index+1} — ${value(guideHeader(guide),'numeroGuiaPrestador')} (${guideType(guide)==='consulta'?'Consulta':'SP/SADT'})`;
     byId('xml-guide-form').innerHTML=defs.map((d,i)=>{
       const node=fieldNode(d,guide,false); fields.push({definition:d,node});
@@ -245,9 +253,11 @@
         : `<input data-xml-index="${i}" type="${d.type}" ${step} value="${esc(current)}" class="xml-edit-control">`;
       const hint=d.list?`<span class="text-[10px] text-outline">A descrição é apenas visual; o XML recebe somente o código.</span>`:'';
       const apply=d.apply?`<div class="flex flex-wrap items-center gap-2 mt-2"><button type="button" data-xml-apply-button="${i}" onclick="xmlAplicarTodas(${i})" class="h-8 px-3 rounded-lg border border-tertiary text-tertiary hover:bg-tertiary-container hover:text-on-tertiary-container text-[11px] font-bold flex items-center gap-1.5"><span class="material-symbols-outlined text-sm">done_all</span>Aplicar a todas as guias</button><span data-xml-apply-status="${i}" role="status" aria-live="polite" class="text-[11px] font-bold text-secondary"></span></div>`:'';
-      return `<div class="flex flex-col gap-1.5 ${d.type==='textarea'?'md:col-span-2':''}"><span class="text-xs font-bold text-on-surface-variant">${esc(d.label)}</span>${control}${hint}${apply}</div>`;
+      const attentionClass=attention.get(d.label)==='erro'?'xml-field-error':attention.has(d.label)?'xml-field-attention':'';
+      return `<div data-xml-field-label="${esc(d.label)}" class="flex flex-col gap-1.5 ${d.type==='textarea'?'md:col-span-2':''} ${attentionClass}"><span class="text-xs font-bold text-on-surface-variant">${esc(d.label)}</span>${control}${hint}${apply}</div>`;
     }).join('');
     state.editFields=fields; byId('xml-editor').classList.remove('hidden'); byId('xml-editor').scrollIntoView({behavior:'smooth',block:'start'});
+    setTimeout(()=>{const target=byId('xml-guide-form').querySelector('.xml-field-error .xml-edit-control, .xml-field-attention .xml-edit-control');target?.focus({preventScroll:true});},450);
   };
   window.xmlFecharEditor=()=>{byId('xml-editor').classList.add('hidden');state.selected=-1;};
   window.xmlAplicarTodas=i=>{
