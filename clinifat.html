@@ -1474,6 +1474,10 @@
                 <button type="button" onclick="xmlLimpar()" class="h-10 px-4 rounded-xl border border-error text-error font-bold text-xs">Fechar XML</button>
               </div>
             </div>
+            <div class="grid grid-cols-1 sm:grid-cols-[minmax(180px,320px)_auto] gap-2 items-end">
+              <label class="flex flex-col gap-1"><span class="text-[10px] uppercase font-bold text-outline">Número do lote</span><input id="xml-lot-number" class="xml-edit-control" inputmode="numeric" placeholder="Número do lote"></label>
+              <button type="button" onclick="xmlSalvarNumeroLote()" class="h-11 px-4 rounded-xl border border-tertiary text-tertiary font-bold text-xs flex items-center justify-center gap-2 sm:justify-self-start"><span class="material-symbols-outlined text-sm">save</span>Salvar número do lote</button>
+            </div>
             <div id="xml-summary" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3"></div>
           </section>
 
