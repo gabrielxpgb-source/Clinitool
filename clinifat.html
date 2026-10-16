@@ -1486,9 +1486,14 @@
                 <button type="button" onclick="xmlLimpar()" class="h-10 px-4 rounded-xl border border-error text-error font-bold text-xs">Fechar XML</button>
               </div>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-[minmax(180px,320px)_auto] gap-2 items-end">
-              <label class="flex flex-col gap-1"><span class="text-[10px] uppercase font-bold text-outline">Número do lote</span><input id="xml-lot-number" class="xml-edit-control" inputmode="numeric" placeholder="Número do lote"></label>
+            <div class="grid grid-cols-1 sm:grid-cols-[minmax(240px,1fr)_auto] gap-2 items-end">
+              <label class="flex flex-col gap-1"><span class="flex justify-between gap-3 text-[10px] uppercase font-bold text-outline"><span>Número do lote</span><span id="xml-lot-length" class="normal-case font-normal">0 caracteres</span></span><input id="xml-lot-number" type="text" class="xml-edit-control font-mono" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="Número do lote"></label>
               <button type="button" onclick="xmlSalvarNumeroLote()" class="h-11 px-4 rounded-xl border border-tertiary text-tertiary font-bold text-xs flex items-center justify-center gap-2 sm:justify-self-start"><span class="material-symbols-outlined text-sm">save</span>Salvar número do lote</button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-[minmax(240px,1fr)_auto_auto] gap-2 items-end">
+              <label class="flex flex-col gap-1"><span class="text-[10px] uppercase font-bold text-outline">Código do prestador no cabeçalho</span><input id="xml-header-provider-code" type="text" class="xml-edit-control font-mono" autocomplete="off" spellcheck="false" placeholder="Código do cabeçalho"></label>
+              <button type="button" onclick="xmlSalvarCodigoCabecalho()" class="h-11 px-4 rounded-xl border border-tertiary text-tertiary font-bold text-xs flex items-center justify-center gap-2 sm:justify-self-start"><span class="material-symbols-outlined text-sm">save</span>Salvar cabeçalho</button>
+              <button type="button" onclick="xmlAplicarCodigoCabecalhoExecutantes()" class="h-11 px-4 rounded-xl border border-secondary text-secondary font-bold text-xs flex items-center justify-center gap-2 sm:justify-self-start"><span class="material-symbols-outlined text-sm">done_all</span>Aplicar aos executantes</button>
             </div>
             <div id="xml-summary" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3"></div>
           </section>
