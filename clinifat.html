@@ -291,6 +291,18 @@
       background: #303236 !important;
     }
     #xml-guide-form .xml-edit-control::placeholder { color: #8b919e !important; }
+    @keyframes xmlAttentionPulse {
+      0%, 100% { box-shadow: 0 0 0 1px rgba(255,184,108,.45), 0 0 0 0 rgba(255,184,108,.18); }
+      50% { box-shadow: 0 0 0 2px rgba(255,184,108,1), 0 0 0 8px rgba(255,184,108,0); }
+    }
+    @keyframes xmlErrorPulse {
+      0%, 100% { box-shadow: 0 0 0 1px rgba(255,180,171,.5), 0 0 0 0 rgba(255,180,171,.22); }
+      50% { box-shadow: 0 0 0 2px rgba(255,180,171,1), 0 0 0 8px rgba(255,180,171,0); }
+    }
+    #xml-guide-form .xml-field-attention { border-radius:.8rem; padding:.45rem; animation:xmlAttentionPulse 1.5s ease-in-out infinite; }
+    #xml-guide-form .xml-field-error { border-radius:.8rem; padding:.45rem; animation:xmlErrorPulse 1.25s ease-in-out infinite; }
+    #xml-guide-form .xml-field-attention > span:first-child { color:#ffb86c; }
+    #xml-guide-form .xml-field-error > span:first-child { color:#ffb4ab; }
 
     /* CliniFat v10.8 — Hub de módulos e listas administrativas */
     .cf-module-card {
