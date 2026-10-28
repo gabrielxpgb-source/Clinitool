@@ -277,20 +277,25 @@
     .sa-check input { width:18px; height:18px; accent-color:#4de082; }
 
     /* XML Edit — campos com contraste reforçado */
-    #xml-guide-form .xml-edit-control {
+    #xml-workspace .xml-edit-control {
       width: 100%; min-height: 44px; padding: 10px 12px;
       background: #282a2c !important; color: #f2f2f5 !important;
       border: 1px solid #717784 !important; border-radius: .65rem;
       font-size: .875rem; font-weight: 600; outline: none;
       color-scheme: dark;
     }
-    #xml-guide-form .xml-edit-control:hover { border-color: #8b919e !important; }
-    #xml-guide-form .xml-edit-control:focus {
+    #xml-workspace .xml-edit-control:hover { border-color: #8b919e !important; }
+    #xml-workspace .xml-edit-control:focus {
       border-color: #c4b5fd !important;
       box-shadow: 0 0 0 2px rgba(196,181,253,.22) !important;
       background: #303236 !important;
     }
-    #xml-guide-form .xml-edit-control::placeholder { color: #8b919e !important; }
+    #xml-workspace .xml-edit-control::placeholder { color: #8b919e !important; }
+    #xml-lot-number {
+      background: #f4f1ff !important; color: #17131f !important;
+      border-color: #a998cf !important; caret-color: #17131f;
+    }
+    #xml-lot-number:focus { background: #fff !important; color: #111 !important; }
     @keyframes xmlAttentionPulse {
       0%, 100% { box-shadow: 0 0 0 1px rgba(255,184,108,.45), 0 0 0 0 rgba(255,184,108,.18); }
       50% { box-shadow: 0 0 0 2px rgba(255,184,108,1), 0 0 0 8px rgba(255,184,108,0); }
@@ -1537,7 +1542,7 @@
               </section>
               <section class="bg-surface-container rounded-2xl border border-outline-variant p-5">
                 <h3 class="font-bold mb-3">Alterações</h3>
-                <div id="xml-change-log" class="text-xs text-on-surface-variant">Nenhuma alteração realizada.</div>
+                <div id="xml-change-log" class="text-xs text-on-surface-variant max-h-[32rem] overflow-y-auto overscroll-contain pr-2" aria-label="Histórico de edições, alterações mais recentes primeiro">Nenhuma alteração realizada.</div>
               </section>
             </div>
           </section>
@@ -1547,7 +1552,7 @@
             <form id="xml-guide-form" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4"></form>
             <div class="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3 mt-6">
               <button type="button" onclick="xmlRemoverGuia()" class="h-11 px-5 rounded-xl border border-error text-error font-bold flex items-center justify-center gap-2"><span class="material-symbols-outlined text-lg">delete</span>Remover guia</button>
-              <div class="flex justify-end gap-3"><button type="button" onclick="xmlFecharEditor()" class="h-11 px-5 rounded-xl border border-outline-variant">Cancelar</button><button type="button" onclick="xmlSalvarGuia()" class="h-11 px-6 rounded-xl bg-tertiary text-on-tertiary font-bold">Salvar correções</button></div>
+              <div class="flex flex-wrap justify-end gap-3"><button type="button" onclick="xmlFecharEditor()" class="h-11 px-5 rounded-xl border border-outline-variant">Cancelar</button><button type="button" onclick="xmlSalvarGuia()" class="h-11 px-6 rounded-xl bg-tertiary text-on-tertiary font-bold">Salvar correções</button><button id="xml-previous-guide" type="button" onclick="xmlNavegarGuia(-1)" class="h-11 px-5 rounded-xl border border-primary text-primary font-bold disabled:opacity-35 disabled:cursor-not-allowed">Guia anterior</button><button id="xml-next-guide" type="button" onclick="xmlNavegarGuia(1)" class="h-11 px-5 rounded-xl border border-primary text-primary font-bold disabled:opacity-35 disabled:cursor-not-allowed">Próxima guia</button></div>
             </div>
           </section>
         </div>
