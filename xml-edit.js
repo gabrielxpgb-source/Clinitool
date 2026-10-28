@@ -103,10 +103,11 @@
       if(g.tipo==='sadt') required.push(['senha','Senha','Senha']);
       required.forEach(([k,label,field])=>{if(!g[k])add('erro',`${label} não informado.`,i,field);});
       if(headerCode && g.executorCodes.some(code=>code!==headerCode)) add('erro',`O código do executante deverá ser idêntico ao código do cabeçalho (${headerCode}).`,i,g.tipo==='sadt'?['Código contratado executante','Código individual na operadora']:['Código na operadora']);
-      const crmSuspeito=numero=>{const digits=String(numero||'').replace(/\D/g,'');return /^520?/.test(digits)&&digits.length>=7;};
+      const crmSuspeito=numero=>/^520?/.test(String(numero||'').trim().replace(/\D/g,''));
+      const conselhoEhCrm=tipo=>{const raw=String(tipo||'').trim();return /^0?6$/.test(raw)||/CRM/i.test(raw);};
       const crmFields=[];
-      if(g.conselhoSolicTipo==='06'&&crmSuspeito(g.conselhoSolicNumero))crmFields.push(['solicitante',g.conselhoSolicNumero,'Número conselho solicitante']);
-      if(g.conselhoExecTipo==='06'&&crmSuspeito(g.conselhoExec))crmFields.push(['executante',g.conselhoExec,'Número conselho executante','Número do conselho']);
+      if(conselhoEhCrm(g.conselhoSolicTipo)&&crmSuspeito(g.conselhoSolicNumero))crmFields.push(['solicitante',g.conselhoSolicNumero,'Número conselho solicitante']);
+      if(conselhoEhCrm(g.conselhoExecTipo)&&crmSuspeito(g.conselhoExec))crmFields.push(['executante',g.conselhoExec,'Número conselho executante','Número do conselho']);
       if(crmFields.length)add('alerta',`Possível código de UF anexado ao CRM: ${crmFields.map(([papel,numero])=>`${papel} ${numero}`).join(' e ')}. Confirme o CRM antes do envio.`,i,[...new Set(crmFields.flatMap(item=>item.slice(2)))]);
       const carteiraDigits=String(g.carteira||'').replace(/\D/g,'');
       const carteiraProviderCode=[headerCode,...g.executorCodes].find(code=>['922902','73202'].includes(code));
@@ -281,6 +282,9 @@
       return `<div data-xml-field-label="${esc(d.label)}" class="flex flex-col gap-1.5 ${d.type==='textarea'?'md:col-span-2':''} ${attentionClass}"><span class="text-xs font-bold text-on-surface-variant">${esc(d.label)}</span>${control}${hint}${apply}</div>`;
     }).join('');
     state.editFields=fields; byId('xml-editor').classList.remove('hidden'); byId('xml-editor').scrollIntoView({behavior:'smooth',block:'start'});
+    const previousButton=byId('xml-previous-guide'),nextButton=byId('xml-next-guide');
+    if(previousButton)previousButton.disabled=index<=0;
+    if(nextButton)nextButton.disabled=index>=state.guides.length-1;
     setTimeout(()=>{const target=byId('xml-guide-form').querySelector('.xml-field-error .xml-edit-control, .xml-field-attention .xml-edit-control');target?.focus({preventScroll:true});},450);
   };
   window.xmlFecharEditor=()=>{byId('xml-editor').classList.add('hidden');state.selected=-1;};
@@ -343,13 +347,21 @@
     refreshHash();state.conversion=null;byId('xml-conversion-report').classList.add('hidden');byId('xml-convert-btn').disabled=true;render();
     alert(`XML convertido para TISS ${result.target}. Revise a auditoria antes de exportar.`);
   };
-  window.xmlSalvarGuia=()=>{
+  window.xmlSalvarGuia=(nextIndex=null)=>{
     if(state.selected<0)return; const guideNo=state.selected+1,guide=state.guides[state.selected],inputs=Array.from(byId('xml-guide-form').querySelectorAll('[data-xml-index]'));
     const prospective={};inputs.forEach(input=>{const f=state.editFields[Number(input.dataset.xmlIndex)];if(f?.definition.key)prospective[f.definition.key]=input.value.trim();});
     if(prospective.autorizacao&&prospective.execucao&&prospective.execucao<prospective.autorizacao){alert('A data de atendimento/execução não pode ser anterior à data de autorização.');return;}
     inputs.forEach(input=>{const i=Number(input.dataset.xmlIndex),f=state.editFields[i],d=f.definition;let node=f.node||fieldNode(d,guide,true);if(!node)return;const before=node.textContent,after=input.value.trim();if(before!==after){node.textContent=after;state.changes.push({guide:guideNo,field:d.label,before,after});}});
     if(guideType(guide)==='sadt') {const item=first(guide,'procedimentoExecutado'),qtd=Number(value(item,'quantidadeExecutada')||0),unit=Number(value(item,'valorUnitario')||0),total=(Math.round(qtd*unit*100)/100).toFixed(2),itemTotal=first(item,'valorTotal'),guideTotal=descendants(guide,'valorTotal').find(n=>children(n).length)||null;if(itemTotal)itemTotal.textContent=total;const vp=first(guideTotal,'valorProcedimentos'),vg=first(guideTotal,'valorTotalGeral');if(vp)vp.textContent=total;if(vg)vg.textContent=total;}
-    const hashNode=first(state.doc,'hash');if(hashNode)hashNode.textContent=calcularHash(); render(); xmlFecharEditor();
+    const hashNode=first(state.doc,'hash');if(hashNode)hashNode.textContent=calcularHash(); render();
+    if(Number.isInteger(nextIndex)&&nextIndex>=0&&nextIndex<state.guides.length)window.xmlAbrirGuia(nextIndex);else xmlFecharEditor();
+  };
+
+  window.xmlNavegarGuia=delta=>{
+    if(state.selected<0)return;
+    const target=state.selected+Number(delta||0);
+    if(target<0||target>=state.guides.length)return;
+    window.xmlSalvarGuia(target);
   };
 
   window.xmlInserirGuia=()=>{
