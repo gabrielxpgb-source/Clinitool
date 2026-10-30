@@ -136,6 +136,22 @@
     .professional-card.count-blink { animation: countBlink .22s ease-out; }
     .professional-name { font-size: .875rem; line-height: 1.15; overflow-wrap: anywhere; }
 
+    @keyframes scanSuccessFade {
+      0%,100% { background-color:#282a2c; border-color:#414753; box-shadow:none; }
+      45% { background-color:rgba(77,224,130,.10); border-color:rgba(77,224,130,.65); box-shadow:0 0 0 3px rgba(77,224,130,.07); }
+    }
+    @keyframes scanWarningFade {
+      0%,100% { background-color:#282a2c; border-color:#414753; box-shadow:none; }
+      45% { background-color:rgba(255,184,108,.10); border-color:rgba(255,184,108,.68); box-shadow:0 0 0 3px rgba(255,184,108,.07); }
+    }
+    @keyframes scanErrorFade {
+      0%,100% { background-color:#282a2c; border-color:#414753; box-shadow:none; }
+      45% { background-color:rgba(255,180,171,.10); border-color:rgba(255,180,171,.68); box-shadow:0 0 0 3px rgba(255,180,171,.07); }
+    }
+    #box-bipador.scan-feedback-success { animation:scanSuccessFade .9s ease-in-out; }
+    #box-bipador.scan-feedback-warning { animation:scanWarningFade .9s ease-in-out; }
+    #box-bipador.scan-feedback-error { animation:scanErrorFade .9s ease-in-out; }
+
     .glass-summary {
       background: rgba(30, 32, 34, 0.85);
       backdrop-filter: blur(12px);
@@ -1143,6 +1159,10 @@
           </label>
         </div>
         <div class="flex items-center gap-3">
+          <label class="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-container border border-outline-variant cursor-pointer select-none" title="Ativar ou desativar os sons da interface">
+            <span class="material-symbols-outlined text-base">volume_up</span><span class="text-xs font-bold">Sons</span>
+            <input id="switch-som-contador" type="checkbox" class="accent-primary" onchange="alternarSonsInterface(this.checked)">
+          </label>
           <span id="status-leitor-qr" class="text-xs font-label-sm text-on-surface-variant hidden sm:inline">--/--/---- --:--:--</span>
           <button id="btn-ler-qr" onclick="ativarLeituraQRCode()" class="h-11 px-4 rounded-xl bg-surface-container-high border border-outline-variant hover:border-primary hover:text-primary text-on-surface font-label-sm transition-all flex items-center gap-2">
             <span class="material-symbols-outlined text-base">qr_code_scanner</span>
@@ -1229,6 +1249,10 @@
             <p class="text-sm text-on-surface-variant mt-1">Carregue o PDF da capa do lote e bipe as guias físicas para verificação automatizada.</p>
           </div>
           <div class="flex items-center gap-2">
+            <label class="flex items-center gap-2 px-3 py-2.5 bg-surface-container-highest border border-outline-variant rounded-xl cursor-pointer select-none" title="Ativar ou desativar os sons da interface">
+              <span class="material-symbols-outlined text-base">volume_up</span><span class="text-xs font-bold">Sons</span>
+              <input id="switch-som-conferencia" type="checkbox" class="accent-secondary" onchange="alternarSonsInterface(this.checked)">
+            </label>
             <!-- BOTÃO LIMPAR -->
             <button onclick="limparConferencia(true)" class="px-4 py-2.5 bg-error-container/40 hover:bg-error-container text-error border border-error/30 rounded-xl font-label-sm transition-all flex items-center gap-2" title="Limpar PDF e zera conferência">
               <span class="material-symbols-outlined text-sm">delete_sweep</span>
@@ -1538,7 +1562,7 @@
             <div class="flex flex-col gap-6">
               <section class="bg-surface-container rounded-2xl border border-outline-variant p-5">
                 <h3 class="font-bold mb-3">Auditoria</h3>
-                <div id="xml-audit-list" class="flex flex-col gap-2 text-xs"></div>
+                <div id="xml-audit-list" class="flex flex-col gap-2 text-xs max-h-[40rem] overflow-y-auto overscroll-contain pr-2"></div>
               </section>
               <section class="bg-surface-container rounded-2xl border border-outline-variant p-5">
                 <h3 class="font-bold mb-3">Alterações</h3>
@@ -2769,6 +2793,70 @@
       });
     })();
 
+    const SOM_INTERFACE_STORAGE_KEY = 'clinifat_sons_interface';
+    let audioContextClinifat = null;
+
+    function sonsInterfaceAtivos() {
+      return localStorage.getItem(SOM_INTERFACE_STORAGE_KEY) !== 'off';
+    }
+
+    function sincronizarChavesSom() {
+      const ativo = sonsInterfaceAtivos();
+      ['switch-som-contador','switch-som-conferencia'].forEach(id => {
+        const chave = document.getElementById(id);
+        if (chave) chave.checked = ativo;
+      });
+    }
+
+    function alternarSonsInterface(ativo) {
+      localStorage.setItem(SOM_INTERFACE_STORAGE_KEY, ativo ? 'on' : 'off');
+      sincronizarChavesSom();
+      if (ativo) emitirSomInterface('click');
+    }
+
+    function emitirSomInterface(tipo = 'click') {
+      if (!sonsInterfaceAtivos()) return;
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        audioContextClinifat ||= new AudioCtx();
+        if (audioContextClinifat.state === 'suspended') audioContextClinifat.resume();
+        const agora = audioContextClinifat.currentTime;
+        const presets = {
+          click: [[720,.035,.055]],
+          success: [[660,.045,.06],[880,.055,.055]],
+          duplicate: [[440,.055,.06],[370,.065,.055]],
+          notFound: [[250,.075,.065],[190,.10,.06]]
+        };
+        (presets[tipo] || presets.click).forEach(([frequencia,duracao,volume],indice) => {
+          const inicio = agora + indice * .065;
+          const oscilador = audioContextClinifat.createOscillator();
+          const ganho = audioContextClinifat.createGain();
+          oscilador.type = tipo === 'click' ? 'triangle' : 'sine';
+          oscilador.frequency.setValueAtTime(frequencia,inicio);
+          ganho.gain.setValueAtTime(0.0001,inicio);
+          ganho.gain.exponentialRampToValueAtTime(volume,inicio+.008);
+          ganho.gain.exponentialRampToValueAtTime(0.0001,inicio+duracao);
+          oscilador.connect(ganho); ganho.connect(audioContextClinifat.destination);
+          oscilador.start(inicio); oscilador.stop(inicio+duracao+.015);
+        });
+      } catch (error) {
+        console.warn('Não foi possível reproduzir o retorno sonoro.', error);
+      }
+    }
+
+    function sinalizarLeituraGuia(tipo) {
+      const box = document.getElementById('box-bipador');
+      if (!box) return;
+      const classes = ['scan-feedback-success','scan-feedback-warning','scan-feedback-error'];
+      box.classList.remove(...classes);
+      void box.offsetWidth;
+      box.classList.add(`scan-feedback-${tipo}`);
+      setTimeout(() => box.classList.remove(`scan-feedback-${tipo}`), 950);
+    }
+
+    sincronizarChavesSom();
+
     function navegar(idTela) {
       const destino = document.getElementById(idTela);
       if (!destino) {
@@ -2890,8 +2978,6 @@
 
         card.innerHTML = `
           <span class="professional-name font-label-md text-on-surface-variant font-bold text-center">${escapeHtmlCF(nome)}</span>
-          <span class="text-[10px] text-outline text-center -mt-2">${escapeHtmlCF(profissionaisMeta[nome]?.especialidade || (tipoAtual === 'consulta' ? 'Consulta' : 'SADT'))}</span>
-          <span id="valor-prof-${nome}" class="text-[10px] text-secondary text-center font-bold">Valor não selecionado</span>
           <div class="flex-grow flex items-center justify-center py-2">
             <span class="font-headline-xl text-3xl font-bold counter-value" id="qtd-${nome}">0</span>
           </div>
@@ -2944,6 +3030,7 @@
         }
 
         atualizarTotais();
+        emitirSomInterface('click');
       }
     }
 
@@ -3680,6 +3767,8 @@
         if (jaConferidas >= totalNecessario) {
           msg.innerText = `⚠️ ${guia.numero} JÁ FOI CONFERIDO ${totalNecessario}/${totalNecessario}!`;
           msg.className = "text-xs font-label-sm text-tertiary font-bold";
+          emitirSomInterface('duplicate');
+          sinalizarLeituraGuia('warning');
         } else {
           guia.quantidadeConferida = jaConferidas + 1;
           guia.conferida = guia.quantidadeConferida >= totalNecessario;
@@ -3690,6 +3779,8 @@
             msg.innerText = `✅ Guia ${guia.numero} CONFERIDA com sucesso!`;
           }
           msg.className = "text-xs font-label-sm text-secondary font-bold";
+          emitirSomInterface('click');
+          sinalizarLeituraGuia('success');
           
           atualizarDashboardConferencia();
           renderizarListaGuias();
@@ -3697,6 +3788,8 @@
       } else {
         msg.innerText = `❌ ATENÇÃO: Guia ${valor} NÃO ENCONTRADA na capa do lote!`;
         msg.className = "text-xs font-label-sm text-error font-bold";
+        emitirSomInterface('notFound');
+        sinalizarLeituraGuia('error');
 
         box.classList.add('shake-error');
         setTimeout(() => {
@@ -4783,6 +4876,6 @@
   </script>
   <script src="./convenios-xml.js"></script>
   <script src="./novo-xml.js"></script>
-  <script src="./xml-edit.js"></script>
+  <script src="./xml-edit.js?v=20261028-1526"></script>
 </body>
 </html>
