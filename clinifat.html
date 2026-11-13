@@ -1485,23 +1485,56 @@
             <label class="flex flex-col gap-1"><span class="sa-label">Indicação de acidente</span><select id="novo-xml-acidente" class="sa-input"><option value="9">9 - Não acidente</option><option value="0">0 - Trabalho</option><option value="1">1 - Trânsito</option><option value="2">2 - Outros</option></select></label>
             <label class="flex flex-col gap-1 xl:col-span-2"><span class="sa-label">Observação</span><input id="novo-xml-observacao" class="sa-input" placeholder="Ex.: Conta 123456"></label>
           </div>
-          <div id="novo-xml-sadt-fields" class="hidden mt-5 pt-5 border-t border-outline-variant">
-            <h4 class="font-bold text-tertiary mb-4">Dados específicos do SADT</h4>
-            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-              <label class="flex flex-col gap-1"><span class="sa-label">Guia principal</span><input id="novo-xml-guia-principal" class="sa-input"></label>
-              <label class="flex flex-col gap-1"><span class="sa-label">Número guia operadora</span><input id="novo-xml-guia-operadora" class="sa-input"></label>
-              <label class="flex flex-col gap-1"><span class="sa-label">Data da autorização</span><input id="novo-xml-data-autorizacao" type="date" class="sa-input !bg-white !text-black [color-scheme:light]"></label>
-              <label class="flex flex-col gap-1"><span class="sa-label">Senha</span><input id="novo-xml-senha" class="sa-input"></label>
-              <label class="flex flex-col gap-1"><span class="sa-label">Data da solicitação</span><input id="novo-xml-data-solicitacao" type="date" class="sa-input !bg-white !text-black [color-scheme:light]"></label>
-              <label class="flex flex-col gap-1"><span class="sa-label">Quantidade executada</span><input id="novo-xml-quantidade" class="sa-input" type="number" min="1" value="1"></label>
-              <label class="flex flex-col gap-1"><span class="sa-label">Profissional executante — Psicólogo</span><select id="novo-xml-solicitante" class="sa-input" onchange="novoXmlSelecionarSolicitante()"></select></label>
-              <label class="flex flex-col gap-1"><span class="sa-label">Conselho do executante</span><select id="novo-xml-solicitante-conselho" class="sa-input"><option value="09">09 - CRP</option></select></label>
-              <label class="flex flex-col gap-1"><span class="sa-label">Número conselho executante</span><input id="novo-xml-solicitante-conselho-numero" class="sa-input"></label>
-              <label class="flex flex-col gap-1"><span class="sa-label">UF do executante</span><select id="novo-xml-solicitante-uf" class="sa-input"><option value="33">33 - RJ</option><option value="35">35 - SP</option><option value="31">31 - MG</option></select></label>
-              <label class="flex flex-col gap-1"><span class="sa-label">CBO do executante</span><input id="novo-xml-solicitante-cbo" class="sa-input"></label>
-              <label class="flex flex-col gap-1"><span class="sa-label">Grau de participação</span><select id="novo-xml-grau-participacao" class="sa-input"><option value="00" selected>00 - Cirurgião</option><option value="01">01 - Primeiro Auxiliar</option><option value="02">02 - Segundo Auxiliar</option><option value="03">03 - Terceiro Auxiliar</option><option value="04">04 - Quarto Auxiliar</option><option value="05">05 - Instrumentador</option><option value="06">06 - Anestesista</option><option value="07">07 - Auxiliar de Anestesista</option><option value="08">08 - Consultor</option><option value="09">09 - Perfusionista</option><option value="10">10 - Pediatra na sala de parto</option><option value="11">11 - Auxiliar SADT</option><option value="12">12 - Clínico</option><option value="13">13 - Intensivista</option></select></label>
-              <label class="flex flex-col gap-1 xl:col-span-2"><span class="sa-label">Indicação clínica</span><input id="novo-xml-indicacao-clinica" class="sa-input"></label>
-            </div>
+          <div id="novo-xml-sadt-fields" class="hidden mt-6 pt-6 border-t border-outline-variant space-y-4">
+            <div><h4 class="font-bold text-tertiary">Complementos da guia SP/SADT</h4><p class="text-xs text-on-surface-variant mt-1">Campos organizados conforme o fluxo da guia impressa: autorização, solicitação, execução, atendimento e procedimento.</p></div>
+
+            <fieldset class="rounded-2xl border border-outline-variant bg-surface-container-high/40 p-4">
+              <legend class="px-2 text-sm font-bold text-primary">Bloco padrão e autorização</legend>
+              <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                <label class="flex flex-col gap-1"><span class="sa-label">Número guia operadora</span><input id="novo-xml-guia-operadora" class="sa-input" inputmode="numeric"></label>
+                <label class="flex flex-col gap-1"><span class="sa-label">Número guia principal</span><input id="novo-xml-guia-principal" class="sa-input" inputmode="numeric"></label>
+                <label class="flex flex-col gap-1"><span class="sa-label">Data da autorização</span><input id="novo-xml-data-autorizacao" type="date" class="sa-input !bg-white !text-black [color-scheme:light]"></label>
+                <label class="flex flex-col gap-1"><span class="sa-label">Senha de autorização</span><input id="novo-xml-senha" class="sa-input"></label>
+              </div>
+            </fieldset>
+
+            <fieldset class="rounded-2xl border border-outline-variant bg-surface-container-high/40 p-4">
+              <legend class="px-2 text-sm font-bold text-primary">Solicitação</legend>
+              <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                <label class="flex flex-col gap-1"><span class="sa-label">Data da solicitação</span><input id="novo-xml-data-solicitacao" type="date" class="sa-input !bg-white !text-black [color-scheme:light]"></label>
+                <label class="flex flex-col gap-1"><span class="sa-label">Caráter da solicitação</span><select id="novo-xml-carater" class="sa-input"><option value="1">1 - Eletiva</option><option value="2">2 - Urgência/Emergência</option></select></label>
+                <label class="flex flex-col gap-1 md:col-span-2"><span class="sa-label">Indicação clínica</span><textarea id="novo-xml-indicacao-clinica" class="sa-input min-h-20 resize-y" maxlength="500" placeholder="Motivo clínico ou hipótese diagnóstica"></textarea></label>
+              </div>
+            </fieldset>
+
+            <fieldset class="rounded-2xl border border-outline-variant bg-surface-container-high/40 p-4">
+              <legend class="px-2 text-sm font-bold text-primary">Profissional executante</legend>
+              <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                <label class="flex flex-col gap-1 xl:col-span-2"><span class="sa-label">Profissional executante — Psicólogo</span><select id="novo-xml-solicitante" class="sa-input" onchange="novoXmlSelecionarSolicitante()"></select></label>
+                <label class="flex flex-col gap-1"><span class="sa-label">Conselho</span><select id="novo-xml-solicitante-conselho" class="sa-input"><option value="09">09 - CRP</option></select></label>
+                <label class="flex flex-col gap-1"><span class="sa-label">Número do conselho</span><input id="novo-xml-solicitante-conselho-numero" class="sa-input"></label>
+                <label class="flex flex-col gap-1"><span class="sa-label">UF</span><select id="novo-xml-solicitante-uf" class="sa-input"><option value="33">33 - RJ</option><option value="35">35 - SP</option><option value="31">31 - MG</option></select></label>
+                <label class="flex flex-col gap-1"><span class="sa-label">CBO</span><input id="novo-xml-solicitante-cbo" class="sa-input" inputmode="numeric"></label>
+                <label class="flex flex-col gap-1 xl:col-span-2"><span class="sa-label">Grau de participação</span><select id="novo-xml-grau-participacao" class="sa-input"><option value="00" selected>00 - Cirurgião</option><option value="01">01 - Primeiro Auxiliar</option><option value="02">02 - Segundo Auxiliar</option><option value="03">03 - Terceiro Auxiliar</option><option value="04">04 - Quarto Auxiliar</option><option value="05">05 - Instrumentador</option><option value="06">06 - Anestesista</option><option value="07">07 - Auxiliar de Anestesista</option><option value="08">08 - Consultor</option><option value="09">09 - Perfusionista</option><option value="10">10 - Pediatra na sala de parto</option><option value="11">11 - Auxiliar SADT</option><option value="12">12 - Clínico</option><option value="13">13 - Intensivista</option></select></label>
+              </div>
+            </fieldset>
+
+            <fieldset class="rounded-2xl border border-outline-variant bg-surface-container-high/40 p-4">
+              <legend class="px-2 text-sm font-bold text-primary">Atendimento</legend>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <label class="flex flex-col gap-1"><span class="sa-label">Tipo de atendimento</span><select id="novo-xml-tipo-atendimento" class="sa-input"><option value="03">03 - Terapias</option><option value="02">02 - Pequena cirurgia</option><option value="04">04 - Consulta</option><option value="05">05 - Exame</option><option value="06">06 - Atendimento domiciliar</option><option value="07">07 - SADT internado</option><option value="08">08 - Quimioterapia</option><option value="09">09 - Radioterapia</option><option value="10">10 - TRS</option><option value="13">13 - Pequeno atendimento</option><option value="14">14 - Saúde ocupacional</option><option value="23">23 - Exame admissional</option></select></label>
+                <label class="flex flex-col gap-1"><span class="sa-label">Tipo de consulta</span><select id="novo-xml-tipo-consulta-sadt" class="sa-input"><option value="2">2 - Seguimento</option><option value="1">1 - Primeira consulta</option><option value="3">3 - Pré-natal</option></select></label>
+                <label class="flex flex-col gap-1"><span class="sa-label">Regime de atendimento</span><select id="novo-xml-regime-atendimento" class="sa-input"><option value="01">01 - Ambulatorial</option><option value="02">02 - Domiciliar</option><option value="03">03 - Internação</option><option value="04">04 - Pronto-socorro</option><option value="05">05 - Telessaúde</option></select></label>
+              </div>
+            </fieldset>
+
+            <fieldset class="rounded-2xl border border-outline-variant bg-surface-container-high/40 p-4">
+              <legend class="px-2 text-sm font-bold text-primary">Procedimento executado</legend>
+              <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                <label class="flex flex-col gap-1"><span class="sa-label">Quantidade executada</span><input id="novo-xml-quantidade" class="sa-input" type="number" min="1" value="1"></label>
+                <label class="flex flex-col gap-1"><span class="sa-label">Técnica utilizada</span><select id="novo-xml-tecnica" class="sa-input"><option value="1">1 - Convencional</option><option value="2">2 - Videolaparoscopia</option><option value="3">3 - Robótica</option></select></label>
+              </div>
+            </fieldset>
           </div>
           <div class="flex flex-wrap justify-end gap-3 mt-6"><button id="novo-xml-cancelar-edicao" type="button" onclick="novoXmlCancelarEdicao()" class="hidden h-11 px-5 rounded-xl border border-outline-variant">Cancelar edição</button><button type="button" onclick="novoXmlAdicionarGuia()" class="h-11 px-5 rounded-xl bg-tertiary text-on-tertiary font-bold flex items-center gap-2"><span class="material-symbols-outlined">add</span><span id="novo-xml-add-label">Adicionar guia ao lote</span></button></div>
         </section>
@@ -4938,7 +4971,7 @@
     verificarSessaoCliniFat();
   </script>
   <script src="./convenios-xml.js"></script>
-<script src="./novo-xml.js?v=20261113-5"></script>
+<script src="./novo-xml.js?v=20261113-6"></script>
   <script src="./xml-edit.js?v=20261113-4"></script>
 </body>
 </html>
