@@ -16,7 +16,7 @@
   function renderBase(){
     el('novo-xml-unidade').innerHTML='<option value="">Selecione...</option>'+state.unidades.map(item=>option(item.id,item.nome)).join('');
     el('novo-xml-operadora').innerHTML='<option value="">Selecione...</option>'+state.operadoras.map(item=>option(item.id,item.nome)).join('');
-    renderProfessionalOptions();el('novo-xml-data').value='';renderMode();renderGuides();configurarValidacaoImediata();
+    renderUfOptions();renderProfessionalOptions();el('novo-xml-data').value='';renderMode();renderGuides();configurarValidacaoImediata();
   }
   window.novoXmlAbrir=async function(){navegar('tela-novo-xml');status('Carregando configurações...');try{await load();renderBase();status('Base carregada. Selecione a modalidade e monte o lote.');}catch(error){status(`Não foi possível carregar a base: ${error.message}`,'erro');}};
 
@@ -25,6 +25,7 @@
   window.novoXmlSelecionarOperadora=function(){const {operadoraId,unidade,operadora,config}=contexto(),tables=state.tabelas.filter(item=>item.operadora_id===operadoraId);el('novo-xml-tabela').innerHTML='<option value="">Selecione...</option>'+tables.map(item=>option(item.id,`${item.nome} • ${item.situacao}`)).join('');const current=tables.find(item=>item.situacao==='atual')||tables[0];if(current)el('novo-xml-tabela').value=current.id;el('novo-xml-contexto-resumo').innerHTML=operadora?`<b>${escHtml(operadora.nome)}</b> • ${escHtml(unidade?.nome||'unidade não selecionada')} • ANS ${escHtml(operadora.registro_ans||'não informado')} • ${config?`TISS ${escHtml(config.versao_tiss_padrao)} • ${config.identificacao_prestador==='cnpj'?'CNPJ':'Código na operadora'}`:'sem configuração XML'}`:'Selecione unidade e convênio.';window.novoXmlAtualizarValor();};
 
   function crmSemPrefixo52(professional){const crm=digits(professional?.crm);if(crm)return crm;const crm52=digits(professional?.crm_52);return crm52.startsWith('52')?crm52.slice(2):crm52;}
+  function renderUfOptions(){const html=Object.entries(ufCodes).map(([uf,code])=>option(code,`${code} - ${uf}`)).join('');['novo-xml-uf','novo-xml-solicitante-uf'].forEach(id=>{const select=el(id),current=select?.value||'33';if(!select)return;select.innerHTML=html;select.value=Object.values(ufCodes).includes(current)?current:'33';});}
   function isPsychologist(professional){return normalize(professional?.especialidade).includes('psico')||digits(professional?.cbo)==='251510';}
   function renderProfessionalOptions(){
     const common=state.modalidade==='sadt'?state.profissionais.filter(item=>!isPsychologist(item)):state.profissionais;
