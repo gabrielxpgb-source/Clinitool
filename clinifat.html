@@ -1536,6 +1536,7 @@
               </div>
             </fieldset>
           </div>
+          <div id="novo-xml-validacao-atual" class="hidden mt-5 p-4 rounded-xl border text-xs" aria-live="polite"></div>
           <div class="flex flex-wrap justify-end gap-3 mt-6"><button id="novo-xml-cancelar-edicao" type="button" onclick="novoXmlCancelarEdicao()" class="hidden h-11 px-5 rounded-xl border border-outline-variant">Cancelar edição</button><button type="button" onclick="novoXmlAdicionarGuia()" class="h-11 px-5 rounded-xl bg-tertiary text-on-tertiary font-bold flex items-center gap-2"><span class="material-symbols-outlined">add</span><span id="novo-xml-add-label">Adicionar guia ao lote</span></button></div>
         </section>
 
@@ -1553,6 +1554,7 @@
           <div><h3 class="font-bold text-secondary">6. Gerar XML</h3><p class="text-xs text-on-surface-variant mt-1">O lote será auditado novamente antes da geração.</p></div>
           <div class="flex flex-wrap gap-3"><button type="button" onclick="novoXmlBaixar()" class="h-11 px-5 rounded-xl bg-secondary text-on-secondary font-bold flex items-center gap-2"><span class="material-symbols-outlined text-sm">download</span>Auditar e baixar XML</button><button type="button" onclick="novoXmlAbrirNoEditor()" class="h-11 px-5 rounded-xl border border-secondary text-secondary font-bold flex items-center gap-2"><span class="material-symbols-outlined text-sm">fact_check</span>Abrir opcionalmente no XML Edit</button></div>
         </section>
+        <div class="flex justify-end pb-4"><button type="button" onclick="novoXmlIniciarNovoLote()" class="h-11 px-5 rounded-xl border border-error text-error hover:bg-error-container font-bold flex items-center gap-2"><span class="material-symbols-outlined text-sm">restart_alt</span>Iniciar Novo Lote</button></div>
       </div>
     </div>
 
@@ -4971,7 +4973,7 @@
     verificarSessaoCliniFat();
   </script>
   <script src="./convenios-xml.js"></script>
-<script src="./novo-xml.js?v=20261113-10"></script>
+<script src="./novo-xml.js?v=20261113-11"></script>
   <script src="./xml-edit.js?v=20261113-4"></script>
 </body>
 </html>
