@@ -1467,7 +1467,7 @@
         <section class="bg-surface-container rounded-2xl border border-outline-variant p-6">
           <div class="flex items-center justify-between gap-3 mb-4"><h3 class="font-bold text-primary">3. Dados da guia</h3><span id="novo-xml-editando" class="hidden text-xs px-3 py-1 rounded-full bg-tertiary-container text-on-tertiary-container">Editando guia</span></div>
           <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-            <label class="flex flex-col gap-1"><span class="sa-label">Número da guia</span><input id="novo-xml-guia" class="sa-input" inputmode="numeric"></label>
+            <label class="flex flex-col gap-1"><span class="sa-label">Número da guia</span><input id="novo-xml-guia" class="sa-input" inputmode="numeric" onchange="novoXmlSincronizarNumeroGuia()"></label>
             <label class="flex flex-col gap-1"><span class="sa-label">Carteira do beneficiário</span><input id="novo-xml-carteira" class="sa-input"></label>
             <label class="flex flex-col gap-1"><span class="sa-label">Atendimento RN</span><select id="novo-xml-rn" class="sa-input"><option value="N">Não</option><option value="S">Sim</option></select></label>
             <label class="flex flex-col gap-1"><span id="novo-xml-data-label" class="sa-label">Data do atendimento</span><input id="novo-xml-data" type="date" class="sa-input !bg-white !text-black [color-scheme:light]" onchange="novoXmlSincronizarDatas('execucao')"></label>
@@ -1491,8 +1491,8 @@
             <fieldset class="rounded-2xl border border-outline-variant bg-surface-container-high/40 p-4">
               <legend class="px-2 text-sm font-bold text-primary">Bloco padrão e autorização</legend>
               <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                <label class="flex flex-col gap-1"><span class="sa-label">Número guia operadora</span><input id="novo-xml-guia-operadora" class="sa-input" inputmode="numeric"></label>
-                <label class="flex flex-col gap-1"><span class="sa-label">Número guia principal</span><input id="novo-xml-guia-principal" class="sa-input" inputmode="numeric"></label>
+                <label class="flex flex-col gap-1"><span class="sa-label">Número guia operadora</span><input id="novo-xml-guia-operadora" class="sa-input" inputmode="numeric" oninput="this.dataset.preenchidoAutomaticamente='false'"></label>
+                <label class="flex flex-col gap-1"><span class="sa-label">Número guia principal</span><input id="novo-xml-guia-principal" class="sa-input" inputmode="numeric" oninput="this.dataset.preenchidoAutomaticamente='false'"></label>
                 <label class="flex flex-col gap-1"><span class="sa-label">Data da autorização</span><input id="novo-xml-data-autorizacao" type="date" class="sa-input !bg-white !text-black [color-scheme:light]" onchange="novoXmlSincronizarDatas('autorizacao')"></label>
                 <label class="flex flex-col gap-1"><span class="sa-label">Senha de autorização</span><input id="novo-xml-senha" class="sa-input"></label>
               </div>
@@ -4971,7 +4971,7 @@
     verificarSessaoCliniFat();
   </script>
   <script src="./convenios-xml.js"></script>
-<script src="./novo-xml.js?v=20261113-8"></script>
+<script src="./novo-xml.js?v=20261113-9"></script>
   <script src="./xml-edit.js?v=20261113-4"></script>
 </body>
 </html>
