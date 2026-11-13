@@ -1437,13 +1437,21 @@
     <div id="tela-novo-xml" class="screen">
       <div class="max-w-7xl mx-auto flex flex-col gap-6">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div><div class="text-xs uppercase tracking-wider font-bold text-tertiary font-label-sm mb-2">CliniFat • TISS</div><h2 class="text-3xl font-bold text-on-surface font-headline-lg">Novo XML de Consulta</h2><p class="text-sm text-on-surface-variant mt-1">Preencha os dados da guia; configurações do prestador e valores serão aplicados automaticamente.</p></div>
+          <div><div class="text-xs uppercase tracking-wider font-bold text-tertiary font-label-sm mb-2">CliniFat • TISS</div><h2 id="novo-xml-titulo" class="text-3xl font-bold text-on-surface font-headline-lg">Novo XML</h2><p class="text-sm text-on-surface-variant mt-1">Monte o lote completo, audite todas as guias e gere o XML sem precisar passar pelo editor.</p></div>
           <button onclick="navegar('tela-inicio')" class="h-11 px-5 rounded-xl bg-surface-container-high border border-outline-variant">Voltar</button>
         </div>
         <div id="novo-xml-status" class="hidden p-3 rounded-xl border text-sm" role="status" aria-live="polite"></div>
 
         <section class="bg-surface-container rounded-2xl border border-outline-variant p-6">
-          <h3 class="font-bold text-primary mb-4">1. Contexto do faturamento</h3>
+          <h3 class="font-bold text-primary mb-4">1. Modalidade do lote</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <button id="novo-xml-modo-consulta" type="button" onclick="novoXmlSelecionarModalidade('consulta')" class="p-5 rounded-2xl border-2 border-primary bg-primary/10 text-left"><span class="material-symbols-outlined text-primary">clinical_notes</span><span class="block mt-2 font-bold">Consulta</span><span class="block text-xs text-on-surface-variant">Guias de consulta médica.</span></button>
+            <button id="novo-xml-modo-sadt" type="button" onclick="novoXmlSelecionarModalidade('sadt')" class="p-5 rounded-2xl border-2 border-outline-variant bg-surface-container-high text-left"><span class="material-symbols-outlined text-tertiary">psychology</span><span class="block mt-2 font-bold">SP/SADT</span><span class="block text-xs text-on-surface-variant">Procedimentos, terapias e demais atendimentos SADT.</span></button>
+          </div>
+        </section>
+
+        <section class="bg-surface-container rounded-2xl border border-outline-variant p-6">
+          <h3 class="font-bold text-primary mb-4">2. Contexto do faturamento</h3>
           <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
             <label class="flex flex-col gap-1"><span class="sa-label">Unidade</span><select id="novo-xml-unidade" class="sa-input" onchange="novoXmlAtualizarContexto()"></select></label>
             <label class="flex flex-col gap-1"><span class="sa-label">Convênio</span><select id="novo-xml-operadora" class="sa-input" onchange="novoXmlSelecionarOperadora()"></select></label>
@@ -1454,12 +1462,12 @@
         </section>
 
         <section class="bg-surface-container rounded-2xl border border-outline-variant p-6">
-          <h3 class="font-bold text-primary mb-4">2. Dados da guia</h3>
+          <div class="flex items-center justify-between gap-3 mb-4"><h3 class="font-bold text-primary">3. Dados da guia</h3><span id="novo-xml-editando" class="hidden text-xs px-3 py-1 rounded-full bg-tertiary-container text-on-tertiary-container">Editando guia</span></div>
           <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
             <label class="flex flex-col gap-1"><span class="sa-label">Número da guia</span><input id="novo-xml-guia" class="sa-input" inputmode="numeric"></label>
             <label class="flex flex-col gap-1"><span class="sa-label">Carteira do beneficiário</span><input id="novo-xml-carteira" class="sa-input"></label>
             <label class="flex flex-col gap-1"><span class="sa-label">Atendimento RN</span><select id="novo-xml-rn" class="sa-input"><option value="N">Não</option><option value="S">Sim</option></select></label>
-            <label class="flex flex-col gap-1"><span class="sa-label">Data do atendimento</span><input id="novo-xml-data" type="date" class="sa-input"></label>
+            <label class="flex flex-col gap-1"><span id="novo-xml-data-label" class="sa-label">Data do atendimento</span><input id="novo-xml-data" type="date" class="sa-input !bg-white !text-black [color-scheme:light]"></label>
             <label class="flex flex-col gap-1"><span class="sa-label">Profissional executante</span><select id="novo-xml-profissional" class="sa-input" onchange="novoXmlSelecionarProfissional()"></select></label>
             <label class="flex flex-col gap-1"><span class="sa-label">Conselho</span><select id="novo-xml-conselho" class="sa-input"><option value="06">06 - CRM</option><option value="09">09 - CRP</option><option value="08">08 - CREFITO</option></select></label>
             <label class="flex flex-col gap-1"><span class="sa-label">Número do conselho</span><input id="novo-xml-conselho-numero" class="sa-input"></label>
@@ -1472,11 +1480,39 @@
             <label class="flex flex-col gap-1"><span class="sa-label">Indicação de acidente</span><select id="novo-xml-acidente" class="sa-input"><option value="9">9 - Não acidente</option><option value="0">0 - Trabalho</option><option value="1">1 - Trânsito</option><option value="2">2 - Outros</option></select></label>
             <label class="flex flex-col gap-1 xl:col-span-2"><span class="sa-label">Observação</span><input id="novo-xml-observacao" class="sa-input" placeholder="Ex.: Conta 123456"></label>
           </div>
+          <div id="novo-xml-sadt-fields" class="hidden mt-5 pt-5 border-t border-outline-variant">
+            <h4 class="font-bold text-tertiary mb-4">Dados específicos do SADT</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+              <label class="flex flex-col gap-1"><span class="sa-label">Guia principal</span><input id="novo-xml-guia-principal" class="sa-input"></label>
+              <label class="flex flex-col gap-1"><span class="sa-label">Número guia operadora</span><input id="novo-xml-guia-operadora" class="sa-input"></label>
+              <label class="flex flex-col gap-1"><span class="sa-label">Data da autorização</span><input id="novo-xml-data-autorizacao" type="date" class="sa-input !bg-white !text-black [color-scheme:light]"></label>
+              <label class="flex flex-col gap-1"><span class="sa-label">Senha</span><input id="novo-xml-senha" class="sa-input"></label>
+              <label class="flex flex-col gap-1"><span class="sa-label">Data da solicitação</span><input id="novo-xml-data-solicitacao" type="date" class="sa-input !bg-white !text-black [color-scheme:light]"></label>
+              <label class="flex flex-col gap-1"><span class="sa-label">Quantidade executada</span><input id="novo-xml-quantidade" class="sa-input" type="number" min="1" value="1"></label>
+              <label class="flex flex-col gap-1"><span class="sa-label">Profissional solicitante</span><select id="novo-xml-solicitante" class="sa-input" onchange="novoXmlSelecionarSolicitante()"></select></label>
+              <label class="flex flex-col gap-1"><span class="sa-label">Conselho solicitante</span><select id="novo-xml-solicitante-conselho" class="sa-input"><option value="06">06 - CRM</option><option value="09">09 - CRP</option><option value="08">08 - CREFITO</option></select></label>
+              <label class="flex flex-col gap-1"><span class="sa-label">Número conselho solicitante</span><input id="novo-xml-solicitante-conselho-numero" class="sa-input"></label>
+              <label class="flex flex-col gap-1"><span class="sa-label">UF solicitante</span><select id="novo-xml-solicitante-uf" class="sa-input"><option value="33">33 - RJ</option><option value="35">35 - SP</option><option value="31">31 - MG</option></select></label>
+              <label class="flex flex-col gap-1"><span class="sa-label">CBO solicitante</span><input id="novo-xml-solicitante-cbo" class="sa-input"></label>
+              <label class="flex flex-col gap-1 xl:col-span-2"><span class="sa-label">Indicação clínica</span><input id="novo-xml-indicacao-clinica" class="sa-input"></label>
+            </div>
+          </div>
+          <div class="flex flex-wrap justify-end gap-3 mt-6"><button id="novo-xml-cancelar-edicao" type="button" onclick="novoXmlCancelarEdicao()" class="hidden h-11 px-5 rounded-xl border border-outline-variant">Cancelar edição</button><button type="button" onclick="novoXmlAdicionarGuia()" class="h-11 px-5 rounded-xl bg-tertiary text-on-tertiary font-bold flex items-center gap-2"><span class="material-symbols-outlined">add</span><span id="novo-xml-add-label">Adicionar guia ao lote</span></button></div>
+        </section>
+
+        <section class="bg-surface-container rounded-2xl border border-outline-variant p-6">
+          <div class="flex items-center justify-between gap-3 mb-4"><div><h3 class="font-bold text-primary">4. Guias adicionadas</h3><p class="text-xs text-on-surface-variant mt-1">Revise, edite ou remova guias antes de gerar o lote.</p></div><span id="novo-xml-guias-count" class="px-3 py-1 rounded-full bg-surface-container-highest text-xs">0 guias</span></div>
+          <div id="novo-xml-guias-lista" class="flex flex-col gap-2"><div class="text-sm text-outline">Nenhuma guia adicionada.</div></div>
+        </section>
+
+        <section class="bg-surface-container rounded-2xl border border-outline-variant p-6">
+          <h3 class="font-bold text-primary mb-4">5. Auditoria do lote</h3>
+          <div id="novo-xml-auditoria" class="flex flex-col gap-2 text-xs"><div class="text-outline">Adicione uma guia para executar a auditoria.</div></div>
         </section>
 
         <section class="bg-surface-container rounded-2xl border border-outline-variant p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div><h3 class="font-bold text-secondary">3. Gerar XML</h3><p class="text-xs text-on-surface-variant mt-1">O arquivo original não existe nesta operação; será criada uma nova cópia TISS para conferência.</p></div>
-          <div class="flex flex-wrap gap-3"><button type="button" onclick="novoXmlBaixar()" class="h-11 px-5 rounded-xl border border-secondary text-secondary font-bold flex items-center gap-2"><span class="material-symbols-outlined text-sm">download</span>Baixar XML</button><button type="button" onclick="novoXmlAbrirNoEditor()" class="h-11 px-5 rounded-xl bg-secondary text-on-secondary font-bold flex items-center gap-2"><span class="material-symbols-outlined text-sm">fact_check</span>Gerar e abrir no XML Edit</button></div>
+          <div><h3 class="font-bold text-secondary">6. Gerar XML</h3><p class="text-xs text-on-surface-variant mt-1">O lote será auditado novamente antes da geração.</p></div>
+          <div class="flex flex-wrap gap-3"><button type="button" onclick="novoXmlBaixar()" class="h-11 px-5 rounded-xl bg-secondary text-on-secondary font-bold flex items-center gap-2"><span class="material-symbols-outlined text-sm">download</span>Auditar e baixar XML</button><button type="button" onclick="novoXmlAbrirNoEditor()" class="h-11 px-5 rounded-xl border border-secondary text-secondary font-bold flex items-center gap-2"><span class="material-symbols-outlined text-sm">fact_check</span>Abrir opcionalmente no XML Edit</button></div>
         </section>
       </div>
     </div>
@@ -4875,7 +4911,7 @@
     verificarSessaoCliniFat();
   </script>
   <script src="./convenios-xml.js"></script>
-  <script src="./novo-xml.js"></script>
-  <script src="./xml-edit.js?v=20261028-1526"></script>
+  <script src="./novo-xml.js?v=20261113-1"></script>
+  <script src="./xml-edit.js?v=20261113-1"></script>
 </body>
 </html>
