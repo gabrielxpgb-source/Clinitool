@@ -905,18 +905,18 @@
           <summary class="cursor-pointer select-none p-5 bg-surface-container-high hover:bg-surface-container-highest flex items-center justify-between gap-3">
             <div>
               <h3 class="text-lg font-bold text-primary">Profissionais do GuideCheck</h3>
-              <p class="text-xs text-on-surface-variant mt-1">Base usada para cruzar nome, CRM, CRM/52, UF e CBO.</p>
+              <p class="text-xs text-on-surface-variant mt-1">Base usada para cruzar nome, conselho profissional, UF e CBO.</p>
             </div>
             <span class="material-symbols-outlined text-outline">expand_more</span>
           </summary>
           <div class="p-6">
             <div id="form-guidecheck-profissional" class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-5">
               <input id="cfg-gcp-nome" class="sa-input md:col-span-4" placeholder="Nome completo" autocomplete="off">
-              <input id="cfg-gcp-especialidade" class="sa-input md:col-span-2" placeholder="Especialidade">
-              <input id="cfg-gcp-crm" class="sa-input md:col-span-2" inputmode="numeric" placeholder="CRM">
-              <input id="cfg-gcp-crm52" class="sa-input md:col-span-2" inputmode="numeric" placeholder="CRM/52">
+              <input id="cfg-gcp-especialidade" class="sa-input md:col-span-2" placeholder="Especialidade" oninput="atualizarRotulosConselhoGuideCheck()">
+              <input id="cfg-gcp-crm" class="sa-input md:col-span-2" inputmode="numeric" placeholder="CRM" aria-label="Número do conselho profissional">
+              <input id="cfg-gcp-crm52" class="sa-input md:col-span-2" inputmode="numeric" placeholder="CRM/52" aria-label="Número do conselho com código 52">
               <input id="cfg-gcp-uf" class="sa-input md:col-span-1" maxlength="2" placeholder="UF">
-              <input id="cfg-gcp-cbo" class="sa-input md:col-span-1" inputmode="numeric" placeholder="CBO">
+              <input id="cfg-gcp-cbo" class="sa-input md:col-span-1" inputmode="numeric" placeholder="CBO" oninput="atualizarRotulosConselhoGuideCheck()">
               <input id="cfg-gcp-aliases" class="sa-input md:col-span-9" placeholder="Variações conhecidas do nome, separadas por ;">
               <button onclick="salvarGuideCheckProfissional()" class="h-11 rounded-xl bg-primary-container text-on-primary-container font-bold md:col-span-2 flex items-center justify-center gap-2">
                 <span class="material-symbols-outlined text-sm">save</span>Salvar
@@ -930,7 +930,10 @@
                 <span class="font-bold text-sm text-primary">Mostrar profissionais cadastrados</span>
                 <span id="cfg-gcp-count" class="text-[10px] font-label-sm text-outline">0 item(ns)</span>
               </summary>
-              <div id="cfg-gcp-lista" class="cf-list m-4"></div>
+              <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 p-4">
+                <section class="rounded-xl border border-outline-variant overflow-hidden"><div class="px-4 py-3 bg-surface-container-high flex items-center justify-between"><span class="font-bold text-sm text-primary">Médicos e demais profissionais</span><span id="cfg-gcp-medicos-count" class="text-[10px] text-outline">0</span></div><div id="cfg-gcp-medicos" class="cf-list"></div></section>
+                <section class="rounded-xl border border-tertiary/40 overflow-hidden"><div class="px-4 py-3 bg-tertiary-container/20 flex items-center justify-between"><span class="font-bold text-sm text-tertiary">Psicólogos</span><span id="cfg-gcp-psicologos-count" class="text-[10px] text-outline">0</span></div><div id="cfg-gcp-psicologos" class="cf-list"></div></section>
+              </div>
             </details>
           </div>
         </details>
@@ -1495,6 +1498,7 @@
               <label class="flex flex-col gap-1"><span class="sa-label">Número conselho executante</span><input id="novo-xml-solicitante-conselho-numero" class="sa-input"></label>
               <label class="flex flex-col gap-1"><span class="sa-label">UF do executante</span><select id="novo-xml-solicitante-uf" class="sa-input"><option value="33">33 - RJ</option><option value="35">35 - SP</option><option value="31">31 - MG</option></select></label>
               <label class="flex flex-col gap-1"><span class="sa-label">CBO do executante</span><input id="novo-xml-solicitante-cbo" class="sa-input"></label>
+              <label class="flex flex-col gap-1"><span class="sa-label">Grau de participação</span><select id="novo-xml-grau-participacao" class="sa-input"><option value="00" selected>00 - Cirurgião</option><option value="01">01 - Primeiro Auxiliar</option><option value="02">02 - Segundo Auxiliar</option><option value="03">03 - Terceiro Auxiliar</option><option value="04">04 - Quarto Auxiliar</option><option value="05">05 - Instrumentador</option><option value="06">06 - Anestesista</option><option value="07">07 - Auxiliar de Anestesista</option><option value="08">08 - Consultor</option><option value="09">09 - Perfusionista</option><option value="10">10 - Pediatra na sala de parto</option><option value="11">11 - Auxiliar SADT</option><option value="12">12 - Clínico</option><option value="13">13 - Intensivista</option></select></label>
               <label class="flex flex-col gap-1 xl:col-span-2"><span class="sa-label">Indicação clínica</span><input id="novo-xml-indicacao-clinica" class="sa-input"></label>
             </div>
           </div>
@@ -2047,18 +2051,41 @@
         </div>`;
     }
 
+    function guideCheckEhPsicologo(p) {
+      const especialidade = String(p?.especialidade || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+      return especialidade.includes('psico') || String(p?.cbo || '').replace(/\D/g,'') === '251510';
+    }
+
+    function atualizarRotulosConselhoGuideCheck() {
+      const psicologo = guideCheckEhPsicologo({especialidade:document.getElementById('cfg-gcp-especialidade')?.value,cbo:document.getElementById('cfg-gcp-cbo')?.value});
+      const conselho = psicologo ? 'CRP' : 'CRM';
+      const numero = document.getElementById('cfg-gcp-crm'), numero52 = document.getElementById('cfg-gcp-crm52');
+      if (numero) { numero.placeholder = conselho; numero.setAttribute('aria-label',`${conselho} do profissional`); }
+      if (numero52) { numero52.placeholder = `${conselho}/52`; numero52.setAttribute('aria-label',`${conselho} com código 52`); }
+    }
+
+    function renderizarListaGuideCheck(profissionais) {
+      const psicologos=(profissionais||[]).filter(guideCheckEhPsicologo),demais=(profissionais||[]).filter(p=>!guideCheckEhPsicologo(p));
+      document.getElementById('cfg-gcp-medicos').innerHTML=demais.map(linhaGuideCheckProfissional).join('')||'<div class="cf-list-empty">Nenhum médico ou outro profissional cadastrado.</div>';
+      document.getElementById('cfg-gcp-psicologos').innerHTML=psicologos.map(linhaGuideCheckProfissional).join('')||'<div class="cf-list-empty">Nenhum psicólogo cadastrado.</div>';
+      document.getElementById('cfg-gcp-medicos-count').textContent=`${demais.length} item(ns)`;
+      document.getElementById('cfg-gcp-psicologos-count').textContent=`${psicologos.length} item(ns)`;
+      document.getElementById('cfg-gcp-count').textContent=`${(profissionais||[]).length} item(ns)`;
+    }
+
     function linhaGuideCheckProfissional(p) {
+      const psicologo=guideCheckEhPsicologo(p),conselho=psicologo?'CRP':'CRM';
       const detalhes = [
         p.especialidade ? escapeHtmlCF(p.especialidade) : null,
-        p.crm ? `CRM ${escapeHtmlCF(p.crm)}` : null,
-        p.crm_52 ? `CRM/52 ${escapeHtmlCF(p.crm_52)}` : null,
+        p.crm ? `${conselho} ${escapeHtmlCF(p.crm)}` : null,
+        p.crm_52 ? `${conselho}/52 ${escapeHtmlCF(p.crm_52)}` : null,
         p.uf ? escapeHtmlCF(p.uf) : null,
         p.cbo ? `CBO ${escapeHtmlCF(p.cbo)}` : null
       ].filter(Boolean).join(' • ');
 
       return `
         <div class="cf-list-row ${p.ativo ? '' : 'is-inactive'}">
-          <span class="material-symbols-outlined text-base text-primary">badge</span>
+          <span class="material-symbols-outlined text-base ${psicologo?'text-tertiary':'text-primary'}">${psicologo?'psychology':'badge'}</span>
           <div class="min-w-0 flex-1">
             <div class="font-bold text-sm truncate">${escapeHtmlCF(p.nome)}</div>
             <div class="text-[10px] text-on-surface-variant font-label-sm">${detalhes || 'Sem dados complementares'} • ${p.ativo ? 'ATIVO' : 'INATIVO'}</div>
@@ -2111,8 +2138,7 @@
       document.getElementById('cfg-prof-total-count').textContent = `${(profRes.data || []).length} item(ns)`;
 
       const gcps = gcpRes.data || [];
-      document.getElementById('cfg-gcp-lista').innerHTML = gcps.map(linhaGuideCheckProfissional).join('') || '<div class="cf-list-empty">Nenhum profissional cadastrado no GuideCheck.</div>';
-      document.getElementById('cfg-gcp-count').textContent = `${gcps.length} item(ns)`;
+      renderizarListaGuideCheck(gcps);
 
       const convConsulta = (convRes.data || []).filter(c => c.tipo === 'consulta');
       const convSadt = (convRes.data || []).filter(c => c.tipo === 'sadt');
@@ -2235,6 +2261,7 @@
       document.getElementById('cfg-gcp-uf').value = uf;
       document.getElementById('cfg-gcp-cbo').value = cbo;
       document.getElementById('cfg-gcp-aliases').value = aliases;
+      atualizarRotulosConselhoGuideCheck();
       const cancel = document.getElementById('cfg-gcp-cancel-btn');
       cancel.classList.remove('hidden'); cancel.classList.add('flex');
       document.getElementById('cfg-gcp-nome').focus();
@@ -2251,6 +2278,7 @@
       });
       const cancel = document.getElementById('cfg-gcp-cancel-btn');
       cancel.classList.add('hidden'); cancel.classList.remove('flex');
+      atualizarRotulosConselhoGuideCheck();
       document.getElementById('cfg-gcp-nome')?.focus();
     }
 
@@ -4248,10 +4276,7 @@
         </div>`;
       }).join('') || '<div class="text-sm text-on-surface-variant">Nenhuma combinação cadastrada.</div>';
 
-      document.getElementById('cfg-gcp-lista').innerHTML =
-        (pRes.data || []).map(linhaGuideCheckProfissional).join('') ||
-        '<div class="cf-list-empty">Nenhum profissional cadastrado.</div>';
-      document.getElementById('cfg-gcp-count').textContent = `${(pRes.data || []).length} item(ns)`;
+      renderizarListaGuideCheck(pRes.data || []);
 
       const convenioSelect = document.getElementById('gcadmin-buscador-convenio');
       convenioSelect.innerHTML = gcOpts(gcAdminConvenios);
@@ -4912,7 +4937,7 @@
     verificarSessaoCliniFat();
   </script>
   <script src="./convenios-xml.js"></script>
-  <script src="./novo-xml.js?v=20261113-2"></script>
-  <script src="./xml-edit.js?v=20261113-2"></script>
+  <script src="./novo-xml.js?v=20261113-3"></script>
+  <script src="./xml-edit.js?v=20261113-3"></script>
 </body>
 </html>
