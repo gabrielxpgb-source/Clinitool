@@ -129,6 +129,17 @@
     if(informed!==calculated)add('erro','Hash do XML não corresponde ao conteúdo atual.');
     state.audit={guides,issues,per,informed,calculated}; return state.audit;
   }
+  window.xmlAuditarDocumento=doc=>{
+    if(!doc?.documentElement)return {guides:[],issues:[{level:'erro',msg:'Documento XML inválido.',index:null,fields:[]}]};
+    const previous={doc:state.doc,guides:state.guides,audit:state.audit};
+    try {
+      state.doc=doc;refreshGuides();
+      const result=auditar();
+      return {guides:result.guides,issues:result.issues.map(issue=>({...issue,fields:[...(issue.fields||[])]})),informed:result.informed,calculated:result.calculated};
+    } finally {
+      state.doc=previous.doc;state.guides=previous.guides;state.audit=previous.audit;
+    }
+  };
 
   function badge(level){return level==='erro'?'bg-error-container text-on-error-container':level==='alerta'?'bg-tertiary-container text-on-tertiary-container':'bg-secondary-container text-on-secondary-container';}
   function render() {
@@ -143,7 +154,7 @@
     if(target&&supportedVersions.includes(version)) Array.from(target.options).forEach(option=>option.disabled=option.value===version);
     byId('xml-guides-body').innerHTML=a.guides.map((g,i)=>{const levels=a.per[i];const st=levels.includes('erro')?'erro':levels.includes('alerta')?'alerta':'ok';return `<tr class="border-b border-outline-variant hover:bg-surface-container-high cursor-pointer" onclick="xmlAbrirGuia(${i})"><td class="p-3">${i+1}</td><td class="p-3 font-bold text-primary">${esc(g.guia)}</td><td class="p-3">${esc(g.carteira)}</td><td class="p-3">${esc(g.execucao)}</td><td class="p-3"><div>${esc(g.codigo)}</div><div class="text-[10px] text-outline">${esc(g.descricao)}</div></td><td class="p-3 text-right font-bold">${esc(money(g.totalGeral))}</td><td class="p-3"><span class="px-2 py-1 rounded-full ${st==='ok'?'bg-secondary-container text-on-secondary-container':badge(st)}">${st==='ok'?'OK':st.toUpperCase()}</span></td><td class="p-3 text-right"><button type="button" onclick="event.stopPropagation();xmlRemoverGuia(${i})" class="p-2 rounded-lg text-error hover:bg-error-container" title="Remover guia ${i+1}" aria-label="Remover guia ${i+1}"><span class="material-symbols-outlined text-lg">delete</span></button></td></tr>`;}).join('');
     const hashOk=a.informed===a.calculated; const general=[{level:hashOk?'ok':'erro',msg:hashOk?'Hash confere com o conteúdo do arquivo.':'Hash inválido para o conteúdo atual.'},{level:a.issues.some(x=>x.level==='erro')?'erro':a.issues.some(x=>x.level==='alerta')?'alerta':'ok',msg:a.issues.length?`${a.issues.length} ocorrência(s) encontrada(s).`:'Nenhuma inconsistência interna encontrada.'}];
-    byId('xml-audit-list').innerHTML=[...general,...a.issues.slice(0,20)].map(x=>`<button type="button" ${x.index!=null?`onclick="xmlAbrirOcorrencia(${a.issues.indexOf(x)})"`:''} class="text-left p-3 rounded-xl ${badge(x.level)}">${x.index!=null?`Guia ${x.index+1}: `:''}${esc(x.msg)}${x.index!=null?'<span class="block mt-1 text-[10px] font-bold opacity-80">Clique para localizar o campo</span>':''}</button>`).join('');
+    byId('xml-audit-list').innerHTML=[...general,...a.issues].map(x=>`<button type="button" ${x.index!=null?`onclick="xmlAbrirOcorrencia(${a.issues.indexOf(x)})"`:''} class="text-left p-3 rounded-xl ${badge(x.level)}">${x.index!=null?`Guia ${x.index+1}: `:''}${esc(x.msg)}${x.index!=null?'<span class="block mt-1 text-[10px] font-bold opacity-80">Clique para localizar o campo</span>':''}</button>`).join('');
     byId('xml-change-log').innerHTML=state.changes.length?state.changes.slice().reverse().map(c=>`<div class="py-2 border-b border-outline-variant"><b>${c.guide==='Lote'?'Lote':`Guia ${c.guide}`}</b> — ${esc(c.field)}<br><span class="text-outline">${esc(c.before)} → ${esc(c.after)}</span></div>`).join(''):'Nenhuma alteração realizada.';
   }
 
